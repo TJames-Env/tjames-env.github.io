@@ -76,7 +76,7 @@ nav.hide{transform:translateY(-100%)}
 .hero-whoami{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted);letter-spacing:.04em;margin-bottom:24px}
 .hero-whoami .pl{color:var(--green)}
 .hero-name{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(34px,8.6vw,116px);line-height:.9;letter-spacing:-.03em;max-width:100%;overflow-wrap:break-word}
-.hl{display:block;position:relative;width:max-content;max-width:100%}
+.hl{display:block;position:relative;width:max-content;max-width:100%;white-space:nowrap}
 .hl .word{display:inline-block}
 .l-build{color:var(--text)}
 .l-auto{-webkit-text-stroke:1.4px rgba(0,229,255,.55);color:transparent}
@@ -240,7 +240,8 @@ footer p{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted
 /* responsive */
 @media(max-width:1600px){#hero{grid-template-columns:1fr;padding:110px clamp(18px,4vw,52px) 60px}.hero-right{display:block;width:100%;max-width:480px;margin-top:6px;align-self:start}}
 @media(max-width:920px){
-  .nav-links li:not(.nav-avail-li){display:none}
+  .nav-links li:not(.nav-avail-li):not(.nav-burger-li){display:none}
+  .nav-links .nav-burger-li{display:block}#navToggle{display:flex}#navMenu{display:flex}.nav-links{gap:14px}
   .about-grid,.skills-2{grid-template-columns:1fr}
   .tl-row{grid-template-columns:22px 1fr;gap:0 14px}
   .tl-spine{grid-column:1;grid-row:1 / span 2}
@@ -257,6 +258,7 @@ footer p{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted
   *{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.05ms!important}
   .rv{opacity:1;transform:none}
 }
+.nav-burger-li{display:none}.nav-burger{display:none;flex-direction:column;justify-content:center;gap:5px;width:40px;height:36px;background:transparent;border:1px solid var(--line);border-radius:8px;cursor:pointer;padding:0 9px;flex-shrink:0}.nav-burger span{display:block;height:2px;width:100%;background:var(--text);border-radius:2px;transition:transform .3s,opacity .2s}.nav-burger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}.nav-burger.open span:nth-child(2){opacity:0}.nav-burger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}.nav-menu{display:none;position:fixed;top:62px;left:0;right:0;z-index:499;flex-direction:column;background:rgba(7,8,9,.97);backdrop-filter:blur(18px);border-bottom:1px solid var(--line);padding:6px clamp(18px,4vw,52px) 14px;opacity:0;transform:translateY(-10px);pointer-events:none;transition:opacity .25s,transform .25s}.nav-menu.open{opacity:1;transform:translateY(0);pointer-events:auto}.nav-menu a{color:var(--soft);text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:14px;letter-spacing:.02em;padding:14px 4px;border-bottom:1px solid rgba(255,255,255,.06)}.nav-menu a:last-child{border-bottom:none}.nav-menu a:hover,.nav-menu a:active{color:var(--text)}.nav-menu a.ext{color:var(--red)}
 </style>
 </head>
 <body class="no-cursor">
@@ -289,8 +291,17 @@ footer p{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted
     <li><a href="#experience" class="navlnk" data-s="experience" data-link>trajectory</a></li>
     <li><a href="#contact" class="navlnk" data-s="contact" data-link>connect</a></li>
     <li class="nav-avail-li"><div class="nav-avail"><span class="pulse"></span>available for work</div></li>
+    <li class="nav-burger-li"><button id="navToggle" class="nav-burger" aria-label="Open menu" aria-expanded="false" aria-controls="navMenu"><span></span><span></span><span></span></button></li>
   </ul>
 </nav>
+<div id="navMenu" class="nav-menu">
+  <a href="projects.html" class="ext" data-link>projects</a>
+  <a href="#about" class="navlnk" data-s="about" data-link>whoami</a>
+  <a href="#skills" class="navlnk" data-s="skills" data-link>arsenal</a>
+  <a href="#certs" class="navlnk" data-s="certs" data-link>credentials</a>
+  <a href="#experience" class="navlnk" data-s="experience" data-link>trajectory</a>
+  <a href="#contact" class="navlnk" data-s="contact" data-link>connect</a>
+</div>
 
 <div id="smooth">
 
@@ -405,7 +416,7 @@ footer p{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted
     <a class="cert az rv" href="https://www.credly.com/badges/f9209a80-9fe1-4da5-b64a-899bb79366d6/public_url" target="_blank" rel="noopener" data-link><div class="cert-ico">☁️</div><h4>AZ-900</h4><span class="d">Azure Fundamentals</span><span class="dt">Feb 2023 · Microsoft / Credly</span><span class="vf">verify ↗</span></a>
 
     <div class="cert-cat pp rv"><span>⚡ &nbsp;Power Platform</span></div>
-    <a class="cert pp rv" href="https://www.credly.com/badges/f9209a80-9fe1-4da5-b64a-899bb79366d6/public_url" target="_blank" rel="noopener" data-link><div class="cert-ico">⚡</div><h4>PL-400 Prep</h4><span class="d">Power Platform Developer Assoc.</span><span class="dt">Feb 2026 · LinkedIn Learning</span><span class="vf">verify ↗</span></a>
+    <a class="cert pp rv" href="https://www.linkedin.com/learning/certificates/e57b3db71cbb906d0eb9b403055b9db345c3ed09581fe67bfb6be322e943f956?u=1007594" target="_blank" rel="noopener" data-link><div class="cert-ico">⚡</div><h4>PL-400 Prep</h4><span class="d">Power Platform Developer Assoc.</span><span class="dt">Feb 2026 · LinkedIn Learning</span><span class="vf">verify ↗</span></a>
     <a class="cert pp rv" href="https://learn.microsoft.com/api/credentials/share/en-us/TimothyJames-5126/9F05E31FD7A139E6?sharingId" target="_blank" rel="noopener" data-link><div class="cert-ico">⚡</div><h4>Canvas Apps</h4><span class="d">Create & Manage Canvas Apps</span><span class="dt">Jan 2024 · Applied Skills</span><span class="vf">verify ↗</span></a>
     <a class="cert pp rv" href="https://learn.microsoft.com/api/credentials/share/en-us/TimothyJames-5126/91E662A970859818?sharingId" target="_blank" rel="noopener" data-link><div class="cert-ico">⚡</div><h4>Power Automate</h4><span class="d">Manage Automated Processes</span><span class="dt">Jan 2024 · Applied Skills</span><span class="vf">verify ↗</span></a>
     <a class="cert pp rv" href="https://learn.microsoft.com/api/credentials/share/en-us/TimothyJames-5126/372681F8E55DE9ED?sharingId" target="_blank" rel="noopener" data-link><div class="cert-ico">⚡</div><h4>Dataverse</h4><span class="d">Model-Driven Apps + Dataverse</span><span class="dt">Jan 2024 · Applied Skills</span><span class="vf">verify ↗</span></a>
@@ -831,5 +842,6 @@ if(term){
 
 })();
 </script>
+<script>(function(){var b=document.getElementById('navToggle'),m=document.getElementById('navMenu');if(!b||!m)return;function set(o){m.classList.toggle('open',o);b.classList.toggle('open',o);b.setAttribute('aria-expanded',o?'true':'false');}b.addEventListener('click',function(e){e.stopPropagation();set(!m.classList.contains('open'));});m.querySelectorAll('a').forEach(function(a){a.addEventListener('click',function(){set(false);});});document.addEventListener('click',function(e){if(m.classList.contains('open')&&!m.contains(e.target)&&!b.contains(e.target))set(false);});window.addEventListener('keydown',function(e){if(e.key==='Escape')set(false);});window.addEventListener('resize',function(){if(window.innerWidth>920)set(false);});})();</script>
 </body>
 </html>
