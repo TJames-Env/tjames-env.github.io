@@ -1,0 +1,2001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>M365 Misconfiguration Checklist — eusebio@it-sec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=JetBrains+Mono:wght@300;400;500;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+
+:root{
+  --font-bebas:'Syne',sans-serif;
+  --void:#070809;--bg:#070809;--bg2:#0d0f13;--card:#13161d;--card2:#191d26;
+  --border:rgba(255,255,255,.07);--line-2:rgba(255,255,255,.14);
+  --cyan:#00e5ff;--blue:#2f81f7;--red:#ff3b4e;--green:#22e584;--orange:#ffb454;--yellow:#ffd166;--purple:#b98aff;--violet:#b98aff;--teal:#2dd4bf;
+  --text:#e7ebf2;--soft:#8a93a3;--muted:#525c6b;--dim:#2a303a;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+body{background:var(--void);color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;line-height:1.65;overflow-x:hidden;min-height:100vh}
+::selection{background:var(--teal);color:#04201c}
+[style*="font-bebas"]{font-weight:700}
+#bg-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.5}
+#bg-glow{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(55% 45% at 16% 8%,rgba(45,212,191,.06),transparent 70%),radial-gradient(55% 45% at 88% 92%,rgba(0,229,255,.05),transparent 70%)}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(18px,3vw,48px);height:56px;background:rgba(7,8,9,.62);backdrop-filter:blur(18px);border-bottom:1px solid var(--border)}
+.nav-brand{font-family:'JetBrains Mono',monospace;font-size:13px;display:flex;align-items:center;text-decoration:none;color:var(--text)}
+.nu{color:#79c0ff}.na{color:var(--muted)}.nh{color:var(--cyan)}.nt{color:var(--orange)}.nd{color:var(--teal);margin-left:5px}
+.nc{display:inline-block;width:7px;height:14px;background:var(--teal);margin-left:4px;vertical-align:middle;animation:blink .9s steps(1) infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.nav-path{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}.nav-path span{color:var(--teal)}
+.nav-back{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);text-decoration:none;letter-spacing:.06em;transition:color .2s}
+.nav-back:hover{color:var(--cyan)}
+
+/* HERO */
+.page-hero{padding:96px clamp(18px,3vw,48px) 40px;position:relative;z-index:2;border-bottom:1px solid var(--border)}
+.ph-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr auto;gap:40px;align-items:end}
+.ph-eyebrow{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--teal);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.ph-eyebrow::before{content:'';width:24px;height:1px;background:var(--teal)}
+.ph-title{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(40px,6vw,68px);line-height:.98;letter-spacing:-.02em;margin-bottom:14px}
+.ph-title span{color:var(--teal)}
+.ph-sub{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.04em;line-height:1.85}
+.ph-sub b{color:var(--soft)}
+
+/* SCORE GAUGE */
+.score-widget{text-align:right;flex-shrink:0}
+.score-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.score-ring{position:relative;width:118px;height:118px;margin-left:auto}
+.score-ring svg{transform:rotate(-90deg)}
+.score-ring circle{fill:none;stroke-width:8}
+.sr-bg{stroke:var(--border)}
+.sr-fill{stroke:var(--teal);stroke-linecap:round;transition:stroke-dashoffset .8s cubic-bezier(.16,1,.3,1),stroke .4s}
+.score-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.score-pct{font-family:'Syne',sans-serif;font-weight:800;font-size:30px;letter-spacing:-.01em;line-height:1;transition:color .4s}
+.score-of{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)}
+.score-grade{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;text-align:right;margin-top:8px;transition:color .4s}
+
+/* TOOLBAR */
+.toolbar{position:sticky;top:56px;z-index:100;background:rgba(7,8,9,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
+.toolbar-inner{max-width:1200px;margin:0 auto;padding:0 clamp(18px,3vw,48px);display:flex;align-items:center;gap:10px;height:54px;overflow-x:auto}
+.filter-btn{flex-shrink:0;padding:6px 14px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all .2s;white-space:nowrap;border-radius:100px}
+.filter-btn:hover{border-color:var(--teal);color:var(--teal)}
+.filter-btn.active{border-color:var(--teal);color:var(--teal);background:rgba(45,212,191,.08)}
+.filter-sep{width:1px;height:22px;background:var(--border);flex-shrink:0}
+.toolbar-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.tb-btn{padding:6px 14px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:transparent;border:1px solid var(--line-2);color:var(--soft);cursor:pointer;transition:all .2s;white-space:nowrap;border-radius:8px}
+.tb-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.tb-btn.export{background:var(--teal);border-color:var(--teal);color:#04201c;font-weight:500}
+.tb-btn.export:hover{box-shadow:0 0 18px rgba(45,212,191,.35)}
+.progress-text{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);white-space:nowrap}
+.progress-text span{color:var(--teal)}
+
+/* MAIN */
+.main{max-width:1200px;margin:0 auto;padding:32px clamp(18px,3vw,48px) 80px;position:relative;z-index:2}
+
+/* CATEGORY */
+.cat-section{margin-bottom:34px}
+.cat-header{display:flex;align-items:center;gap:14px;margin-bottom:16px;cursor:pointer;user-select:none}
+.cat-header:hover .cat-title{color:var(--text)}
+.cat-icon{font-size:18px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);background:var(--card);flex-shrink:0;transition:border-color .2s;border-radius:10px}
+.cat-header:hover .cat-icon{border-color:var(--teal)}
+.cat-title{font-family:'Syne',sans-serif;font-weight:700;font-size:20px;letter-spacing:-.01em;color:var(--soft);transition:color .2s}
+.cat-count{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.06em}
+.cat-progress{flex:1;height:3px;background:var(--border);position:relative;max-width:200px;border-radius:2px;overflow:hidden}
+.cat-progress-fill{position:absolute;top:0;left:0;height:100%;background:var(--teal);transition:width .5s}
+.cat-toggle{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);margin-left:auto;transition:color .2s}
+.cat-header:hover .cat-toggle{color:var(--muted)}
+.cat-items{display:flex;flex-direction:column;gap:8px}
+.cat-items.collapsed{display:none}
+
+/* CHECK ITEM */
+.check-item{background:var(--card);transition:border-color .15s,background .15s;position:relative;border:1px solid var(--border);border-radius:11px;overflow:hidden}
+.check-item:hover{border-color:var(--line-2)}
+.check-item.status-pass{border-left:3px solid var(--green)}
+.check-item.status-fail{border-left:3px solid var(--red)}
+.check-item.status-na{border-left:3px solid var(--dim);opacity:.62}
+.ci-main{display:flex;align-items:flex-start;gap:14px;padding:16px 18px;cursor:pointer}
+.ci-controls{display:flex;flex-direction:column;gap:5px;flex-shrink:0;padding-top:2px}
+.ci-btn{width:24px;height:24px;border-radius:6px;border:1px solid var(--border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .15s;line-height:1}
+.ci-btn.pass{color:var(--green);border-color:rgba(34,229,132,.3)}
+.ci-btn.pass:hover,.ci-btn.pass.active{background:var(--green);color:#04201c;border-color:var(--green)}
+.ci-btn.fail{color:var(--red);border-color:rgba(255,59,78,.3)}
+.ci-btn.fail:hover,.ci-btn.fail.active{background:var(--red);color:#fff;border-color:var(--red)}
+.ci-btn.na{color:var(--muted);border-color:var(--border)}
+.ci-btn.na:hover,.ci-btn.na.active{background:var(--dim);color:var(--soft);border-color:var(--dim)}
+.ci-content{flex:1;min-width:0}
+.ci-top{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.ci-sev{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.06em;padding:2px 8px;flex-shrink:0;margin-top:2px;border-radius:100px}
+.sev-c{background:rgba(255,59,78,.12);color:var(--red);border:1px solid rgba(255,59,78,.3)}
+.sev-h{background:rgba(255,180,84,.12);color:var(--orange);border:1px solid rgba(255,180,84,.3)}
+.sev-m{background:rgba(255,209,102,.1);color:var(--yellow);border:1px solid rgba(255,209,102,.3)}
+.sev-l{background:rgba(45,212,191,.08);color:var(--teal);border:1px solid rgba(45,212,191,.3)}
+.ci-title{font-size:13px;font-weight:600;color:var(--text);flex:1}
+.ci-tags{display:flex;gap:5px;flex-wrap:wrap;margin-left:auto}
+.ci-tag{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 7px;border:1px solid var(--border);color:var(--muted);letter-spacing:.04em;border-radius:100px}
+.ci-desc{font-size:12px;color:var(--soft);line-height:1.75}
+
+/* EXPAND */
+.ci-expand{display:none;border-top:1px solid var(--border);background:rgba(0,0,0,.2)}
+.ci-expand.open{display:block}
+.ci-expand-inner{padding:16px 18px 16px 56px;display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.expand-col h4{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:7px}
+.expand-col h4.risk-hd{color:var(--red)}
+.expand-col h4.fix-hd{color:var(--green)}
+.expand-col h4.ref-hd{color:var(--cyan)}
+.expand-col h4.detect-hd{color:var(--orange)}
+.expand-col h4::before{content:'//';color:var(--dim);font-size:10px}
+.expand-col p,.expand-col li{font-size:12px;color:var(--soft);line-height:1.8}
+.expand-col ul{padding-left:15px}
+.expand-col li{margin-bottom:3px}
+.expand-col li::marker{color:var(--teal)}
+.expand-col strong{color:var(--text);font-weight:500}
+.ref-links{display:flex;flex-direction:column;gap:5px}
+.ref-link{display:flex;align-items:center;gap:7px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.04em;text-decoration:none;color:var(--cyan);transition:color .2s;word-break:break-all}
+.ref-link:hover{color:var(--text)}
+.ref-link::before{content:'↗';flex-shrink:0}
+.ci-note{padding:10px 18px 10px 56px;background:rgba(255,209,102,.05);border-top:1px solid rgba(255,209,102,.14)}
+.ci-note-inner{display:flex;align-items:flex-start;gap:8px}
+.ci-note-icon{color:var(--yellow);font-size:13px;flex-shrink:0;margin-top:1px}
+.ci-note-text{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--yellow);line-height:1.7;opacity:.92}
+
+/* POWERSHELL */
+.ps-block{background:#0a0c10;border:1px solid var(--border);padding:11px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.7;margin-top:10px;position:relative;overflow-x:auto;border-radius:9px}
+.ps-block .ps-ps{color:var(--teal)}.ps-block .ps-cmd{color:var(--text)}.ps-block .ps-comment{color:var(--muted)}.ps-block .ps-string{color:#a5d6ff}.ps-block .ps-param{color:var(--orange)}
+.ps-copy{position:absolute;top:7px;right:8px;background:rgba(13,15,19,.8);border:1px solid var(--border);color:var(--muted);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:9px;padding:3px 8px;letter-spacing:.05em;transition:all .2s;border-radius:6px}
+.ps-copy:hover{border-color:var(--teal);color:var(--teal)}
+
+/* SUMMARY BAR */
+.summary-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:28px}
+.sb-cell{background:var(--card);border:1px solid var(--border);padding:14px 16px;text-align:center;border-radius:11px}
+.sb-num{font-family:'Syne',sans-serif;font-weight:800;font-size:28px;line-height:1;margin-bottom:3px}
+.sb-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.sb-total .sb-num{color:var(--text)}.sb-pass .sb-num{color:var(--green)}.sb-fail .sb-num{color:var(--red)}.sb-pending .sb-num{color:var(--yellow)}.sb-na .sb-num{color:var(--muted)}
+
+/* REPORT MODAL */
+.report-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;align-items:flex-start;justify-content:center;padding:56px 24px;backdrop-filter:blur(5px);overflow-y:auto}
+.report-modal-bg.show{display:flex}
+.report-modal{background:var(--bg2);border:1px solid rgba(45,212,191,.25);width:100%;max-width:820px;position:relative;border-radius:14px;overflow:hidden}
+.rm-header{display:flex;align-items:center;justify-content:space-between;padding:15px 22px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg2);z-index:1}
+.rm-header h3{font-family:'Syne',sans-serif;font-weight:700;font-size:18px;letter-spacing:-.01em}.rm-header h3 span{color:var(--teal)}
+.rm-close{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:0 4px;line-height:1;transition:color .2s}
+.rm-close:hover{color:var(--red)}
+.rm-body{padding:24px}
+.rm-actions{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.rm-btn{padding:9px 18px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border:1px solid var(--line-2);background:transparent;color:var(--soft);transition:all .2s;border-radius:8px}
+.rm-btn:hover{border-color:var(--teal);color:var(--teal)}
+.rm-btn.pri{background:var(--teal);border-color:var(--teal);color:#04201c;font-weight:500}
+.rm-btn.pri:hover{box-shadow:0 0 18px rgba(45,212,191,.35)}
+.rm-btn.pdf{background:var(--red);border-color:var(--red);color:#fff;font-weight:500}
+.rm-btn.pdf:hover{box-shadow:0 0 18px rgba(255,59,78,.35)}
+
+/* REPORT DOC (modal) */
+.rdoc{font-family:'Outfit',sans-serif}
+.rd-title{font-family:'Syne',sans-serif;font-weight:800;font-size:30px;letter-spacing:-.02em;line-height:1.05}
+.rd-title span{color:var(--teal)}
+.rd-sub{font-size:13px;color:var(--soft);margin-bottom:20px}
+.rd-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px}
+.rd-mc{background:var(--card);border:1px solid var(--border);padding:11px 14px;border-radius:10px}
+.rd-ml{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.rd-mv{font-size:13px;color:var(--text);font-weight:500}
+.rd-sev-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:20px}
+.rd-seg{padding:11px;text-align:center;border-radius:10px}
+.rd-seg-num{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;line-height:1}
+.rd-seg-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+.rd-sec-title{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--teal);margin:20px 0 10px;display:flex;align-items:center;gap:8px}
+.rd-sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.rd-finding-row{border:1px solid var(--border);margin-bottom:8px;padding:12px 14px;border-radius:10px}
+.rd-finding-row.f-fail{border-left:3px solid var(--red)}
+.rd-finding-row.f-pass{border-left:3px solid var(--green);opacity:.62}
+.rdf-top{display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap}
+.rdf-title{font-size:13px;font-weight:600;color:var(--text);flex:1}
+.rdf-body{font-size:12px;color:var(--soft);line-height:1.75}
+.rd-disclaimer{font-size:11px;color:var(--muted);line-height:1.8;padding:12px 14px;border:1px solid var(--border);background:rgba(0,0,0,.2);margin-top:16px;border-radius:10px}
+.rd-disclaimer strong{color:var(--soft)}
+
+/* RADAR */
+.radar-wrap{display:flex;gap:24px;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap}
+.radar-svg-box{flex-shrink:0;position:relative}
+.radar-svg-box svg text{font-family:'JetBrains Mono',monospace}
+.radar-legend{flex:1;min-width:220px;display:flex;flex-direction:column;gap:7px}
+.rl-row{display:flex;align-items:center;gap:8px;font-size:11px}
+.rl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.rl-label{color:var(--soft);font-family:'JetBrains Mono',monospace;font-size:10px;flex:1}
+.rl-pct{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;letter-spacing:0}
+.rl-bar{flex:1;height:4px;background:var(--border);border-radius:2px;position:relative;overflow:hidden}
+.rl-bar-fill{position:absolute;top:0;left:0;height:100%;border-radius:2px;transition:width .6s}
+
+/* CAT SCORE GRID */
+.cat-score-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
+.csg-cell{background:var(--card);border:1px solid var(--border);padding:11px 12px;text-align:center;border-radius:10px}
+.csg-icon{font-size:16px;margin-bottom:5px}
+.csg-name{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;line-height:1.3}
+.csg-pct{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;line-height:1}
+.csg-bar{height:3px;background:var(--dim);border-radius:2px;margin-top:6px;position:relative;overflow:hidden}
+.csg-bar-fill{position:absolute;top:0;left:0;height:100%;border-radius:2px}
+
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--dim);border-radius:3px}
+
+@media(max-width:800px){
+  nav,.toolbar-inner{padding-left:18px;padding-right:18px}
+  .page-hero{padding:84px 18px 28px}
+  .main{padding:24px 18px 60px}
+  .ph-inner{grid-template-columns:1fr}.score-widget{display:none}
+  .ci-expand-inner{grid-template-columns:1fr}
+  .summary-bar{grid-template-columns:repeat(3,1fr)}
+  .rd-meta,.rd-sev-bar,.cat-score-grid{grid-template-columns:repeat(2,1fr)}
+}
+
+/* PRINT */
+@media print{
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;box-sizing:border-box}
+  html,body{background:#fff !important}
+
+  /* Hide everything except the print doc */
+  body>*{display:none !important}
+  #bg-canvas,#bg-glow{display:none !important}
+  #printDoc{display:block !important}
+
+  /* Page setup */
+  @page{margin:18mm 16mm 18mm 16mm;size:A4}
+  @page:first{margin-top:0}
+
+  /* Print doc base */
+  #printDoc{
+    font-family:Georgia,serif;
+    font-size:10pt;
+    line-height:1.55;
+    color:#111;
+    background:#fff;
+    width:100%;
+  }
+
+  /* Cover page */
+  .pd-cover{
+    min-height:100vh;
+    display:flex !important;
+    flex-direction:column;
+    justify-content:flex-end;
+    padding:0;
+    page-break-after:always;
+    background:#fff;
+    position:relative;
+  }
+  .pd-cover-band{
+    background:#0a1628;
+    padding:40mm 16mm 24mm;
+    color:#fff;
+  }
+  .pd-cover-tag{
+    font-family:Arial,sans-serif;font-size:7pt;letter-spacing:.2em;
+    text-transform:uppercase;color:#2dd4bf;margin-bottom:8mm;
+  }
+  .pd-cover-title{
+    font-family:Arial,sans-serif;font-size:30pt;font-weight:700;
+    line-height:1.05;color:#fff;margin-bottom:3mm;
+  }
+  .pd-cover-title span{color:#2dd4bf}
+  .pd-cover-sub{font-size:10pt;color:rgba(255,255,255,.6);margin-bottom:8mm}
+  .pd-cover-score-row{
+    display:flex !important;align-items:center;gap:8mm;
+    border-top:1px solid rgba(255,255,255,.15);
+    padding-top:6mm;margin-top:4mm;
+  }
+  .pd-cover-score-num{
+    font-family:Arial,sans-serif;font-size:48pt;font-weight:700;line-height:1;
+  }
+  .pd-cover-score-meta{display:flex;flex-direction:column;gap:1mm}
+  .pd-cover-grade{font-family:Arial,sans-serif;font-size:14pt;font-weight:700}
+  .pd-cover-date{font-size:8pt;color:rgba(255,255,255,.5)}
+  .pd-cover-white{
+    background:#fff;padding:12mm 16mm 8mm;
+    display:flex !important;gap:8mm;flex-wrap:wrap;
+  }
+  .pd-kpi{flex:1;min-width:30mm;border:1px solid #e0e0e0;padding:4mm 5mm}
+  .pd-kpi-num{font-family:Arial,sans-serif;font-size:22pt;font-weight:700;line-height:1;margin-bottom:1mm}
+  .pd-kpi-lbl{font-size:7pt;text-transform:uppercase;letter-spacing:.1em;color:#666}
+
+  /* Section headers */
+  .pd-sec-title{
+    font-family:Arial,sans-serif;font-size:7pt;
+    text-transform:uppercase;letter-spacing:.18em;
+    color:#1a8cff;margin:8mm 0 4mm;
+    border-bottom:1.5pt solid #1a8cff;
+    padding-bottom:1.5mm;
+    page-break-after:avoid;
+  }
+
+  /* Radar + legend row */
+  .pd-radar-row{
+    display:flex !important;gap:8mm;align-items:flex-start;
+    margin-bottom:6mm;page-break-inside:avoid;
+  }
+  .pd-radar-row svg{width:72mm;height:72mm;flex-shrink:0}
+  .pd-legend-table{flex:1;border-collapse:collapse;width:100%;font-size:8.5pt}
+  .pd-legend-table td{padding:1.5mm 2mm;vertical-align:middle}
+  .pd-legend-table tr{border-bottom:0.5pt solid #eee}
+  .pd-l-dot{width:6pt;height:6pt;border-radius:50%;display:inline-block}
+  .pd-l-name{color:#222;font-size:8.5pt}
+  .pd-l-bar-wrap{width:28mm}
+  .pd-l-bar{height:3pt;background:#e8e8e8;border-radius:1pt;overflow:hidden}
+  .pd-l-bar-fill{height:100%;border-radius:1pt}
+  .pd-l-pct{font-family:Arial,sans-serif;font-weight:700;font-size:9pt;text-align:right;white-space:nowrap}
+
+  /* Domain grid */
+  .pd-domain-grid{
+    display:grid !important;grid-template-columns:repeat(4,1fr);
+    gap:2mm;margin-bottom:6mm;
+  }
+  .pd-domain-cell{
+    border:1pt solid #e0e0e0;padding:3mm;text-align:center;
+    page-break-inside:avoid;
+  }
+  .pd-d-icon{font-size:12pt;margin-bottom:1mm}
+  .pd-d-name{font-size:7pt;text-transform:uppercase;letter-spacing:.06em;color:#666;margin-bottom:1.5mm;line-height:1.3}
+  .pd-d-pct{font-family:Arial,sans-serif;font-size:18pt;font-weight:700;line-height:1;margin-bottom:1.5mm}
+  .pd-d-bar{height:2.5pt;background:#e8e8e8;border-radius:1pt;overflow:hidden;margin-bottom:1.5mm}
+  .pd-d-bar-fill{height:100%;border-radius:1pt}
+  .pd-d-counts{font-size:7pt;color:#888}
+
+  /* Finding cards */
+  .pd-finding{
+    border:1pt solid #ddd;margin-bottom:3mm;
+    page-break-inside:avoid;
+  }
+  .pd-finding.pf-fail{border-left:3.5pt solid #cc2222}
+  .pd-finding.pf-pass{border-left:3.5pt solid #008844}
+  .pd-finding.pf-na  {border-left:3.5pt solid #aaa;opacity:.7}
+  .pd-finding-head{
+    display:flex !important;align-items:center;gap:3mm;
+    padding:3mm 4mm 2.5mm;background:#f8f8f8;
+    border-bottom:0.5pt solid #e8e8e8;flex-wrap:wrap;
+  }
+  .pd-sev{
+    font-family:Arial,sans-serif;font-size:6.5pt;font-weight:700;
+    letter-spacing:.08em;padding:1mm 2.5mm;white-space:nowrap;
+  }
+  .pd-sev-c{background:#ffecec;color:#cc2222;border:0.5pt solid #ffaaaa}
+  .pd-sev-h{background:#fff3e8;color:#b85c00;border:0.5pt solid #ffbb88}
+  .pd-sev-m{background:#fffbe6;color:#7a6000;border:0.5pt solid #ffe88a}
+  .pd-sev-l{background:#e6fff4;color:#005c30;border:0.5pt solid #88ddb5}
+  .pd-finding-title{font-weight:600;font-size:9.5pt;flex:1;color:#111}
+  .pd-status-badge{
+    font-family:Arial,sans-serif;font-size:7pt;font-weight:700;
+    letter-spacing:.08em;padding:1mm 3mm;white-space:nowrap;
+  }
+  .pd-status-fail{background:#ffecec;color:#cc2222}
+  .pd-status-pass{background:#e6fff4;color:#007733}
+  .pd-status-na  {background:#f0f0f0;color:#666}
+  .pd-finding-body{padding:3mm 4mm;font-size:8.5pt;line-height:1.65}
+
+  /* Risk / Remediation / Achievement blocks */
+  .pd-block{margin-bottom:3mm}
+  .pd-block-label{
+    font-family:Arial,sans-serif;font-size:6.5pt;font-weight:700;
+    text-transform:uppercase;letter-spacing:.12em;margin-bottom:1mm;
+  }
+  .pd-block-label.lbl-risk{color:#cc2222}
+  .pd-block-label.lbl-fix{color:#1a8cff}
+  .pd-block-label.lbl-ach{color:#008844}
+  .pd-block-label.lbl-cat{color:#7a6000}
+  .pd-block-text{color:#333;font-size:8.5pt;line-height:1.6}
+  .pd-tags{display:flex !important;gap:1.5mm;flex-wrap:wrap;margin-bottom:2mm}
+  .pd-tag{
+    font-size:6.5pt;border:0.5pt solid #ddd;
+    padding:.5mm 2mm;color:#555;
+  }
+  .pd-cat-badge{
+    font-size:6.5pt;background:#f0f4ff;border:0.5pt solid #c0ceff;
+    padding:.5mm 2.5mm;color:#334;font-style:italic;
+  }
+
+  /* Pending table */
+  .pd-pending-table{width:100%;border-collapse:collapse;font-size:8.5pt;margin-bottom:4mm}
+  .pd-pending-table th{
+    font-family:Arial,sans-serif;font-size:7pt;text-transform:uppercase;
+    letter-spacing:.08em;color:#666;padding:2mm 3mm;
+    border-bottom:1pt solid #ccc;text-align:left;background:#f8f8f8;
+  }
+  .pd-pending-table td{padding:2mm 3mm;border-bottom:0.5pt solid #eee;vertical-align:top}
+  .pd-pending-table tr:last-child td{border-bottom:none}
+
+  /* Executive summary box */
+  .pd-exec-box{
+    border:1pt solid #e0e0e0;padding:5mm 6mm;margin-bottom:6mm;
+    background:#fafafa;
+  }
+  .pd-exec-box h3{
+    font-family:Arial,sans-serif;font-size:9pt;font-weight:700;
+    margin-bottom:3mm;color:#0a1628;
+  }
+  .pd-exec-para{font-size:8.5pt;color:#333;line-height:1.7;margin-bottom:2mm}
+  .pd-exec-bullets{padding-left:5mm;margin-bottom:2mm}
+  .pd-exec-bullets li{font-size:8.5pt;color:#333;margin-bottom:1mm;line-height:1.6}
+
+  /* Disclaimer */
+  .pd-disclaimer{
+    font-size:7.5pt;color:#888;line-height:1.6;
+    border-top:0.5pt solid #ddd;padding-top:4mm;margin-top:6mm;
+  }
+
+  /* Page break helpers */
+  .pd-page-break{page-break-before:always}
+  .pd-no-break{page-break-inside:avoid}
+}
+}
+
+.fx-local{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#8a93a3;border:1px solid rgba(255,255,255,.12);padding:3px 9px;border-radius:100px;white-space:nowrap}
+.fx-local::before{content:'';width:6px;height:6px;border-radius:50%;background:#22e584;box-shadow:0 0 6px rgba(34,229,132,.6)}
+@media(max-width:620px){.fx-local{display:none}}
+
+.fx-toast{position:fixed;right:18px;bottom:18px;z-index:1200;background:#191d26;border:1px solid rgba(255,255,255,.14);border-left:3px solid #22e584;border-radius:10px;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#e7ebf2;box-shadow:0 12px 32px rgba(0,0,0,.45);opacity:0;transform:translateY(10px);transition:opacity .25s,transform .25s;pointer-events:none;max-width:300px}
+.fx-toast.show{opacity:1;transform:none}
+@media(max-width:620px){.fx-toast{left:12px;right:12px;bottom:12px;max-width:none}}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div id="bg-glow"></div>
+
+
+
+<!-- REPORT MODAL -->
+<div class="report-modal-bg" id="reportModal">
+  <div class="report-modal">
+    <div class="rm-header">
+      <h3>AUDIT <span>REPORT</span></h3>
+      <button class="rm-close" id="rmClose">&#10005;</button>
+    </div>
+    <div class="rm-body" id="rmBody"></div>
+    <div class="rm-actions">
+      <button class="rm-btn" id="rmCopy">Copy Markdown</button>
+      <button class="rm-btn pdf" id="rmPdf">⬇ Export PDF</button>
+      <button class="rm-btn" id="rmPrint">Print</button>
+      <button class="rm-btn pri" id="rmClose2">Done</button>
+    </div>
+  </div>
+</div>
+
+<div id="printDoc" style="display:none"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-brand">
+    <span class="nu">eusebio</span><span class="na">@</span><span class="nh">it-sec</span><span class="na">:</span><span class="nt">~</span><span class="nd">$</span><span class="nc"></span>
+  </a>
+  <span class="nav-path">~/tools/<span>m365-checklist</span></span>
+  <span class="fx-local" title="Runs entirely in your browser — no data is uploaded or sent anywhere">Local-only</span>
+  <a href="projects.html" class="nav-back">&#8592; Projects</a>
+</nav>
+
+<!-- HERO -->
+<div class="page-hero">
+  <div class="ph-inner">
+    <div>
+      <div class="ph-eyebrow">Microsoft 365 · Entra ID · Power Platform</div>
+      <div class="ph-title">M365 MISCONFIGURATION<br><span>CHECKLIST</span></div>
+      <div class="ph-sub">
+        <b>Enterprise Security Audit Tool</b> &nbsp;&#183;&nbsp; eusebio@it-sec<br>
+        57+ enterprise security checks across Identity, Exchange, SharePoint, Teams, Power Platform, Defender, Endpoint &amp; Audit<br>
+        Mark each control Pass / Fail / N/A &nbsp;&#183;&nbsp; Expand for guidance, remediation steps &amp; Microsoft docs
+      </div>
+    </div>
+    <div class="score-widget">
+      <div class="score-label">Secure Score</div>
+      <div class="score-ring">
+        <svg viewBox="0 0 110 110" width="110" height="110">
+          <circle class="sr-bg" cx="55" cy="55" r="46"/>
+          <circle class="sr-fill" id="scoreCircle" cx="55" cy="55" r="46" stroke-dasharray="289" stroke-dashoffset="289"/>
+        </svg>
+        <div class="score-num">
+          <span class="score-pct" id="scorePct" style="color:var(--muted)">—</span>
+          <span class="score-of">/ 100</span>
+        </div>
+      </div>
+      <div class="score-grade" id="scoreGrade" style="color:var(--muted)">Not started</div>
+      <div style="margin-top:10px;text-align:right">
+        <button onclick="document.getElementById('exportBtn').click()" style="font-family:monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;background:transparent;border:1px solid var(--teal);color:var(--teal);padding:4px 10px;cursor:pointer;transition:all .2s" onmouseover="this.style.background='rgba(45,212,191,.1)'" onmouseout="this.style.background='transparent'">View Report</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <div class="toolbar-inner">
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="CRITICAL">Critical</button>
+    <button class="filter-btn" data-filter="HIGH">High</button>
+    <button class="filter-btn" data-filter="MEDIUM">Medium</button>
+    <div class="filter-sep"></div>
+    <button class="filter-btn" data-filter="fail">&#10005; Failed</button>
+    <button class="filter-btn" data-filter="pass">&#10003; Passed</button>
+    <button class="filter-btn" data-filter="pending">&#9675; Pending</button>
+    <div class="filter-sep"></div>
+    <button class="filter-btn" data-filter="identity">Identity</button>
+    <button class="filter-btn" data-filter="exchange">Exchange</button>
+    <button class="filter-btn" data-filter="sharepoint">SharePoint</button>
+    <button class="filter-btn" data-filter="teams">Teams</button>
+    <button class="filter-btn" data-filter="powerplatform">Power Platform</button>
+    <button class="filter-btn" data-filter="defender">Defender</button>
+    <button class="filter-btn" data-filter="endpoint">Endpoint</button>
+    <button class="filter-btn" data-filter="auditlog">Audit &amp; Monitoring</button>
+    <div class="toolbar-right">
+      <span class="progress-text"><span id="progressDone">0</span> / <span id="progressTotal">0</span> checked</span>
+      <button class="tb-btn" id="resetBtn">Reset All</button>
+      <button class="tb-btn export" id="exportBtn">Export Report</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main" id="mainContent">
+
+  <!-- Summary Bar -->
+  <div class="summary-bar" id="summaryBar">
+    <div class="sb-cell sb-total"><div class="sb-num" id="stTotal">0</div><div class="sb-lbl">Total Checks</div></div>
+    <div class="sb-cell sb-pass"><div class="sb-num" id="stPass">0</div><div class="sb-lbl">Passed</div></div>
+    <div class="sb-cell sb-fail"><div class="sb-num" id="stFail">0</div><div class="sb-lbl">Failed</div></div>
+    <div class="sb-cell sb-pending"><div class="sb-num" id="stPending">0</div><div class="sb-lbl">Pending</div></div>
+    <div class="sb-cell sb-na"><div class="sb-num" id="stNA">0</div><div class="sb-lbl">N/A</div></div>
+  </div>
+
+  <div id="checklistRoot"></div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ── smooth 3D background: sparse drifting points (usability-first, no links) ── */
+(function(){
+  var canvas=document.getElementById('bg-canvas'); if(!canvas) return;
+  if(typeof THREE==='undefined'){canvas.style.display='none';return;}
+  var renderer; try{renderer=new THREE.WebGLRenderer({canvas:canvas,alpha:true,antialias:true});}catch(e){canvas.style.display='none';return;}
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){canvas.style.opacity='.2';}
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(innerWidth,innerHeight);
+  var scene=new THREE.Scene(), camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,1,400);
+  camera.position.z=60; var group=new THREE.Group(); scene.add(group);
+  var N=innerWidth<760?55:120, R=40, base=new Float32Array(N*3), pos=new Float32Array(N*3), col=new Float32Array(N*3);
+  var C=new THREE.Color(0x2dd4bf), C2=new THREE.Color(0x00e5ff), i;
+  for(i=0;i<N;i++){ base[i*3]=(Math.random()*2-1)*R*1.9; base[i*3+1]=(Math.random()*2-1)*R*1.2; base[i*3+2]=(Math.random()*2-1)*R*0.6; var c=Math.random()<0.3?C2:C; col[i*3]=c.r;col[i*3+1]=c.g;col[i*3+2]=c.b; }
+  var sc=document.createElement('canvas');sc.width=sc.height=64;var sx=sc.getContext('2d');var g=sx.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.4,'rgba(255,255,255,.5)');g.addColorStop(1,'rgba(255,255,255,0)');sx.fillStyle=g;sx.beginPath();sx.arc(32,32,32,0,7);sx.fill();
+  var geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(pos,3)); geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  var mat=new THREE.PointsMaterial({size:1.5,map:new THREE.CanvasTexture(sc),vertexColors:true,transparent:true,opacity:.9,depthWrite:false,blending:THREE.AdditiveBlending});
+  group.add(new THREE.Points(geo,mat));
+  var mx=0,my=0; window.addEventListener('mousemove',function(e){mx=(e.clientX/innerWidth)*2-1;my=-(e.clientY/innerHeight)*2+1;},{passive:true});
+  var t=0; function loop(){ t+=0.006; group.rotation.y+=0.0009; camera.position.x+=(mx*6-camera.position.x)*0.03; camera.position.y+=(my*4-camera.position.y)*0.03; camera.lookAt(0,0,0); for(i=0;i<N;i++){ pos[i*3]=base[i*3]+Math.sin(t*0.6+i)*1.3; pos[i*3+1]=base[i*3+1]+Math.cos(t*0.5+i*1.3)*1.3; pos[i*3+2]=base[i*3+2]+Math.sin(t*0.4+i)*1.0; } geo.attributes.position.needsUpdate=true; renderer.render(scene,camera); requestAnimationFrame(loop); }
+  loop();
+  window.addEventListener('resize',function(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+  /* WebGL canvases can composite onto the printout even with display:none — detach during print */
+  var glow=document.getElementById('bg-glow');
+  function hideForPrint(){ try{ if(canvas.parentNode) canvas.parentNode.removeChild(canvas); if(glow) glow.style.display='none'; }catch(e){} }
+  function showAfterPrint(){ try{ if(!canvas.parentNode) document.body.insertBefore(canvas, document.body.firstChild); if(glow) glow.style.display=''; }catch(e){} }
+  window.addEventListener('beforeprint', hideForPrint);
+  window.addEventListener('afterprint', showAfterPrint);
+  if(window.matchMedia){ var mqp=window.matchMedia('print'); var mqh=function(e){ e.matches?hideForPrint():showAfterPrint(); }; if(mqp.addEventListener) mqp.addEventListener('change',mqh); else if(mqp.addListener) mqp.addListener(mqh); }
+})();
+
+/* ── Markdown report export ── */
+var LASTREPORT=null;
+function mdStrip(s){ return String(s).replace(/<[^>]+>/g,' ').replace(/&amp;/g,'&').replace(/&#183;/g,'-').replace(/\s+/g,' ').trim(); }
+function buildMarkdownReport(){
+  if(!LASTREPORT) return document.getElementById('rmBody').innerText;
+  var R=LASTREPORT, L=[];
+  L.push('# Microsoft 365 Security Posture Report');
+  L.push('**Generated:** '+R.date+'  ');
+  L.push('**Overall score:** '+R.pct+'% ('+R.grade+')  ');
+  L.push('**Checks completed:** '+(R.passed.length+R.failed.length)+' / '+R.total+'  ');
+  L.push('**Critical fails:** '+R.critFails+' · **High fails:** '+R.highFails+'\n');
+  L.push('## Security Posture by Domain\n| Domain | Score | Pass | Fail | Pending |\n|---|---|---|---|---|');
+  R.catScores.forEach(function(s){ L.push('| '+s.title+' | '+(s.pct!==null?s.pct+'%':'N/A')+' | '+s.pass+' | '+s.fail+' | '+s.pend+' |'); });
+  L.push('\n## Failed Controls — Require Remediation ('+R.failed.length+')');
+  if(!R.failed.length) L.push('\n_None._');
+  R.failed.forEach(function(i,n){ L.push('\n### F-'+String(n+1).padStart(2,'0')+' — '+i.title+' ['+i.sev+']  ('+mdStrip(i.cat)+')'); L.push('- **Risk:** '+mdStrip(i.risk)); L.push('- **Remediation:** '+mdStrip(i.fix)); if(i.detect) L.push('- **Detection:** '+mdStrip(i.detect)); });
+  L.push('\n## Compliant Controls ('+R.passed.length+')');
+  if(!R.passed.length) L.push('\n_None._');
+  R.passed.forEach(function(i){ L.push('- ['+i.sev+'] '+i.title); });
+  L.push('\n## Pending Assessment ('+R.pending.length+')');
+  if(!R.pending.length) L.push('\n_None._');
+  R.pending.forEach(function(i){ L.push('- ['+i.sev+'] '+i.title+' ('+mdStrip(i.cat)+')'); });
+  L.push('\n## Methodology & Standards');
+  L.push('- Control set aligned to the CIS Microsoft 365 Foundations Benchmark and Microsoft Secure Score recommendations.');
+  L.push('- Domains organised by Microsoft Zero Trust pillars (identity, devices, applications, data).');
+  L.push('- Weighted scoring: Critical=4, High=3, Medium=2, Low=1; score = passed weight ÷ assessed weight.');
+  L.push('- Manual assessment — validate against the live tenant and Microsoft Secure Score before sign-off.');
+  L.push('\n_Generated by M365 Misconfiguration Checklist — eusebio@it-sec — '+R.date+'. Confidential; authorised internal use only._');
+  return L.join('\n');
+}
+
+
+/* ════════════════════════════════════════
+   CHECKLIST DATA
+════════════════════════════════════════ */
+var CATEGORIES = [
+  {
+    id:'identity', icon:'🔐', title:'Identity & Access Management (Entra ID)',
+    items:[
+      {id:'id01',sev:'CRITICAL',title:'Legacy Authentication Blocked',tags:['CA','MFA'],
+       desc:'Legacy authentication protocols (IMAP, SMTP AUTH, POP3, Basic Auth) bypass MFA and Conditional Access policies, making them a primary vector for credential-stuffing and password-spray attacks.',
+       risk:'An attacker who obtains credentials via phishing or breach can authenticate using legacy protocols, completely bypassing MFA. Microsoft telemetry shows 99% of password spray attacks use legacy authentication.',
+       fix:'Create a Conditional Access policy that blocks all legacy authentication for all users and all cloud apps. Use the sign-in logs to identify users still relying on legacy clients before enforcing.',
+       ps:'# Block legacy authentication via Conditional Access\n# Entra ID → Protection → Conditional Access → New Policy\n# Conditions: Client apps = Exchange ActiveSync clients + Other clients\n# Grant: Block access\n\n# Identify legacy auth sign-ins first:\nGet-AzureADAuditSignInLogs | Where-Object {$_.ClientAppUsed -ne "Browser" -and $_.ClientAppUsed -ne "Mobile Apps and Desktop clients"}',
+       refs:[
+         {t:'Block legacy authentication — Microsoft Docs',u:'https://learn.microsoft.com/en-us/entra/identity/conditional-access/block-legacy-authentication'},
+         {t:'Conditional Access policy templates',u:'https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-policy-common'}
+       ],
+       detect:'Entra ID Sign-in Logs → filter by Client App Used = "Legacy clients". Monitor for SMTP AUTH attempts in Exchange Online message trace.',
+       note:''},
+      {id:'id02',sev:'CRITICAL',title:'Multi-Factor Authentication Enforced (All Users)',tags:['MFA','CA'],
+       desc:'MFA is the single most effective control against account takeover. Accounts without MFA are trivially compromised via phishing, password spray, or credential stuffing.',
+       risk:'Accounts without MFA can be fully compromised with only a username and password. Microsoft reports MFA blocks 99.9% of automated attacks.',
+       fix:'Enforce MFA via Conditional Access policy for all users on all cloud apps. For privileged accounts, require phishing-resistant MFA (FIDO2 or certificate-based). Enable Microsoft Authenticator push notifications with number matching.',
+       ps:'# Verify MFA enforcement via CA\n# Check all users MFA status:\nConnect-MgGraph -Scopes "Reports.Read.All"\n$users = Get-MgReportAuthenticationMethodUserRegistrationDetail\n$users | Where-Object {$_.IsMfaRegistered -eq $false} | Select DisplayName,UserPrincipalName',
+       refs:[
+         {t:'Plan a Microsoft Entra multifactor authentication deployment',u:'https://learn.microsoft.com/en-us/entra/identity/authentication/howto-mfa-getstarted'},
+         {t:'Phishing-resistant MFA methods',u:'https://learn.microsoft.com/en-us/entra/identity/authentication/concept-authentication-methods'}
+       ],
+       detect:'Entra ID → Reports → Authentication Methods → MFA registration report. Identity Protection → Risky sign-ins.',
+       note:'Consider Microsoft Entra ID P2 for risk-based MFA via Identity Protection policies.'},
+      {id:'id03',sev:'CRITICAL',title:'Conditional Access Policies Covering All Users',tags:['CA','Zero Trust'],
+       desc:'Conditional Access is the Zero Trust policy engine for Microsoft 365. Without comprehensive CA policies, authentication controls are easily bypassed through unmanaged devices, untrusted locations, or high-risk sign-ins.',
+       risk:'Without CA policies, users can authenticate from any device, any location, without MFA. Attackers exploiting stolen credentials face no additional barriers.',
+       fix:'Deploy at minimum: (1) Require MFA for all users, (2) Block legacy auth, (3) Require compliant device for privileged access, (4) Block high-risk sign-ins (requires P2), (5) Block unknown/anonymous IP ranges.',
+       ps:'# Export all CA policies:\nConnect-MgGraph -Scopes "Policy.Read.All"\n$policies = Get-MgIdentityConditionalAccessPolicy\n$policies | Select DisplayName,State | Format-Table',
+       refs:[
+         {t:'Conditional Access overview',u:'https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview'},
+         {t:'CA policy common configurations',u:'https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-policy-common'},
+         {t:'Zero Trust with CA',u:'https://learn.microsoft.com/en-us/entra/identity/conditional-access/plan-conditional-access'}
+       ],
+       detect:'Entra ID → Protection → Conditional Access → Insights and reporting workbook.',
+       note:''},
+      {id:'id04',sev:'HIGH',title:'Privileged Identity Management (PIM) Enabled',tags:['PIM','Admin','RBAC'],
+       desc:'Standing permanent admin assignments are a critical risk. Any compromised admin account provides immediate persistent access. PIM enforces just-in-time (JIT) privileged access with time limits, approvals, and MFA at activation.',
+       risk:'Permanent Global Admin assignments mean a compromised account instantly has full tenant control. Attackers targeting privileged accounts gain persistent, unrestricted access.',
+       fix:'Enable PIM for all Entra ID directory roles. Configure eligible assignments instead of active assignments for all admin roles. Require MFA and justification on activation. Set activation time limits (2-4 hours max).',
+       ps:'# Requires Entra ID P2\n# Enable PIM — done in Entra portal:\n# Entra ID → Identity Governance → Privileged Identity Management\n\n# List all permanent admin assignments:\nGet-MgDirectoryRole | ForEach-Object {\n  $members = Get-MgDirectoryRoleMember -DirectoryRoleId $_.Id\n  [PSCustomObject]@{Role=$_.DisplayName;Members=$members.Count}\n}',
+       refs:[
+         {t:'What is Privileged Identity Management?',u:'https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/pim-configure'},
+         {t:'PIM deployment guide',u:'https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/pim-deployment-plan'}
+       ],
+       detect:'Entra ID Audit Logs → filter Category = RoleManagement. Alert on direct permanent role assignments outside PIM.',
+       note:'Requires Entra ID P2 (or Microsoft 365 E5) licence.'},
+      {id:'id05',sev:'HIGH',title:'Emergency Access (Break-Glass) Accounts Configured',tags:['Admin','Resilience'],
+       desc:'Break-glass accounts are permanent, MFA-exempt emergency admin accounts excluded from all CA policies. Without them, a misconfigured CA policy or MFA outage can lock all admins out of the tenant.',
+       risk:'If all admin accounts are subject to CA policies and MFA, a misconfiguration or identity provider outage can cause a complete tenant lockout with no recovery path.',
+       fix:'Create 2 emergency access accounts: strong random 64+ character passwords, no phone/email assigned, excluded from all CA policies, Global Admin role assigned directly. Store credentials in a physical safe. Monitor sign-in activity on these accounts — any use should trigger an alert.',
+       ps:'# Monitor break-glass account sign-ins via Sentinel/Log Analytics:\n# Alert on any sign-in from break-glass UPNs\n\n# Verify accounts are excluded from CA policies:\nGet-MgIdentityConditionalAccessPolicy | Select DisplayName, @{N="ExcludedUsers";E={$_.Conditions.Users.ExcludeUsers}}',
+       refs:[
+         {t:'Manage emergency access accounts',u:'https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/security-emergency-access'},
+       ],
+       detect:'Create a Sentinel alert or Logic App that fires on any sign-in from break-glass account UPNs.',
+       note:''},
+      {id:'id06',sev:'HIGH',title:'Password Hash Sync or SSPR Configured Securely',tags:['Identity','Hybrid'],
+       desc:'Self-Service Password Reset (SSPR) must require strong authentication (MFA methods) before allowing resets. Poorly configured SSPR allows account takeover via weak security questions.',
+       risk:'If SSPR allows password reset via SMS or weak security questions without MFA, an attacker with basic personal information (from LinkedIn/OSINT) can reset passwords and take over accounts.',
+       fix:'Configure SSPR to require 2 authentication methods. Disable security questions as an authentication method. Require Authenticator app, FIDO2, or email + phone. Enable write-back for hybrid environments.',
+       ps:'# Check SSPR configuration:\nConnect-MgGraph -Scopes "Policy.Read.All"\nGet-MgPolicyAuthenticationMethodPolicy | Select-Object *',
+       refs:[
+         {t:'SSPR deployment guide',u:'https://learn.microsoft.com/en-us/entra/identity/authentication/howto-sspr-deployment'},
+         {t:'Authentication methods policy',u:'https://learn.microsoft.com/en-us/entra/identity/authentication/concept-authentication-methods'}
+       ],
+       detect:'Entra ID Audit Logs → Category: Self-service Password Management. Alert on password reset activity outside business hours.',
+       note:''},
+      {id:'id07',sev:'HIGH',title:'Guest Access Governed by Policy',tags:['B2B','Guests'],
+       desc:'Unrestricted guest invitations allow any user in the organisation to invite external guests who can then access SharePoint, Teams, and potentially sensitive data. Guest accounts are frequently overlooked during access reviews.',
+       risk:'External attackers or malicious insiders can invite compromised external accounts to gain persistent M365 access. Guest accounts often persist long after the legitimate collaboration need ends.',
+       fix:'Restrict guest invitations to Global Admins and User Administrators only. Configure External Collaboration Settings to limit guest access. Implement Access Reviews to audit guest accounts quarterly. Apply CA policies to guest users.',
+       ps:'# Check guest invite settings:\nConnect-MgGraph -Scopes "Policy.Read.All"\n(Get-MgPolicyAuthorizationPolicy).AllowInvitesFrom\n\n# List all guest accounts:\nGet-MgUser -Filter "userType eq \'Guest\'" | Select DisplayName,Mail,CreatedDateTime | Sort CreatedDateTime',
+       refs:[
+         {t:'Manage external collaboration settings',u:'https://learn.microsoft.com/en-us/entra/external-id/external-collaboration-settings-configure'},
+         {t:'Access reviews for guests',u:'https://learn.microsoft.com/en-us/entra/id-governance/access-reviews-overview'}
+       ],
+       detect:'Entra ID Audit Logs → filter OperationName = "Invite external user". Alert on bulk guest invitations.',
+       note:''},
+      {id:'id08',sev:'MEDIUM',title:'Entra ID Identity Protection Risk Policies Enabled',tags:['P2','Risk'],
+       desc:'Identity Protection uses machine learning to detect risky sign-ins and compromised credentials. Without risk policies, detected risks require manual investigation with no automated response.',
+       risk:'Without automated risk-based policies, a compromised account flagged as high-risk continues to operate normally until an analyst manually investigates and remediates.',
+       fix:'Enable Sign-in Risk Policy: High risk → Block. User Risk Policy: High risk → Require password change + MFA. Configure risk remediation to allow users to self-remediate low/medium risks.',
+       ps:'# Requires Entra ID P2\n# Configure via Entra ID → Protection → Identity Protection\n# Or via Microsoft Graph:\nConnect-MgGraph -Scopes "IdentityRiskyUser.Read.All"\nGet-MgRiskyUser -Filter "riskLevel eq \'high\'" | Select DisplayName,UserPrincipalName,RiskDetail',
+       refs:[
+         {t:'What is Identity Protection?',u:'https://learn.microsoft.com/en-us/entra/id-protection/overview-identity-protection'},
+         {t:'Configure risk policies',u:'https://learn.microsoft.com/en-us/entra/id-protection/howto-identity-protection-configure-risk-policies'}
+       ],
+       detect:'Entra ID Identity Protection → Risky users / Risky sign-ins dashboards.',
+       note:'Requires Entra ID P2 or Microsoft 365 E5.'},
+    ,
+      {id:'id09',sev:'CRITICAL',title:'Conditional Access — Report-Only Policies Not Left Unenforced',tags:['CA','Governance'],
+       desc:'CA policies in Report-only mode generate log entries but block nothing. In mature tenants, policies routinely stay in Report-only indefinitely after the initial monitoring window — providing zero actual protection while appearing active in the dashboard.',
+       risk:'Attackers enumerating CA policies via Microsoft Graph immediately identify Report-only policies. These are invisible as controls — they appear secure on the dashboard but provide no blocking capability whatsoever.',
+       fix:'Set a 30-day hard deadline for every new CA policy to move from Report-only to Enforced. Review all existing Report-only policies older than 90 days — enforce or delete. Use the CA What If tool to validate before enforcing.',
+       ps:'# List all CA policies in Report-only state:\nConnect-MgGraph -Scopes "Policy.Read.All"\nGet-MgIdentityConditionalAccessPolicy | \n  Where-Object {$_.State -eq "enabledForReportingButNotEnforcing"} | \n  Select-Object DisplayName, State, CreatedDateTime | \n  Sort-Object CreatedDateTime | Format-Table\n\n# State: enabledForReportingButNotEnforcing = REPORT-ONLY = NOT BLOCKING\n# Any policy here older than 30 days = immediate action required',
+       refs:[
+         {t:'CA policy states and What If tool',u:'https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-policy-common'},
+         {t:'Conditional Access What If tool',u:'https://learn.microsoft.com/en-us/entra/identity/conditional-access/what-if-tool'}
+       ],
+       detect:'Run the PowerShell above monthly. Include in monthly change control agenda. Never leave a policy in report-only indefinitely.',
+       note:'Never disable a CA policy — document the reason and delete it. Disabled policies create false confidence in your security posture review.'},
+      {id:'id10',sev:'CRITICAL',title:'Conditional Access — Exclusion Groups Governed with Access Reviews',tags:['CA','Governance'],
+       desc:'CA policy exclusion groups bypass all policy controls entirely. In every mature tenant reviewed, exclusion groups grow silently over years — ex-employees, expired temp exceptions, and vendor accounts accumulate unchecked and unreviewed.',
+       risk:'An attacker who compromises any Global Admin or Privileged Role Admin can add a controlled account to an exclusion group, bypassing all CA policies — MFA, device compliance, and location restrictions — with the change reversible within minutes.',
+       fix:'One named exclusion group per policy only. Enable Entra ID Access Reviews on all CA exclusion groups quarterly with auto-remove on no response. Set Sentinel alert on any CA exclusion group membership change with 15-minute SLA.',
+       ps:'# Enumerate all CA policy exclusions:\nConnect-MgGraph -Scopes "Policy.Read.All"\nGet-MgIdentityConditionalAccessPolicy | Select-Object DisplayName,\n  @{N="ExcludedUsers";E={$_.Conditions.Users.ExcludeUsers}},\n  @{N="ExcludedGroups";E={$_.Conditions.Users.ExcludeGroups}} | Format-List\n\n# KQL Sentinel alert - add to your detection rules:\n// AuditLogs\n// | where OperationName == "Add member to group"\n// | where TargetResources[0].DisplayName contains "CA-Exclusion"\n// | project TimeGenerated, InitiatedBy, TargetResources',
+       refs:[
+         {t:'CA policy exclusions best practices',u:'https://learn.microsoft.com/en-us/entra/identity/conditional-access/plan-conditional-access'},
+         {t:'Entra ID Access Reviews for groups',u:'https://learn.microsoft.com/en-us/entra/id-governance/access-reviews-overview'}
+       ],
+       detect:'Monitor Entra Audit Logs for AddMember operations to CA exclusion groups. Quarterly Access Reviews automatically flag stale memberships.',
+       note:'Document every exclusion with business justification and expiry date in the group description field — creates an auditable compliance trail.'},
+      {id:'id11',sev:'CRITICAL',title:'OIDC Scope CA Bypass Reviewed — March–June 2026 Enforcement',tags:['CA','OIDC','2026'],
+       desc:'CA policies targeting All Resources with a resource exclusion previously skipped sign-ins requesting only OIDC scopes (openid, profile, email, User.Read) — silently bypassing MFA and device compliance. Microsoft closed this gap March–June 2026. Action required.',
+       risk:'Azure CLI, developer tools, and custom OAuth apps requesting basic OIDC scopes bypassed MFA and device compliance silently in affected tenants. Attackers could obtain tokens without MFA challenge. Affects virtually every mature enterprise tenant.',
+       fix:'Run the detection KQL. Identify applications that were bypassing CA. Test those apps in non-prod — some will require MFA after the March 2026 enforcement rollout. Minimise resource exclusions on All Resources policies.',
+       ps:'// KQL — Sentinel or Log Analytics\n// Find sign-ins where CA was not applied (OIDC bypass candidates)\nSigninLogs\n| where ConditionalAccessStatus == "notApplied"\n| where AuthenticationRequirement == "singleFactorAuthentication"\n| where TimeGenerated > ago(30d)\n| summarize Count=count(), LastSeen=max(TimeGenerated)\n    by UserPrincipalName, AppDisplayName, ClientAppUsed\n| order by Count desc\n// High count + notApplied + singleFactor = was bypassing your CA policy',
+       refs:[
+         {t:'Conditional Access for all cloud apps',u:'https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-cloud-apps'},
+         {t:'CA policy troubleshooting',u:'https://learn.microsoft.com/en-us/entra/identity/conditional-access/troubleshoot-conditional-access'}
+       ],
+       detect:'Run the KQL in Sentinel. Applications with high notApplied counts were bypassing CA and may fail after enforcement. Monitor auth failure rates post-March 2026.',
+       note:'Active enforcement rollout: March 27 – June 2026. Every resource exclusion removed from All Resources policies further reduces bypass surface.'},
+      {id:'id12',sev:'HIGH',title:'Phishing-Resistant MFA Required for All Privileged Roles',tags:['MFA','Admins','FIDO2'],
+       desc:'Standard MFA (Authenticator push, SMS, TOTP) is vulnerable to AiTM proxy attacks relaying authentication in real time. Phishing-resistant methods (FIDO2, Windows Hello for Business, CBA) are cryptographically site-bound and cannot be relayed by any proxy.',
+       risk:'Admins using push notifications or TOTP are vulnerable to AiTM phishing and MFA fatigue attacks. A compromised admin account provides full unrestricted tenant control — the highest-value target for any attacker.',
+       fix:'Create a CA policy targeting all privileged roles requiring Authentication Strength = Phishing-resistant MFA. Set sign-in frequency to 1 hour. Deploy FIDO2 security keys or Windows Hello for Business to all administrators.',
+       ps:'# Check admin MFA method registration (phishing-resistant only):\nConnect-MgGraph -Scopes "UserAuthenticationMethod.Read.All","Directory.Read.All"\n$adminRole = Get-MgDirectoryRole | Where-Object {$_.DisplayName -eq "Global Administrator"}\n$admins = Get-MgDirectoryRoleMember -DirectoryRoleId $adminRole.Id\n$admins | ForEach-Object {\n  $methods = Get-MgUserAuthenticationMethod -UserId $_.Id\n  [PSCustomObject]@{\n    User=$_.AdditionalProperties["userPrincipalName"]\n    MethodCount=$methods.Count\n    HasFIDO2=($methods.OdataType -contains "#microsoft.graph.fido2AuthenticationMethod")\n  }\n} | Format-Table',
+       refs:[
+         {t:'Authentication strengths in CA',u:'https://learn.microsoft.com/en-us/entra/identity/authentication/concept-authentication-strengths'},
+         {t:'FIDO2 security key deployment guide',u:'https://learn.microsoft.com/en-us/entra/identity/authentication/howto-authentication-passwordless-security-key'}
+       ],
+       detect:'Entra ID → Authentication Methods → Registration details. Filter admin accounts for FIDO2 or Windows Hello registration. Unregistered admins are a critical gap.',
+       note:'Phishing-resistant MFA is now required for US federal systems and increasingly expected by cyber insurers. Plan deployment before it becomes a regulatory mandate for your industry.'},
+      {id:'id13',sev:'HIGH',title:'Continuous Access Evaluation Enabled and IR Playbooks Updated',tags:['CAE','Session Security'],
+       desc:'CAE forces near-real-time policy re-evaluation vs waiting for token expiry (up to 90 min). When an account is disabled or risk detected, CAE revokes access within minutes. February 2026: Revoke Sessions now invalidates ALL tokens including MFA-satisfied sessions.',
+       risk:'Without CAE, attackers with stolen tokens retain access for up to 90 minutes after compromise detection and session revocation. This window is sufficient to exfiltrate data or establish persistence.',
+       fix:'Verify CAE is enabled (default in new tenants, may have been disabled). Update IR playbooks to use Revoke Sessions (February 2026 change) which now invalidates all token types, not just MFA sessions.',
+       ps:'# Verify CAE policy is active:\nConnect-MgGraph -Scopes "Policy.Read.All"\nGet-MgPolicyContinuousAccessEvaluationPolicy | Select-Object IsEnabled, Description\n\n# Monitor CAE token revocation events:\n// KQL\nSigninLogs\n| where ResultType == 70043  // CAE-triggered revocation\n| project TimeGenerated, UserPrincipalName, AppDisplayName, IPAddress\n| order by TimeGenerated desc',
+       refs:[
+         {t:'Continuous Access Evaluation',u:'https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-continuous-access-evaluation'},
+         {t:'Revoke user access — Entra ID',u:'https://learn.microsoft.com/en-us/entra/identity/users/users-revoke-access'}
+       ],
+       detect:'SigninLogs filtered by ResultType 70043 = CAE-triggered revocation events. Useful for confirming IR actions completed successfully.',
+       note:'February 2026: "Revoke sessions" action now invalidates ALL tokens including MFA-satisfied sessions. Update all SOC playbooks and IR runbooks to reference this new control.'},
+      {id:'id14',sev:'HIGH',title:'OAuth App Consent Governed — User Consent Restricted',tags:['OAuth','App Consent','Zero Trust'],
+       desc:'OAuth consent phishing tricks users into granting a malicious third-party app access to their Microsoft 365 data (email, files, contacts). By default, users can consent to apps requesting low-privilege permissions without any admin review. This bypasses MFA, CA policies, and all identity controls.',
+       risk:'A user clicks a convincing "Connect your Microsoft 365 account" link, grants permissions to a malicious app, and the attacker has persistent delegated access to their mailbox and files — without ever knowing the account password. The access token persists until manually revoked.',
+       fix:'Restrict user consent to verified publisher apps only (Entra ID → Enterprise Applications → Consent and permissions). Enable admin consent workflow so users can request approval. Regularly audit granted app permissions and revoke any unrecognised or excessive grants.',
+       ps:'# Check current user consent settings:\nConnect-MgGraph -Scopes "Policy.Read.All"\nGet-MgPolicyAuthorizationPolicy | \n  Select DefaultUserRolePermissions | \n  Select-Object -ExpandProperty DefaultUserRolePermissions | \n  Select AllowedToCreateApps, PermissionGrantPoliciesAssigned\n\n# List all OAuth app permissions granted in tenant:\nGet-MgServicePrincipal -All | \n  Where-Object {$_.Tags -contains "WindowsAzureActiveDirectoryIntegratedApp"} | \n  Select DisplayName, AppId, CreatedDateTime | Format-Table\n\n# Revoke app access for a user:\n# Entra ID → Users → [user] → Applications → Revoke',
+       refs:[
+         {t:'Configure user consent settings',u:'https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-user-consent'},
+         {t:'Admin consent workflow',u:'https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-admin-consent-workflow'}
+       ],
+       detect:'Entra ID → Enterprise Applications → All applications → filter Permission type = Delegated. Review apps with high-privilege permissions (Mail.ReadWrite, Files.ReadWrite.All) granted by non-admin users.',
+       note:'Enable the admin consent workflow so legitimate app requests are not silently blocked. Users who cannot consent to a needed app will escalate to IT rather than find workarounds.'},
+      {id:'id15',sev:'HIGH',title:'Named Locations Defined and Used in Conditional Access Policies',tags:['CA','Named Locations','Zero Trust'],
+       desc:'Named locations define trusted IP ranges (office networks, VPN gateways) and country/region allow-lists in Conditional Access. Without them, CA policies cannot distinguish a sign-in from a trusted corporate office from one originating in a high-risk country — both receive the same policy treatment.',
+       risk:'CA policies without named locations cannot enforce location-based controls. High-risk country blocking, enhanced MFA requirements for off-network access, and impossible travel detection all depend on named locations being correctly defined and referenced in CA policies.',
+       fix:'Create named locations for: all office public IP ranges, VPN gateway IPs, and trusted partner network ranges. Create a CA policy requiring step-up authentication for any sign-in outside named locations. Block or require MFA from countries your organisation has no operations in.',
+       ps:'# Check existing named locations:\nConnect-MgGraph -Scopes "Policy.Read.All"\nGet-MgIdentityConditionalAccessNamedLocation | \n  Select DisplayName, CreatedDateTime, @{N="Type";E={$_.OdataType}} | \n  Format-Table\n\n# Check CA policies referencing named locations:\nGet-MgIdentityConditionalAccessPolicy | \n  Select DisplayName, \n    @{N="IncludeLocations";E={$_.Conditions.Locations.IncludeLocations}},\n    @{N="ExcludeLocations";E={$_.Conditions.Locations.ExcludeLocations}} | \n  Where-Object {$_.IncludeLocations -ne $null} | Format-List',
+       refs:[
+         {t:'Named locations in Conditional Access',u:'https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-assignment-network'},
+         {t:'Block access by location',u:'https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-location'}
+       ],
+       detect:'If Get-MgIdentityConditionalAccessNamedLocation returns empty or only default locations, named locations have not been configured. Review CA policies — any policy with no location condition is applying the same controls regardless of where the sign-in originates.',
+       note:'Named locations require maintenance — add new office IPs and remove old ones when offices open or close. Stale named locations create false trust signals in CA policies and Identity Protection.'}]
+  },
+  {
+    id:'exchange', icon:'📧', title:'Exchange Online & Email Security',
+    items:[
+      {id:'ex01',sev:'CRITICAL',title:'DMARC Policy Enforced (p=quarantine or p=reject)',tags:['Email','Anti-Spoofing'],
+       desc:'DMARC (Domain-based Message Authentication, Reporting and Conformance) tells receiving mail servers how to handle emails that fail SPF and DKIM checks. Without enforcement, spoofed emails impersonating your domain are delivered.',
+       risk:'Without DMARC enforcement, attackers can spoof your domain to send convincing phishing emails to your customers, partners, and employees. Business Email Compromise (BEC) attacks rely heavily on domain spoofing.',
+       fix:'Add a DMARC DNS TXT record at _dmarc.yourdomain.com. Start with p=none to monitor, then move to p=quarantine, then p=reject after reviewing reports. Ensure all legitimate mail sources are covered by SPF and signed by DKIM first.',
+       ps:'# Check DMARC record:\nnslookup -type=TXT _dmarc.yourdomain.com\n\n# Check SPF record:\nnslookup -type=TXT yourdomain.com\n\n# Check DKIM (Exchange default selector):\nnslookup -type=TXT selector1._domainkey.yourdomain.com',
+       refs:[
+         {t:'Set up DMARC in Microsoft 365',u:'https://learn.microsoft.com/en-us/defender-office-365/email-authentication-dmarc-configure'},
+         {t:'Set up DKIM for custom domain',u:'https://learn.microsoft.com/en-us/defender-office-365/email-authentication-dkim-configure'}
+       ],
+       detect:'Monitor DMARC aggregate reports (rua= address). Use Microsoft Defender for Office 365 Threat Explorer to review spoofed sender reports.',
+       note:'Do not jump straight to p=reject — start with p=none and review reports for 2-4 weeks first.'},
+      {id:'ex02',sev:'HIGH',title:'Anti-Phishing Policy Configured with Impersonation Protection',tags:['Anti-Phishing','Defender'],
+       desc:'Microsoft Defender for Office 365 anti-phishing policies can detect user and domain impersonation attacks — emails that appear to come from executives or trusted domains but are actually malicious.',
+       risk:'Without impersonation protection, phishing emails impersonating the CEO, CFO, or trusted vendors bypass basic filters and reach user inboxes. These are the primary vector for BEC fraud.',
+       fix:'Enable anti-phishing policy: Turn on user impersonation protection (add key executives), domain impersonation protection, mailbox intelligence. Set action to quarantine for impersonation detections.',
+       ps:'# Check anti-phishing policies:\nConnect-ExchangeOnline\nGet-AntiPhishPolicy | Select Name,EnableMailboxIntelligence,EnableSpoofIntelligence,TargetedUserProtectionAction | Format-List',
+       refs:[
+         {t:'Configure anti-phishing policies in Defender for Office 365',u:'https://learn.microsoft.com/en-us/defender-office-365/anti-phishing-policies-mdo-configure'},
+         {t:'Anti-phishing protection overview',u:'https://learn.microsoft.com/en-us/defender-office-365/anti-phishing-protection-about'}
+       ],
+       detect:'Defender for Office 365 → Threat Explorer → Phish. Review impersonation detection reports weekly.',
+       note:'Requires Microsoft Defender for Office 365 Plan 1 or higher.'},
+      {id:'ex03',sev:'HIGH',title:'Mailbox Auditing Enabled (All Users)',tags:['Audit','Forensics'],
+       desc:'Mailbox audit logging records mailbox access and operations (read, send, delete, move). Without auditing, forensic investigation of BEC incidents and data breaches is severely limited.',
+       risk:'Without mailbox auditing, there is no record of who accessed a compromised mailbox, what emails were read, or what rules were created. Incident response is effectively blind.',
+       fix:'Enable unified mailbox auditing tenant-wide. Ensure AuditAdmin, AuditDelegate, and AuditOwner actions cover MailItemsAccessed, SendAs, UpdateInboxRules, and SoftDelete. Extend audit log retention.',
+       ps:'# Enable auditing on all mailboxes:\nConnect-ExchangeOnline\nGet-Mailbox -ResultSize Unlimited | Set-Mailbox -AuditEnabled $true\n\n# Verify audit settings:\nGet-Mailbox -Identity "user@domain.com" | Select AuditEnabled,AuditAdmin,AuditDelegate,AuditOwner\n\n# Check audit log retention:\nGet-AdminAuditLogConfig | Select UnifiedAuditLogIngestionEnabled',
+       refs:[
+         {t:'Manage mailbox auditing',u:'https://learn.microsoft.com/en-us/purview/audit-mailboxes'},
+         {t:'Exchange mailbox audit actions',u:'https://learn.microsoft.com/en-us/purview/audit-log-activities'}
+       ],
+       detect:'Purview Audit → Search audit log for MailItemsAccessed, UpdateInboxRules, SendAs operations.',
+       note:''},
+      {id:'ex04',sev:'HIGH',title:'SMTP AUTH Disabled (or Restricted to Required Accounts)',tags:['Email','Legacy Auth'],
+       desc:'SMTP AUTH allows clients to send authenticated email directly via Exchange Online. Unless required for line-of-business applications, it should be disabled to prevent its use for credential-based mail relay attacks.',
+       risk:'SMTP AUTH bypasses MFA and Conditional Access. Attackers with valid credentials can send email appearing to come from any user account, enabling phishing, spam relay, and BEC.',
+       fix:'Disable SMTP AUTH at the tenant level, then enable only for specific service accounts or applications that legitimately require it. Use certificate-based authentication or OAuth for modern mail clients.',
+       ps:'# Disable SMTP AUTH tenant-wide:\nConnect-ExchangeOnline\nSet-TransportConfig -SmtpClientAuthenticationDisabled $true\n\n# Enable for specific mailbox only:\nSet-CASMailbox -Identity "service@domain.com" -SmtpClientAuthenticationDisabled $false\n\n# Check current SMTP AUTH status:\nGet-TransportConfig | Select SmtpClientAuthenticationDisabled',
+       refs:[
+         {t:'Enable or disable SMTP AUTH in Exchange Online',u:'https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/authenticated-client-smtp-submission'}
+       ],
+       detect:'Exchange message trace → filter by connector or authentication type. Alert on SMTP AUTH usage for non-service accounts.',
+       note:''},
+      {id:'ex05',sev:'HIGH',title:'Automatic External Mail Forwarding Blocked',tags:['DLP','Data Exfil'],
+       desc:'Automatic forwarding of email to external addresses is a primary technique used by attackers in BEC incidents to silently exfiltrate email. Users and compromised accounts should not be able to forward email externally without approval.',
+       risk:'Attackers who compromise a mailbox commonly create inbox rules to forward all email to an external address for ongoing surveillance. This can persist undetected for months.',
+       fix:'Create an outbound spam filter policy that blocks automatic external forwarding. Set AutoForwardingMode to Off. Review and whitelist any legitimate external forwarding via approved mail flow rules with business justification.',
+       ps:'# Block automatic external forwarding:\nConnect-ExchangeOnline\nSet-HostedOutboundSpamFilterPolicy Default -AutoForwardingMode Off\n\n# Check existing forwarding:\nGet-Mailbox -ResultSize Unlimited | Where-Object {$_.ForwardingAddress -ne $null -or $_.ForwardingSmtpAddress -ne $null} | Select Name,ForwardingAddress,ForwardingSmtpAddress',
+       refs:[
+         {t:'Control automatic external email forwarding',u:'https://learn.microsoft.com/en-us/defender-office-365/outbound-spam-policies-external-email-forwarding'}
+       ],
+       detect:'Alert rule in Purview: search for Set-Mailbox operations with ForwardingSmtpAddress set to external addresses.',
+       note:''},
+      {id:'ex06',sev:'MEDIUM',title:'Safe Attachments Policy Enabled (Detonation)',tags:['Defender','Malware'],
+       desc:'Safe Attachments detonates suspicious email attachments in a sandbox environment before delivery. This catches zero-day malware that signature-based scanning misses.',
+       risk:'Without Safe Attachments, malware delivered via email is only detected by signature-based antivirus, which consistently misses new and obfuscated malware variants.',
+       fix:'Create a Safe Attachments policy for all recipients. Use Dynamic Delivery action so email is delivered while the attachment is being scanned. Enable Safe Attachments for SharePoint, OneDrive, and Teams as well.',
+       ps:'# Check Safe Attachments policies:\nConnect-ExchangeOnline\nGet-SafeAttachmentPolicy | Select Name,Enable,Action,ScanTimeout | Format-List\n\n# Check SharePoint/OneDrive/Teams protection:\nGet-AtpPolicyForO365 | Select EnableATPForSPOTeamsODB',
+       refs:[
+         {t:'Set up Safe Attachments policies',u:'https://learn.microsoft.com/en-us/defender-office-365/safe-attachments-policies-configure'},
+         {t:'Safe Attachments for SharePoint/OneDrive/Teams',u:'https://learn.microsoft.com/en-us/defender-office-365/safe-attachments-for-spo-odfb-teams-configure'}
+       ],
+       detect:'Defender for Office 365 → Reports → Safe Attachments.',
+       note:'Requires Microsoft Defender for Office 365 Plan 1 or higher.'},
+    ]
+  },
+  {
+    id:'sharepoint', icon:'📂', title:'SharePoint Online & OneDrive',
+    items:[
+      {id:'sp01',sev:'HIGH',title:'External Sharing Restricted to Known Domains',tags:['Sharing','DLP'],
+       desc:'SharePoint external sharing controls who can receive links to SharePoint content outside the organisation. Unrestricted sharing allows employees to inadvertently or deliberately share sensitive documents with any email address globally.',
+       risk:'Sensitive business data, financial documents, HR records, and intellectual property can be shared with arbitrary external recipients with no visibility or control.',
+       fix:'Set SharePoint external sharing to "Existing guests only" or "New and existing guests" at minimum. Restrict to approved domain allow-list where possible. Disable "Anyone with the link" (anonymous sharing) for sensitive sites.',
+       ps:'# Check and set SharePoint sharing level:\nConnect-SPOService -Url https://yourtenantadmin.sharepoint.com\nGet-SPOTenant | Select SharingCapability,RequireAcceptingAccountMatchInvitedAccount\n\n# Restrict to specific domains:\nSet-SPOTenant -SharingDomainRestrictionMode AllowList -SharingAllowedDomainList "trustedpartner.com partner2.com"',
+       refs:[
+         {t:'Manage sharing in SharePoint and OneDrive',u:'https://learn.microsoft.com/en-us/sharepoint/manage-sharing'},
+         {t:'External sharing overview',u:'https://learn.microsoft.com/en-us/sharepoint/external-sharing-overview'}
+       ],
+       detect:'SharePoint Admin Center → Reports → Sharing activity. Alert on site-level anonymous link creation via Purview audit log.',
+       note:''},
+      {id:'sp02',sev:'HIGH',title:'SharePoint Audit Logging Enabled',tags:['Audit','Compliance'],
+       desc:'SharePoint audit logging tracks file access, downloads, sharing changes, and permission modifications. Without it, data breach investigations have no visibility into what was accessed or exfiltrated.',
+       risk:'In a data exfiltration scenario, without SharePoint audit logs there is no way to determine which files were accessed, downloaded, or shared with external parties.',
+       fix:'Enable unified audit logging in Purview. Configure SharePoint site-level auditing for all activities. Extend log retention to 90+ days. Enable Defender for Cloud Apps monitoring of SharePoint for anomalous activity.',
+       ps:'# Verify unified audit log is enabled:\nConnect-ExchangeOnline\nGet-AdminAuditLogConfig | Select UnifiedAuditLogIngestionEnabled\n\n# Enable if disabled:\nSet-AdminAuditLogConfig -UnifiedAuditLogIngestionEnabled $true\n\n# Search SharePoint audit events:\nSearch-UnifiedAuditLog -StartDate (Get-Date).AddDays(-7) -EndDate (Get-Date) -RecordType SharePoint -Operations FileAccessed,FileDownloaded',
+       refs:[
+         {t:'Turn auditing on or off — SharePoint',u:'https://learn.microsoft.com/en-us/purview/audit-log-enable-disable'},
+         {t:'Search the audit log',u:'https://learn.microsoft.com/en-us/purview/audit-search'}
+       ],
+       detect:'Purview Audit → Search for FileAccessed, FileDownloaded, FileSyncDownloadedFull operations at scale.',
+       note:''},
+      {id:'sp03',sev:'MEDIUM',title:'Legacy SharePoint Authentication Disabled',tags:['Auth','Legacy'],
+       desc:'SharePoint legacy authentication (SharePoint Add-in permissions, ACS-based app-only tokens) bypasses modern Entra ID authentication controls and Conditional Access policies.',
+       risk:'Applications using legacy SharePoint app-only permissions can access tenant data without Entra ID oversight, bypassing Conditional Access and audit logging for those operations.',
+       fix:'Migrate all custom apps and integrations to use Microsoft Entra app registrations with OAuth 2.0. Disable SharePoint Add-in permissions and ACS service principals. Review and remove legacy service principals.',
+       ps:'# Check for legacy app-only principals:\nConnect-SPOService -Url https://yourtenantadmin.sharepoint.com\nGet-SPOTenant | Select DisableCustomAppAuthentication\n\n# Disable legacy app auth:\nSet-SPOTenant -DisableCustomAppAuthentication $true',
+       refs:[
+         {t:'SharePoint and OneDrive unattended auth migration',u:'https://learn.microsoft.com/en-us/sharepoint/dev/solution-guidance/security-apponly-azureacs'},
+       ],
+       detect:'Entra ID → Enterprise Applications → filter by application type for legacy service principals.',
+       note:''},
+    ,
+      {id:'sp04',sev:'HIGH',title:'Anonymous Sharing Links Have Maximum Expiration Set',tags:['Sharing','OneDrive','SharePoint'],
+       desc:'SharePoint "Anyone with the link" anonymous sharing links require no authentication, create no recipient audit trail, and have no expiration by default. Files shared via anonymous links remain publicly accessible indefinitely unless manually revoked.',
+       risk:'Anonymous links persist for years after the collaboration need ends. Sensitive contracts, HR documents, and financial data can remain publicly accessible. With M365 Copilot in use, overshared content is discoverable via AI search — amplifying the blast radius significantly.',
+       fix:'Set maximum anonymous link expiration to 14 days at tenant level. For sensitive sites, restrict sharing to "Existing guests only" or disable anonymous sharing entirely. Require sign-in for all external collaboration.',
+       ps:'# Set 14-day maximum expiration for anonymous links:\nConnect-SPOService -Url https://yourtenantadmin.sharepoint.com\nSet-SPOTenant -RequireAnonymousLinksExpireInDays 14\n\n# Restrict to authenticated sharing only (recommended for enterprise):\nSet-SPOTenant -SharingCapability ExternalUserSharingOnly\n\n# Require guest sign-in with the invited account:\nSet-SPOTenant -RequireAcceptingAccountMatchInvitedAccount $true\n\n# Check current settings:\nGet-SPOTenant | Select SharingCapability, RequireAnonymousLinksExpireInDays',
+       refs:[
+         {t:'Manage sharing in SharePoint and OneDrive',u:'https://learn.microsoft.com/en-us/sharepoint/manage-sharing'},
+         {t:'Secure external sharing in SharePoint',u:'https://learn.microsoft.com/en-us/sharepoint/external-sharing-overview'}
+       ],
+       detect:'SharePoint Admin Center → Reports → Sharing → filter by Anyone link type. Purview: configure alert for bulk external sharing by single user.',
+       note:''}]
+  },
+  {
+    id:'teams', icon:'💬', title:'Microsoft Teams',
+    items:[
+      {id:'te01',sev:'HIGH',title:'External Access (Federation) Restricted',tags:['Teams','Federation'],
+       desc:'Teams external access (federation) controls whether users can chat and meet with users from external Teams organisations. Unrestricted federation allows any Teams user globally to contact your employees and send files.',
+       risk:'Social engineering attacks via Teams are increasing. Attackers from external tenants can send malicious links or files directly to employees via Teams chat, bypassing email security controls.',
+       fix:'Restrict Teams external access to explicitly allowed domains only (allow-list model). Disable federation with unmanaged/consumer Teams accounts. Enable "Known organizations only" in Teams admin center.',
+       ps:'# Check Teams external access settings:\nConnect-MicrosoftTeams\nGet-CsTenantFederationConfiguration | Select AllowFederatedUsers,AllowedDomains,BlockedDomains,AllowPublicUsers',
+       refs:[
+         {t:'Manage external access in Teams',u:'https://learn.microsoft.com/en-us/microsoftteams/manage-external-access'},
+       ],
+       detect:'Teams Admin Center → Analytics and reports → Usage reports. Alert on external user message activity from unknown domains.',
+       note:''},
+      {id:'te02',sev:'HIGH',title:'Teams Meeting Recording Security Configured',tags:['Teams','Data'],
+       desc:'Teams meeting recordings stored in OneDrive and SharePoint should not be automatically shared externally or have open anonymous access. Sensitive business discussions captured in recordings can be exposed through misconfigured sharing.',
+       risk:'Meeting recordings containing confidential business discussions, PII, or financial data can be shared with external parties via link sharing, either accidentally or maliciously.',
+       fix:'Disable anonymous access to meeting recordings. Configure recordings to expire automatically (90 days recommended for standard meetings). Restrict download capability for sensitive meeting recordings via SharePoint permissions.',
+       ps:'# Check Teams meeting policy:\nConnect-MicrosoftTeams\nGet-CsTeamsMeetingPolicy -Identity Global | Select AllowCloudRecording,AllowRecordingStorageOutsideRegion',
+       refs:[
+         {t:'Teams cloud recording admin settings',u:'https://learn.microsoft.com/en-us/microsoftteams/cloud-recording'},
+       ],
+       detect:'Review OneDrive/SharePoint sharing reports for recording files shared externally.',
+       note:''},
+      {id:'te03',sev:'MEDIUM',title:'Guest Access in Teams Governed',tags:['Teams','Guests'],
+       desc:'Teams guest access allows external users to be added to Teams channels and access all channel content. Without governance, guests accumulate over time and may retain access long after the collaboration project ends.',
+       risk:'Former contractors, departed partners, or compromised external accounts with guest access can access team channel conversations, files, and meeting recordings.',
+       fix:'Implement Access Reviews for Teams guest users (quarterly). Require approval for new guest additions. Configure guest access to restrict guests from inviting other guests. Set guest account expiry policies.',
+       ps:'# List all guests across Teams:\nConnect-MicrosoftTeams\nGet-CsOnlineUser -Filter {UserType -eq "Guest"} | Select DisplayName,SipAddress,AccountEnabled',
+       refs:[
+         {t:'Guest access in Microsoft Teams',u:'https://learn.microsoft.com/en-us/microsoftteams/guest-access'},
+         {t:'Manage guest access with access reviews',u:'https://learn.microsoft.com/en-us/entra/id-governance/access-reviews-overview'}
+       ],
+       detect:'Teams Admin Center → Users → Guest users. Schedule quarterly access reviews via Entra ID Governance.',
+       note:''},
+    ,
+      {id:'te04',sev:'HIGH',title:'Teams External Access (Federation) Restricted to Approved Domains',tags:['Teams','Federation'],
+       desc:'Teams external access (federation) allows any Teams user globally to initiate chat, calls, and file sharing with your employees by default. Without restrictions, this enables social engineering, phishing campaigns, and data exfiltration via Teams — bypassing email filtering entirely.',
+       risk:'External actors can directly contact employees via Teams federation, bypassing email filters. Teams DLP policies do not cover federated external chats by default in many configurations. Sensitive information shared in federated chats may leave the governance boundary.',
+       fix:'Restrict Teams external access to a defined allow-list of trusted partner domains. Disable open federation if no federated partners exist. Ensure Teams DLP policies are scoped to cover external chat sessions.',
+       ps:'# Check Teams federation configuration:\nConnect-MicrosoftTeams\nGet-CsTenantFederationConfiguration | Select AllowFederatedUsers, AllowedDomains, BlockedDomains | Format-List\n\n# Disable open federation entirely (if no external partners):\nSet-CsTenantFederationConfiguration -AllowFederatedUsers $false\n\n# Or allow only specific approved domains:\n# Teams Admin Center → Users → External access → Add allowed domains',
+       refs:[
+         {t:'Manage external access in Microsoft Teams',u:'https://learn.microsoft.com/en-us/microsoftteams/manage-external-access'},
+         {t:'Teams external communications compliance',u:'https://learn.microsoft.com/en-us/microsoftteams/security-compliance-overview'}
+       ],
+       detect:'Teams Admin Center → Users → External access tab. Review federation logs for unexpected inbound external communication patterns.',
+       note:''},
+      {id:'te05',sev:'MEDIUM',title:'Teams Meeting Policies — Lobby, Recording, and Anonymous Join',tags:['Teams','Meetings','Governance'],
+       desc:'Default Teams meeting settings allow external guests to bypass the lobby, all participants to record, and anonymous users to start meetings. These defaults create governance and confidentiality risks at enterprise scale.',
+       risk:'Confidential board, HR, legal, and M&A discussions can be recorded by any participant by default. Recordings stored in OneDrive or SharePoint may be shared externally. Anonymous users joining without a lobby can attend meetings they were not intended to join.',
+       fix:'Create role-based meeting policies: require lobby for all external participants, restrict recording to organiser/co-organiser only, disable transcription for sensitive meeting types, require authentication for all participants.',
+       ps:'# Check global Teams meeting policy:\nConnect-MicrosoftTeams\nGet-CsTeamsMeetingPolicy -Identity Global | \n  Select AllowAnonymousUsersToJoinMeeting, AllowCloudRecording, \n         AutoAdmittedUsers, AllowTranscription | Format-List\n\n# Require lobby for all external participants:\nSet-CsTeamsMeetingPolicy -Identity Global -AutoAdmittedUsers "EveryoneInCompany"\n\n# Restrict recording to organisers:\nSet-CsTeamsMeetingPolicy -Identity Global -AllowCloudRecording $false',
+       refs:[
+         {t:'Teams meeting policies reference',u:'https://learn.microsoft.com/en-us/microsoftteams/settings-policies-reference'},
+         {t:'Teams security and compliance overview',u:'https://learn.microsoft.com/en-us/microsoftteams/security-compliance-overview'}
+       ],
+       detect:'Teams Admin Center → Analytics & reports → Meeting usage report. Review recordings stored in SharePoint for unexpected external sharing permissions.',
+       note:''}]
+  },
+  {
+    id:'powerplatform', icon:'⚡', title:'Power Platform & Automation',
+    items:[
+      {id:'pp01',sev:'CRITICAL',title:'Power Platform DLP Policies Configured',tags:['DLP','Power Platform'],
+       desc:'Data Loss Prevention (DLP) policies for Power Platform classify connectors into "Business", "Non-Business", and "Blocked" tiers to prevent users from building flows or apps that connect sensitive business data to uncontrolled external services.',
+       risk:'Without DLP policies, any user with a Power Platform licence can build a flow that forwards all email attachments to a personal Dropbox or Google Sheets, exfiltrating sensitive data with no oversight.',
+       fix:'Create environment-scoped DLP policies at minimum. Configure the Microsoft 365 services (SharePoint, Exchange, Teams) as Business tier. Block consumer services (Gmail, Twitter, Dropbox) for business environments. Restrict HTTP connector to approved endpoints.',
+       ps:'# Requires Power Platform Admin PowerShell\nInstall-Module -Name Microsoft.PowerApps.Administration.PowerShell\nConnect-PowerAppsAdmin\n\n# List all DLP policies:\nGet-AdminDlpPolicy | Select DisplayName,EnvironmentName\n\n# Get policy details:\nGet-AdminDlpPolicy -PolicyName "PolicyName" | ConvertTo-Json',
+       refs:[
+         {t:'Data loss prevention policies overview',u:'https://learn.microsoft.com/en-us/power-platform/admin/wp-data-loss-prevention'},
+         {t:'Create a DLP policy',u:'https://learn.microsoft.com/en-us/power-platform/admin/create-dlp-policy'},
+         {t:'DLP connector classification',u:'https://learn.microsoft.com/en-us/power-platform/admin/dlp-connector-classification'}
+       ],
+       detect:'Power Platform Admin Center → Policies → Data Policies. Review violations in the CoE Toolkit DLP violation reports.',
+       note:'Deploy the Power Platform CoE Starter Kit for comprehensive governance visibility.'},
+      {id:'pp02',sev:'HIGH',title:'Power Platform Environment Strategy Implemented',tags:['Governance','Environments'],
+       desc:'Production Power Platform environments should be isolated from development and personal productivity environments. Default environment allows all licensed users to build apps that interact with production data.',
+       risk:'By default, all licensed users create apps in the default environment which connects directly to the production Dataverse and tenant data. Untested automation can cause data corruption or exfiltration.',
+       fix:'Create dedicated Production, UAT, and Development environments. Restrict environment creation to admins only. Apply strict DLP policies to production environments. Disable maker access to production data for standard users.',
+       ps:'# List all environments:\nConnect-PowerAppsAdmin\nGet-AdminPowerAppEnvironment | Select DisplayName,EnvironmentType,IsDefault,CreatedBy\n\n# Restrict environment creation:\n# Power Platform Admin Center → Settings → Tenant Settings → Who can create production/sandbox environments',
+       refs:[
+         {t:'Power Platform environment strategy',u:'https://learn.microsoft.com/en-us/power-platform/guidance/adoption/environment-strategy'},
+         {t:'CoE Starter Kit',u:'https://learn.microsoft.com/en-us/power-platform/guidance/coe/starter-kit'}
+       ],
+       detect:'Power Platform Admin Center → Analytics → Resource usage. CoE Starter Kit environment inventory dashboard.',
+       note:''},
+      {id:'pp03',sev:'HIGH',title:'Power Automate HTTP Connector Governed',tags:['Power Automate','Security'],
+       desc:'The HTTP connector in Power Automate allows flows to make arbitrary HTTP requests to any URL. Without governance, users can exfiltrate data to external endpoints or invoke internal APIs without oversight.',
+       risk:'A flow using the HTTP connector can POST Dataverse data, SharePoint documents, or email content to any external URL — effectively a data exfiltration pipeline built by any licensed user.',
+       fix:'Block or restrict the HTTP connector via DLP policy in non-IT environments. Require approval workflow for HTTP connector usage. Create custom connectors for approved internal APIs instead of using raw HTTP.',
+       ps:'# Check HTTP connector usage:\nConnect-PowerAppsAdmin\nGet-AdminFlow | Where-Object {$_.Properties.Definition.actions.PSObject.Properties.Name -contains "Http"} | Select DisplayName,CreatedBy',
+       refs:[
+         {t:'Connector classification in DLP',u:'https://learn.microsoft.com/en-us/power-platform/admin/dlp-connector-classification'},
+         {t:'Govern HTTP connector',u:'https://learn.microsoft.com/en-us/power-platform/admin/governance-considerations'}
+       ],
+       detect:'CoE Starter Kit → Power Automate flows using HTTP connector dashboard.',
+       note:''},
+      {id:'pp04',sev:'MEDIUM',title:'Power Platform CoE Toolkit Deployed',tags:['Governance','CoE'],
+       desc:'The Power Platform Center of Excellence Starter Kit provides governance tooling, analytics, environment management, and compliance features that are not available out-of-the-box in the admin center.',
+       risk:'Without the CoE Toolkit, there is no automated inventory of apps, flows, and connectors across environments, no unused resource cleanup, and no self-service governance for makers.',
+       fix:'Deploy the CoE Starter Kit in a dedicated CoE environment. Configure the inventory sync flows. Set up the Admin and Maker portal apps. Enable the compliance process for high-value apps.',
+       ps:'# CoE Toolkit setup is done via the installer package\n# Download from: aka.ms/coestarterkit\n\n# After deployment, verify sync flows are running:\nGet-AdminFlow | Where-Object {$_.DisplayName -like "*CoE*"} | Select DisplayName,State',
+       refs:[
+         {t:'CoE Starter Kit overview',u:'https://learn.microsoft.com/en-us/power-platform/guidance/coe/starter-kit'},
+         {t:'Set up the CoE Starter Kit',u:'https://learn.microsoft.com/en-us/power-platform/guidance/coe/setup'}
+       ],
+       detect:'CoE Toolkit provides its own dashboards — Power BI reports for usage, compliance, and governance metrics.',
+       note:''},
+    ,
+      {id:'pp05',sev:'CRITICAL',title:'DLP Policies Cover All Workloads Including Teams Chat',tags:['DLP','Teams','Purview'],
+       desc:'DLP misconfigured for Exchange only leaves SharePoint, OneDrive, and Teams completely unwatched. Teams chat is the most commonly unprotected workload — sensitive data shared in Teams messages has no policy enforcement in most enterprise tenants.',
+       risk:'A compromised account or malicious insider can exfiltrate sensitive data through Teams chat or OneDrive sync with zero detection. In regulated industries this constitutes a reportable breach even if data does not leave the boundary.',
+       fix:'Verify every DLP policy covers: Exchange, SharePoint, OneDrive, Teams chat and channel messages, and Endpoint devices (requires Defender for Endpoint). Use Purview policy templates for PII/Financial/HIPAA/GDPR as a baseline. Start in Audit mode for 2-4 weeks before enforcing.',
+       ps:'# Check DLP policy workload coverage:\nConnect-IPPSSession\nGet-DlpCompliancePolicy | Select-Object Name, Mode, @{N="Workloads";E={$_.Workload}} | Format-List\n\n# Mode values:\n# Enforce              = active, policies blocking\n# AuditAndNotify       = audit only, NOT blocking\n# TestWithNotifications = test mode, NOT blocking\n\n# Check compliance: any policy older than 90 days NOT in Enforce mode = action required',
+       refs:[
+         {t:'DLP policy locations — Teams included',u:'https://learn.microsoft.com/en-us/purview/dlp-policy-reference#locations'},
+         {t:'Create and deploy DLP policies',u:'https://learn.microsoft.com/en-us/purview/dlp-create-deploy-policy'},
+         {t:'Purview Just-in-Time DLP for SharePoint (2026 preview)',u:'https://learn.microsoft.com/en-us/purview/dlp-overview-plan-for-dlp'}
+       ],
+       detect:'Purview Activity Explorer: zero DLP match count across all workloads likely indicates misconfiguration. Even clean environments generate audit-mode matches. Zero = investigate.',
+       note:'New 2026: Purview Just-in-Time DLP for SharePoint (preview) applies restrictions to unclassified files on first access or external share. Enable in pilot environments.'},
+      {id:'pp06',sev:'HIGH',title:'Sensitivity Labels Deployed with Auto-Labelling in Enforce Mode',tags:['DLP','Labels','Purview'],
+       desc:'Sensitivity labels classify and protect content throughout its lifecycle. Without labels, DLP cannot differentiate a public marketing doc from a confidential contract. Labels that exist only in simulation mode provide no actual classification or protection.',
+       risk:'Sensitive data is unidentifiable and unprotectable when it leaves the Microsoft 365 boundary without a label. GDPR and most industry compliance frameworks require demonstrable data classification — labels in simulation mode do not satisfy this requirement.',
+       fix:'Deploy label taxonomy: Public, Internal, Confidential, Highly Confidential. Move auto-labelling policies from Simulation to Enforce mode. Apply default label policies to Office apps. Require labels on all SharePoint sites.',
+       ps:'# Check sensitivity label policies and auto-labelling status:\nConnect-IPPSSession\nGet-LabelPolicy | Select-Object Name, Labels, ExchangeLocation | Format-List\n\n# Check auto-labelling policies — critical: check the Mode\nGet-AutoSensitivityLabelPolicy | \n  Select-Object Name, Mode, Priority | Format-Table\n\n# Mode: Simulation = NOT applying labels (testing only)\n# Mode: Enable      = actively applying labels to content\n# Any Simulation policy older than 60 days = needs review and promotion',
+       refs:[
+         {t:'Get started with sensitivity labels',u:'https://learn.microsoft.com/en-us/purview/get-started-with-sensitivity-labels'},
+         {t:'Auto-labelling policies',u:'https://learn.microsoft.com/en-us/purview/apply-sensitivity-label-automatically'}
+       ],
+       detect:'Purview Activity Explorer → filter by auto-labelling events. Zero matches across 30 days in a production tenant = policies in simulation or not configured. Investigate.',
+       note:'Apply mandatory labelling in Office apps after user training. Start in recommendation mode for 30 days, then enforce. Priority: SharePoint libraries containing known sensitive data first.'},
+      {id:'pp07',sev:'HIGH',title:'Power Platform DLP Policies Applied to All Environments',tags:['Power Platform','DLP','Connectors'],
+       desc:'Power Platform DLP policies control which connectors can pair together in flows and apps. Without them, users can build flows connecting corporate SharePoint and Dataverse to uncontrolled external services (Gmail, Dropbox, personal storage) — a common and hard-to-detect exfiltration vector.',
+       risk:'Without connector governance, a single misconfigured flow can silently exfiltrate corporate data to personal accounts. These flows run on a schedule, are invisible to network monitoring, and do not trigger email DLP alerts.',
+       fix:'Create environment DLP policies classifying: Business (SharePoint, Teams, Outlook, Approvals), Non-business (personal storage, social), Blocked (high-risk external). Apply a restrictive policy to the Default environment immediately — this is where most ungoverned flows live.',
+       ps:'# List Power Platform DLP policies:\nInstall-Module -Name Microsoft.PowerApps.Administration.PowerShell -Force\nConnect-PowerAppsDlpAdmin\nGet-DlpPolicy | \n  Select-Object DisplayName, EnvironmentName, DefaultConnectorsClassification | \n  Format-Table\n\n# Environments with no DLP policy = ungoverned\n# Default environment MUST have a DLP policy — check first',
+       refs:[
+         {t:'Power Platform DLP policies overview',u:'https://learn.microsoft.com/en-us/power-platform/admin/wp-data-loss-prevention'},
+         {t:'Connector classification guide',u:'https://learn.microsoft.com/en-us/power-platform/admin/dlp-connector-classification'}
+       ],
+       detect:'Power Platform Admin Center → Environments. Any environment without a DLP policy assigned is ungoverned. Filter by DLP Policy = None.',
+       note:'Apply a restrictive baseline DLP policy to the Default environment first. Then create permissive policies for managed production environments with documented exceptions.'},
+      {id:'pp08',sev:'HIGH',title:'Copilot Studio Agents Governed — Auth, Service Accounts, and Agent Register',tags:['Copilot Studio','AI Governance'],
+       desc:'Copilot Studio agents deployed without security review use personal account connections, have no authentication requirement, and may store PII in conversation variables. In 2026, many enterprises have production agents with no formal security or privacy assessment.',
+       risk:'Agents using personal connections break when the employee leaves and have no service continuity. Anonymous agents expose sensitive business data to any user who can access the channel. Without DLP, agents can exfiltrate data via Power Automate to uncontrolled services.',
+       fix:'Require Entra ID SSO authentication for all agents accessing sensitive data. Use dedicated service accounts for all flow connections — never personal logins. Create an agent register: owner, purpose, data accessed, auth type, last review date.',
+       ps:'# Inventory Copilot Studio agents:\n# Power Platform Admin Center → Environments → [env] → Resources → Chatbots\n\n# Per-agent review in Copilot Studio portal:\n# Settings → Security → Authentication\n#   Should NOT be: No authentication (for any sensitive use case)\n# PA flows connected to agent — check each connection account\n\n# Graph API: Get all bots in a Power Platform environment\n# (use Copilot Studio Management connector in Power Automate)',
+       refs:[
+         {t:'Security and governance — Copilot Studio',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/security-and-governance'},
+         {t:'Authentication in Copilot Studio',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/configuration-end-user-authentication'}
+       ],
+       detect:'Power Platform Admin Center → Copilot Studio analytics. Agents with anonymous authentication and high session counts are exposing data without identity verification.',
+       note:'M365 Copilot and Copilot Studio share the same data boundary. Overpermissioned agents can surface sensitive SharePoint content and emails to unauthenticated users via AI search.'}]
+  },
+  {
+    id:'defender', icon:'🛡️', title:'Microsoft Defender & Security Monitoring',
+    items:[
+      {id:'de01',sev:'CRITICAL',title:'Unified Audit Log (UAL) Enabled',tags:['Audit','SIEM'],
+       desc:'The Unified Audit Log is the central forensic and compliance data source for all M365 services. Without it, incident response, breach investigation, and compliance reporting are impossible.',
+       risk:'If the UAL is disabled, there is no record of user activities, admin changes, file accesses, or sign-in events. A threat actor who disables the UAL can operate undetected with no forensic trail.',
+       fix:'Verify UAL is enabled in Purview compliance portal. Extend audit log retention to 180 days (requires Purview Audit Standard) or 1 year (Purview Audit Premium/E5). Enable Advanced Audit for critical workloads including MailItemsAccessed.',
+       ps:'# Check UAL status:\nConnect-ExchangeOnline\nGet-AdminAuditLogConfig | Select UnifiedAuditLogIngestionEnabled\n\n# Enable if disabled:\nSet-AdminAuditLogConfig -UnifiedAuditLogIngestionEnabled $true\n\n# Test log search:\nSearch-UnifiedAuditLog -StartDate (Get-Date).AddDays(-1) -EndDate (Get-Date) -ResultSize 1',
+       refs:[
+         {t:'Turn audit log on or off',u:'https://learn.microsoft.com/en-us/purview/audit-log-enable-disable'},
+         {t:'Microsoft Purview Audit solutions',u:'https://learn.microsoft.com/en-us/purview/audit-solutions-overview'}
+       ],
+       detect:'Alert in Sentinel or Defender XDR: trigger on Set-AdminAuditLogConfig -UnifiedAuditLogIngestionEnabled $false operations.',
+       note:''},
+      {id:'de02',sev:'HIGH',title:'Microsoft Defender for Identity Deployed (Hybrid AD)',tags:['Defender','AD'],
+       desc:'Defender for Identity monitors on-premises Active Directory for lateral movement, pass-the-hash, Kerberoasting, golden ticket attacks, and other AD-based threats. Essential for hybrid environments.',
+       risk:'Without Defender for Identity, AD-based attacks (Kerberoasting, DCSync, Pass-the-Hash, Golden Ticket) are undetected. Attackers can perform full domain compromise without triggering any alert.',
+       fix:'Deploy Defender for Identity sensors on all domain controllers and ADFS servers. Configure integration with Microsoft Defender XDR. Enable entity tags for sensitive accounts and honeypot accounts.',
+       ps:'# Verify sensor deployment on DCs:\n# Check in Defender portal: settings.microsoft.com → Identities → Sensors\n\n# Alternatively via PowerShell (requires Defender for Identity module):\n# Install-Module DefenderForIdentity\n# Get-MDISensor',
+       refs:[
+         {t:'What is Microsoft Defender for Identity?',u:'https://learn.microsoft.com/en-us/defender-for-identity/what-is'},
+         {t:'Deploy Defender for Identity',u:'https://learn.microsoft.com/en-us/defender-for-identity/deploy/deploy-defender-identity'}
+       ],
+       detect:'Defender for Identity alerts in Microsoft Defender XDR → Incidents. Key alerts: Suspected Kerberoasting, DCSync, Pass-the-Hash, Golden Ticket.',
+       note:'Requires Microsoft 365 E5 or Microsoft Defender for Identity standalone licence.'},
+      {id:'de03',sev:'HIGH',title:'Microsoft Defender for Endpoint Deployed (All Devices)',tags:['MDE','EDR'],
+       desc:'Defender for Endpoint provides EDR (Endpoint Detection and Response) for all managed devices. Without EDR, malware execution, credential theft, and lateral movement on endpoints goes undetected until significant damage is done.',
+       risk:'Without EDR, endpoints are visible attack surfaces with no behavioural detection. Ransomware, credential dumping tools like Mimikatz, and C2 activity are missed by traditional antivirus.',
+       fix:'Onboard all Windows, macOS, and Linux endpoints to Defender for Endpoint. Enable tamper protection. Configure EDR in block mode. Set up device groups and alert suppression rules for known-good activity.',
+       ps:'# Check onboarded device count via Graph:\nConnect-MgGraph -Scopes "DeviceManagementManagedDevices.Read.All"\n$devices = Get-MgDeviceManagementManagedDevice\n$devices | Group-Object {$_.OperatingSystem} | Select Name,Count',
+       refs:[
+         {t:'Microsoft Defender for Endpoint overview',u:'https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-endpoint'},
+         {t:'Onboard devices to Defender for Endpoint',u:'https://learn.microsoft.com/en-us/defender-endpoint/onboard-configure'}
+       ],
+       detect:'Microsoft Defender XDR → Devices → Device health. Alert on devices with outdated sensor version or missing onboarding.',
+       note:''},
+      {id:'de04',sev:'HIGH',title:'Microsoft Sentinel (or Equivalent SIEM) Connected',tags:['SIEM','SOC'],
+       desc:'Microsoft Sentinel aggregates security signals from all M365 services, Azure, and third-party sources into a centralised SIEM for threat detection, investigation, and automated response.',
+       risk:'Without a SIEM, security events from individual M365 services are siloed. Cross-service attack patterns (e.g., phishing → credential theft → lateral movement → data exfil) cannot be correlated and detected.',
+       fix:'Deploy Microsoft Sentinel workspace. Connect M365 Defender, Entra ID, and Azure data connectors. Enable Microsoft Sentinel content hub solution packs (M365, Entra ID, Defender XDR). Configure analytics rules for high-priority threats.',
+       ps:'# Verify Sentinel data connectors via Azure CLI:\naz monitor log-analytics workspace list --output table\n\n# Check connected data sources:\naz sentinel data-connector list --workspace-name <workspace> --resource-group <rg>',
+       refs:[
+         {t:'Microsoft Sentinel overview',u:'https://learn.microsoft.com/en-us/azure/sentinel/overview'},
+         {t:'Connect Microsoft 365 Defender to Sentinel',u:'https://learn.microsoft.com/en-us/azure/sentinel/connect-microsoft-365-defender'},
+         {t:'Sentinel solutions hub',u:'https://learn.microsoft.com/en-us/azure/sentinel/sentinel-solutions'}
+       ],
+       detect:'This IS the detection platform. Configure Scheduled Analytics Rules for key M365 threats — BEC, ATO, data exfiltration patterns.',
+       note:'Microsoft Sentinel requires separate Azure billing.'},
+      {id:'de05',sev:'MEDIUM',title:'Defender for Cloud Apps (MCAS) Monitoring M365',tags:['CASB','DLP'],
+       desc:'Defender for Cloud Apps (formerly MCAS) is a CASB that provides visibility into M365 app usage, data access patterns, and anomalous behaviour including bulk downloads, impossible travel, and OAuth app abuse.',
+       risk:'Without CASB monitoring, bulk data downloads from SharePoint, OAuth consent abuse, and anomalous file access patterns go undetected until after significant data loss.',
+       fix:'Enable Defender for Cloud Apps with M365 app connector. Configure anomaly detection policies for mass download, unusual admin activity, and impossible travel. Integrate with Sentinel for centralised alerting.',
+       ps:'# App connector is configured via the Defender for Cloud Apps portal\n# Defender XDR → Settings → Cloud Apps → Connected apps\n# Then: Microsoft 365 → Connect → Enable all checkboxes',
+       refs:[
+         {t:'Connect Microsoft 365 to Defender for Cloud Apps',u:'https://learn.microsoft.com/en-us/defender-cloud-apps/connect-office-365'},
+         {t:'Anomaly detection policies',u:'https://learn.microsoft.com/en-us/defender-cloud-apps/anomaly-detection-policy'}
+       ],
+       detect:'Defender for Cloud Apps → Alerts dashboard. Key policies: Mass download, Unusual admin activity, Suspicious OAuth app activity.',
+       note:'Requires Microsoft 365 E5 or Defender for Cloud Apps standalone licence.'},
+    ,
+      {id:'de06',sev:'HIGH',title:'Microsoft Secure Score — Recommendations Reviewed and Actioned Monthly',tags:['Secure Score','Governance'],
+       desc:'Microsoft Secure Score provides a prioritised security improvement list across identity, devices, apps, data, and infrastructure. Most organisations enable it but treat the score as a vanity metric rather than an action list — unimplemented recommendations represent real unmitigated risk.',
+       risk:'High-value Secure Score recommendations remain unimplemented because they are harder to deploy. These are precisely the controls attackers expect to find missing. A high score from risk-acceptance only masks the actual security posture.',
+       fix:'Review Secure Score monthly. Assign ownership of recommendation categories to specific engineers. Prioritise CRITICAL and HIGH items first. Track score trend — flat or declining score = security drift.',
+       ps:'# Get current Secure Score:\nConnect-MgGraph -Scopes "SecurityEvents.Read.All"\nGet-MgSecuritySecureScore | \n  Sort-Object CreatedDateTime -Descending | \n  Select-Object -First 1 | \n  Select-Object CurrentScore, MaxScore, CreatedDateTime\n\n# Get top unimplemented recommendations:\nGet-MgSecuritySecureScoreControlProfile | \n  Where-Object {$_.ImplementationStatus -ne "Implemented"} | \n  Sort-Object Rank | \n  Select-Object Title, ControlScore, MaxScore, Rank | \n  Select-Object -First 20 | Format-Table',
+       refs:[
+         {t:'Microsoft Secure Score overview',u:'https://learn.microsoft.com/en-us/defender-xdr/microsoft-secure-score'},
+         {t:'Secure Score improvement actions',u:'https://learn.microsoft.com/en-us/defender-xdr/microsoft-secure-score-improvement-actions'}
+       ],
+       detect:'Defender portal → Secure Score → History tab. Set a monthly calendar reminder for review. A declining score requires root cause investigation.',
+       note:'Never mark recommendations as resolved via risk acceptance without genuine remediation — this inflates the score without improving security and creates false assurance for leadership reporting.'},
+      {id:'de07',sev:'HIGH',title:'Defender XDR Automatic Attack Disruption Enabled',tags:['Defender XDR','Automation'],
+       desc:'Defender XDR Automatic Attack Disruption uses AI to contain active threats in real time — suspending compromised accounts and isolating devices without waiting for analyst intervention. This is the primary automated defence against BEC and ransomware in Microsoft environments.',
+       risk:'Without automated disruption, attacker dwell time in BEC incidents averages 72 hours. Manual containment cannot match the speed of automated lateral movement. Data is exfiltrated before analysts can respond at human speed.',
+       fix:'Enable Automatic Attack Disruption in Defender XDR settings. Set automated investigation to Full automation for high-confidence threats. Exclude break-glass accounts and service accounts from automated device isolation to prevent unintended disruption.',
+       ps:'# Defender portal (security.microsoft.com):\n# Settings → Microsoft Defender XDR → Automatic attack disruption → Enable\n\n# Check automation level per device group (Defender for Endpoint):\n# Settings → Endpoints → Device groups → select group → Automation level\n# Set to: Full - remediate threats automatically\n\n# Review auto-investigation actions history:\n# Defender portal → Incidents & alerts → Action center → History tab',
+       refs:[
+         {t:'Automatic attack disruption in Defender XDR',u:'https://learn.microsoft.com/en-us/defender-xdr/automatic-attack-disruption'},
+         {t:'Automated investigation and response (AIR)',u:'https://learn.microsoft.com/en-us/defender-xdr/m365d-autoir'}
+       ],
+       detect:'Defender portal → Incidents → filter by Automated investigation status = Completed. Review auto-contained accounts and isolated devices in the Action center weekly.',
+       note:'Requires Microsoft 365 E5 or Defender for Endpoint Plan 2. Devices must be onboarded to Defender for Endpoint for device-level isolation actions to function.'},
+      {id:'de08',sev:'MEDIUM',title:'Insider Risk Management Policies Configured in Purview',tags:['Insider Risk','Purview'],
+       desc:'Purview Insider Risk Management uses ML to detect patterns associated with insider threats — data theft before resignation, policy violations, and sabotage. Without it, internal threat actors operate undetected while the organisation focuses entirely on external threats.',
+       risk:'Data theft by departing employees is one of the most common and highest-impact breach patterns. The 90-day window before a resignation is submitted is when most data exfiltration occurs — and it goes completely undetected without IRM policies.',
+       fix:'Enable IRM in Purview. Start with: (1) Data theft by departing employees policy (requires HR connector for resignation data). (2) Sensitive data leak policy for high-privilege users. Connect Defender for Endpoint for security policy violation detection.',
+       ps:'# Requires: Microsoft 365 E5 Compliance or IRM add-on\n# Purview Compliance Portal → Insider risk management → Policies → Create policy\n\n# Prerequisite: unified audit log must be enabled\nConnect-IPPSSession\nGet-AdminAuditLogConfig | Select UnifiedAuditLogIngestionEnabled\n# Set-AdminAuditLogConfig -UnifiedAuditLogIngestionEnabled $true\n\n# High-priority policy templates:\n# Data theft by departing users (highest ROI)\n# Data leaks by priority users (executives/admins)\n# Security policy violations (requires Defender for Endpoint)',
+       refs:[
+         {t:'Insider risk management in Microsoft Purview',u:'https://learn.microsoft.com/en-us/purview/insider-risk-management'},
+         {t:'Configure insider risk management policies',u:'https://learn.microsoft.com/en-us/purview/insider-risk-management-policies'}
+       ],
+       detect:'Purview → Insider Risk Management → Alerts dashboard. Review weekly. Cases require human investigation — not all alerts represent genuine insider risk.',
+       note:'Consult legal and HR before deployment. Employee privacy obligations vary significantly by jurisdiction — IRM policies must be scoped appropriately and disclosed per your regional requirements.'}]
+  },
+  {
+    id:'endpoint', icon:'💻', title:'Endpoint & Device Management',
+    items:[
+      {id:'ep01',sev:'CRITICAL',title:'Intune Device Compliance Policies Configured and Enforced',tags:['Intune','Compliance','Devices'],
+       desc:'Intune device compliance policies define the minimum security requirements a device must meet to access corporate resources. Without them, Conditional Access "require compliant device" policies have nothing to evaluate against — every device is treated as compliant by default.',
+       risk:'CA policies requiring device compliance only work if compliance policies are actually defined. Without them, any device — unmanaged, unpatched, or compromised — passes the compliance check and receives full access to corporate data.',
+       fix:'Create compliance policies for Windows, macOS, iOS, and Android covering: BitLocker encryption, minimum OS version, Secure Boot, antivirus active and up to date, no jailbreak/root detection. Set grace period to 0 days for corporate devices. Apply to all device groups.',
+       ps:'# Check existing compliance policies:\nConnect-MgGraph -Scopes "DeviceManagementConfiguration.Read.All"\nGet-MgDeviceManagementCompliancePolicy | Select DisplayName, Platforms, ScheduledActionsForRule | Format-Table\n\n# Check compliance state across all devices:\nGet-MgDeviceManagedDevice | \n  Select DeviceName, ComplianceState, OperatingSystem, OsVersion, LastSyncDateTime | \n  Where-Object {$_.ComplianceState -ne "compliant"} | \n  Sort-Object LastSyncDateTime -Descending | Format-Table',
+       refs:[
+         {t:'Create compliance policies in Intune',u:'https://learn.microsoft.com/en-us/mem/intune/protect/create-compliance-policy'},
+         {t:'Device compliance settings for Windows',u:'https://learn.microsoft.com/en-us/mem/intune/protect/compliance-policy-create-windows'}
+       ],
+       detect:'Intune Admin Center → Devices → Compliance → select policy → Device status. Any device showing Non-compliant should be investigated before being granted access.',
+       note:'Compliance policies have no effect until you create a Conditional Access policy requiring compliant device. The two controls must be configured together to enforce device-based access control.'},
+      {id:'ep02',sev:'CRITICAL',title:'Defender for Endpoint Onboarded to All Managed Devices',tags:['Defender','Endpoint','MDE'],
+       desc:'Microsoft Defender for Endpoint (MDE) provides EDR, threat intelligence, and automated investigation on managed devices. Devices not onboarded to MDE have no endpoint detection capability — malware, ransomware, and attacker tools operate undetected.',
+       risk:'Enterprise audits consistently find 20–40% of devices not enrolled in Defender for Endpoint. Unonboarded devices are completely blind spots — no alerts, no threat hunting visibility, no automated response. One unprotected device is enough to anchor a ransomware campaign.',
+       fix:'Deploy MDE via Intune configuration profile (Settings Catalog → Microsoft Defender Antivirus). Onboard all Windows, macOS, iOS, and Android devices. Verify onboarding in the Defender portal. Set a compliance policy that marks devices without MDE as non-compliant.',
+       ps:'# Check onboarding status across devices:\nConnect-MgGraph -Scopes "DeviceManagementManagedDevice.Read.All"\nGet-MgDeviceManagedDevice | \n  Select-Object DeviceName, OperatingSystem, IsEncrypted, \n    @{N="DefenderState";E={$_.ConfigurationManagerClientEnabledFeatures}} | \n  Format-Table\n\n# Defender portal: Security.microsoft.com\n# Assets → Devices → filter by Onboarding status = Not onboarded\n# These devices are completely unprotected',
+       refs:[
+         {t:'Onboard devices to Defender for Endpoint',u:'https://learn.microsoft.com/en-us/defender-endpoint/onboarding'},
+         {t:'Deploy MDE via Intune',u:'https://learn.microsoft.com/en-us/mem/intune/protect/advanced-threat-protection-configure'}
+       ],
+       detect:'Defender portal → Assets → Devices → Onboarding status column. Filter by Not onboarded or Inactive (no data in 7+ days).',
+       note:'Requires Defender for Endpoint Plan 1 (MDE P1 included in M365 Business Premium) or Plan 2 (included in M365 E5). MDE P2 required for EDR, threat hunting, and automated investigation.'},
+      {id:'ep03',sev:'HIGH',title:'Attack Surface Reduction (ASR) Rules Enabled',tags:['Defender','ASR','Endpoint'],
+       desc:'Attack Surface Reduction rules are Defender for Endpoint policies that block specific attacker techniques — macro execution from Office documents, credential theft from LSASS, process injection from Office apps, and abuse of scripting engines. They are the most effective pre-breach controls available on Windows endpoints.',
+       risk:'Without ASR rules, standard attacker techniques work unimpeded: Office macros execute malware, PowerShell downloads payloads, LSASS is dumped for credential theft. ASR rules block these at the operating system level before any signature-based detection fires.',
+       fix:'Enable ASR rules via Intune (Endpoint Security → Attack Surface Reduction policy). Start in Audit mode for all rules for 2 weeks, review impact, then enforce. Priority rules to enable first: Block credential stealing from LSASS, Block Office macros from child processes, Block executable content from email.',
+       ps:'# Check ASR rules status via PowerShell on endpoint:\nGet-MpPreference | Select-Object AttackSurfaceReductionRules_Ids, AttackSurfaceReductionRules_Actions\n\n# ASR rule actions: 0=Off, 1=Block, 2=Audit, 6=Warn\n# Deploy via Intune: Endpoint Security → Attack Surface Reduction\n\n# Key rules to enable (Block mode):\n# 9e6c4e1f - Block credential stealing from LSASS\n# d4f940ab - Block all Office apps from child processes\n# 3b576869 - Block Office apps from creating executable content\n# be9ba2d9 - Block executable content from email',
+       refs:[
+         {t:'Attack surface reduction rules overview',u:'https://learn.microsoft.com/en-us/defender-endpoint/attack-surface-reduction'},
+         {t:'ASR rules deployment guide',u:'https://learn.microsoft.com/en-us/defender-endpoint/attack-surface-reduction-rules-deployment'}
+       ],
+       detect:'Defender portal → Reports → Attack surface reduction. Review audit events before switching rules to Block mode. High-volume audit events indicate the rule would impact legitimate software.',
+       note:'Some ASR rules can impact legitimate software if enabled in Block mode without auditing first. Always audit for 2 weeks minimum before enforcing. Start with email attachment and credential-theft rules — lowest false positive rate.'},
+      {id:'ep04',sev:'HIGH',title:'BitLocker Encryption Enforced on All Windows Devices',tags:['Intune','Encryption','Devices'],
+       desc:'BitLocker full-disk encryption protects data on Windows devices if they are lost or stolen. Without BitLocker, a lost laptop provides an attacker with direct access to all files, cached credentials, browser sessions, and locally stored data — regardless of Windows login password.',
+       risk:'A lost or stolen unencrypted device exposes everything on disk. Cached Entra ID tokens, browser-saved passwords, locally synced OneDrive files, and locally cached email are all immediately accessible. No MFA, no CA policy, no network control applies to offline disk access.',
+       fix:'Configure BitLocker via Intune: Device configuration → Endpoint protection → Windows Encryption. Require BitLocker, set XTS-AES 256 for OS and fixed drives. Store recovery keys in Entra ID automatically. Create a compliance policy that marks devices without BitLocker as non-compliant.',
+       ps:'# Check BitLocker status across managed devices:\nConnect-MgGraph -Scopes "DeviceManagementManagedDevice.Read.All"\nGet-MgDeviceManagedDevice | \n  Where-Object {$_.OperatingSystem -eq "Windows"} | \n  Select-Object DeviceName, IsEncrypted, UserDisplayName | \n  Where-Object {$_.IsEncrypted -eq $false} | Format-Table\n\n# Check BitLocker recovery keys stored in Entra ID:\n# Entra ID → Devices → [device] → Recovery keys\n# Missing recovery key = BitLocker not managed by Intune',
+       refs:[
+         {t:'BitLocker policy settings in Intune',u:'https://learn.microsoft.com/en-us/mem/intune/protect/encrypt-devices'},
+         {t:'BitLocker recovery key management',u:'https://learn.microsoft.com/en-us/mem/intune/protect/encrypt-devices#view-details-for-recovery-keys'}
+       ],
+       detect:'Intune Admin Center → Devices → Monitor → Encryption report. Filter by Encryption status = Not encrypted. Prioritise devices assigned to high-privilege users.',
+       note:''},
+      {id:'ep05',sev:'HIGH',title:'Device Offboarding Process — Remote Wipe on Employee Departure',tags:['Intune','Offboarding','Devices'],
+       desc:'Without a formal device offboarding process, devices belonging to departed employees retain access to corporate data indefinitely. Intune can remotely wipe or retire devices, revoke certificates, and remove corporate apps — but only if the process is documented and consistently followed.',
+       risk:'A former employee retains physical access to a device containing cached corporate credentials, locally synced files, and email. Without remote wipe, corporate data persists on the device. A disgruntled employee can use it for data theft or access long after their account is disabled.',
+       fix:'Define and document an offboarding checklist: (1) Disable Entra ID account, (2) Revoke all sessions, (3) Remote wipe or retire Intune-managed device, (4) Remove from all groups, (5) Transfer mailbox and OneDrive to manager. Automate via Power Automate triggered by HR system departure event.',
+       ps:'# Remote wipe a device via Intune:\nConnect-MgGraph -Scopes "DeviceManagementManagedDevice.ReadWrite.All"\n$device = Get-MgDeviceManagedDevice | Where-Object {$_.DeviceName -eq "DEVICE-NAME"}\nClear-MgDeviceManagedDeviceBypassActivationLock -ManagedDeviceId $device.Id\n# OR retire (removes corp data, keeps personal data for BYOD):\nInvoke-MgRetireManagedDevice -ManagedDeviceId $device.Id\n\n# Check devices still assigned to disabled accounts:\nGet-MgDeviceManagedDevice | \n  Where-Object {$_.UserDisplayName -ne $null} | \n  Select-Object DeviceName, UserDisplayName, LastSyncDateTime | Format-Table',
+       refs:[
+         {t:'Retire or wipe devices in Intune',u:'https://learn.microsoft.com/en-us/mem/intune/remote-actions/devices-wipe'},
+         {t:'Employee offboarding with Microsoft 365',u:'https://learn.microsoft.com/en-us/microsoft-365/admin/add-users/remove-former-employee'}
+       ],
+       detect:'Intune Admin Center → Devices → All devices → filter by last sync older than 30 days. Cross-reference with disabled Entra ID accounts — devices still enrolled for disabled users need immediate retirement.',
+       note:'For BYOD (personal devices), use Retire rather than Wipe — this removes only corporate apps and data, leaving personal content intact. Wipe factory resets the entire device.'},
+      {id:'ep06',sev:'MEDIUM',title:'Mobile Application Management (MAM) Policies for BYOD Devices',tags:['Intune','MAM','BYOD'],
+       desc:'Not all users enrol their personal devices into Intune MDM. Mobile Application Management (MAM) without enrolment allows you to protect corporate data within managed apps (Outlook, Teams, OneDrive) on personal devices — without requiring full device management.',
+       risk:'Without MAM, corporate email accessed on a personal phone can be copied to any personal app, shared to personal cloud storage, or remain on the device indefinitely after the employee leaves. BYOD devices accessing corporate data with no controls are a common breach vector.',
+       fix:'Deploy Intune App Protection Policies (APP) for iOS and Android: require PIN to access managed apps, block copy/paste to unmanaged apps, require device health check, wipe corporate data on unenrolled device after 90 days of inactivity or on demand.',
+       ps:'# Check App Protection Policy status:\nConnect-MgGraph -Scopes "DeviceManagementApps.Read.All"\nGet-MgDeviceAppManagementManagedAppPolicy | \n  Select DisplayName, PlatformType, DeployedAppCount | Format-Table\n\n# Check users without app protection applied:\n# Intune Admin Center → Apps → App protection policies\n# Select policy → User status → filter Not protected\n# These users are accessing corporate apps with no data protection',
+       refs:[
+         {t:'App protection policies overview',u:'https://learn.microsoft.com/en-us/mem/intune/apps/app-protection-policy'},
+         {t:'Create iOS App Protection Policy',u:'https://learn.microsoft.com/en-us/mem/intune/apps/app-protection-policies-configure-ios'}
+       ],
+       detect:'Intune Admin Center → Apps → Monitor → App protection status. Filter by Policy applied = No to identify unprotected users accessing corporate apps from personal devices.',
+       note:'MAM policies apply at the app level, not the device level. They work even when users refuse MDM enrolment — making them the right control for BYOD scenarios where full device management is not appropriate.'}
+    ]
+  },
+  {
+    id:'auditlog', icon:'📋', title:'Audit Logging & Monitoring',
+    items:[
+      {id:'al01',sev:'CRITICAL',title:'Unified Audit Log Enabled with Extended Retention',tags:['Audit','Logging','Forensics'],
+       desc:'The Unified Audit Log (UAL) captures all user and admin activity across the Microsoft 365 tenant — sign-ins, file access, admin changes, mail operations, and more. Without it, forensic investigation of any security incident is effectively impossible.',
+       risk:'Without UAL, you have no record of what happened during a breach. You cannot answer: who accessed this mailbox, when was this file downloaded, what admin changes were made, or which inbox rules were created. Incident response requires evidence — no log means no investigation.',
+       fix:'Verify UAL is enabled in Purview. Extend retention to 1 year minimum (requires Microsoft 365 E3 or higher) or 10 years (requires audit premium add-on for regulated industries). Feed logs to Microsoft Sentinel or a SIEM for continuous monitoring and alerting.',
+       ps:'# Verify Unified Audit Log is enabled:\nConnect-IPPSSession\nGet-AdminAuditLogConfig | Select UnifiedAuditLogIngestionEnabled\n\n# Enable if disabled:\nSet-AdminAuditLogConfig -UnifiedAuditLogIngestionEnabled $true\n\n# Check audit log retention period:\nGet-OrganizationConfig | Select AuditDisabled\n\n# Search audit log (example: admin role changes last 7 days):\nSearch-UnifiedAuditLog -StartDate (Get-Date).AddDays(-7) -EndDate (Get-Date) \n  -RecordType RoleAdministration | Select CreationDate, UserIds, Operations | Format-Table',
+       refs:[
+         {t:'Turn on auditing in Microsoft 365',u:'https://learn.microsoft.com/en-us/purview/audit-log-enable-disable'},
+         {t:'Audit log retention policies',u:'https://learn.microsoft.com/en-us/purview/audit-log-retention-policies'}
+       ],
+       detect:'Purview Compliance Portal → Audit → check search returns results. If search returns no results for a known admin action taken in the last 24 hours, UAL may be disabled or misconfigured.',
+       note:'Microsoft extended default audit log retention from 90 days to 180 days for E3/E5 licences as of early 2026. However, 180 days is still insufficient for breach detection — attackers often have months of dwell time before discovery.'},
+      {id:'al02',sev:'CRITICAL',title:'Microsoft Sentinel Connected and M365 Data Sources Ingesting',tags:['Sentinel','SIEM','Monitoring'],
+       desc:'Microsoft Sentinel is the cloud-native SIEM/SOAR built for Microsoft 365. Alerts without a SIEM mean nobody is watching. Defender and Purview generate accurate, actionable alerts — but alerts sitting unread in a portal provide zero security value.',
+       risk:'Without a SIEM, security alerts generated by Defender, Entra Identity Protection, and Purview require someone to manually check each portal daily. This does not happen in practice. Alerts go unread, incidents go undetected, and breaches persist for months.',
+       fix:'Connect Microsoft Sentinel to your M365 tenant. Enable data connectors for: Microsoft Entra ID, Microsoft 365 (Exchange, SharePoint, Teams), Defender XDR, Microsoft Purview DLP, Azure Activity. Enable the Microsoft 365 solution from Content Hub. Assign alert ownership to named team members.',
+       ps:'# Connect M365 data sources to Sentinel via portal:\n# Sentinel → Data connectors:\n# ✓ Microsoft Entra ID (sign-in logs, audit logs)\n# ✓ Microsoft 365 Defender (unified incidents)\n# ✓ Office 365 (Exchange, SharePoint, Teams activity)\n# ✓ Microsoft Purview DLP\n# ✓ Azure Activity\n\n# Verify data is ingesting (KQL):\nOfficeActivity\n| where TimeGenerated > ago(1h)\n| summarize count() by RecordType\n| order by count_ desc\n// Zero results = connector not ingesting',
+       refs:[
+         {t:'Connect Microsoft 365 data to Sentinel',u:'https://learn.microsoft.com/en-us/azure/sentinel/connect-microsoft-365-defender'},
+         {t:'Microsoft 365 solution for Sentinel',u:'https://learn.microsoft.com/en-us/azure/sentinel/sentinel-solutions-catalog'}
+       ],
+       detect:'Sentinel → Data connectors → check Last log received column. Any connector showing No data in last 24 hours requires immediate investigation.',
+       note:'Alerts without owners are just noise. After connecting Sentinel, assign named owners for the top alert scenarios: compromised account, malware detection, DLP violation, mass file deletion, impossible travel.'},
+      {id:'al03',sev:'HIGH',title:'Alert Policies Configured with Named Owners and Response Workflows',tags:['Alerts','SOC','Monitoring'],
+       desc:'Microsoft 365 and Defender generate accurate, real-time security alerts. The most common failure mode in enterprise security is not missing alerts — it is having alerts with no owner, no escalation path, and no documented response. Alerts that sit unreviewed provide zero security value.',
+       risk:'Without alert ownership and response workflows, a Defender alert about active credential stuffing or a DLP alert about bulk data exfiltration sits unread in the portal. Mean time to detect (MTTD) becomes infinite — the alert is there, nobody acts on it.',
+       fix:'Define alert owners for each alert category. Document minimum response SLAs: CRITICAL alerts = 15 minutes, HIGH = 1 hour, MEDIUM = 4 hours. Create runbooks for the top 5 alert types: compromised account, malware on endpoint, DLP violation, mass file download, admin role change.',
+       ps:'# Review existing alert policies in Purview:\nConnect-IPPSSession\nGet-ProtectionAlert | Select Name, Severity, AlertBy, NotifyUser | Format-Table\n\n# Check alert volume and status in Defender portal:\n# security.microsoft.com → Incidents & alerts → Alerts\n# Filter by Status = New + older than 24 hours\n# Any New alert older than 24 hours = no owner reviewing\n\n# Create custom alert policy:\nNew-ProtectionAlert -Name "Mass File Download" -Category DataLossPrevention \n  -Severity High -NotifyUser "soc@domain.com"',
+       refs:[
+         {t:'Alert policies in Microsoft 365',u:'https://learn.microsoft.com/en-us/purview/alert-policies'},
+         {t:'Manage alerts in Microsoft Defender',u:'https://learn.microsoft.com/en-us/defender-xdr/investigate-alerts'}
+       ],
+       detect:'Defender portal → Incidents & alerts → filter Status = New, Age > 24 hours. Any alert in this filter = no active SOC review process in place.',
+       note:''},
+      {id:'al04',sev:'HIGH',title:'Admin Activity Alerts Configured for Sensitive Operations',tags:['Audit','Admin','Alerts'],
+       desc:'Critical administrative actions — Global Admin role assignment, CA policy changes, MFA method registration, new app consent grants — should trigger immediate alerts. These are the operations attackers perform after gaining initial access to establish persistence.',
+       risk:'An attacker who compromises a Global Admin silently creates a new admin account, adds themselves to CA exclusion groups, and disables audit logging. Without real-time alerts on these operations, the changes go undetected until the next manual review — which may be weeks away.',
+       fix:'Create alert rules (Sentinel analytics rules or Purview alert policies) for: Global Admin role assignment, Conditional Access policy creation/modification, MFA method registration for admin accounts, new OAuth app consent grants, mass mailbox rule creation.',
+       ps:'// Sentinel KQL: Alert on Global Admin role assignment\nAuditLogs\n| where OperationName == "Add member to role"\n| where TargetResources[0].modifiedProperties has "Global Administrator"\n| project TimeGenerated, InitiatedBy=InitiatedBy.user.userPrincipalName,\n    Target=TargetResources[0].userPrincipalName\n| extend AlertSeverity = "High"\n\n// Alert on CA policy changes\nAuditLogs\n| where OperationName in ("Add conditional access policy",\n    "Update conditional access policy","Delete conditional access policy")\n| project TimeGenerated, OperationName, InitiatedBy=InitiatedBy.user.userPrincipalName',
+       refs:[
+         {t:'Sentinel analytics rules',u:'https://learn.microsoft.com/en-us/azure/sentinel/detect-threats-built-in'},
+         {t:'Purview alert policies for admin activity',u:'https://learn.microsoft.com/en-us/purview/alert-policies'}
+       ],
+       detect:'Entra ID Audit Logs → Category: RoleManagement. Any role assignment outside your PIM workflow = immediate investigation required.',
+       note:'Enable the Microsoft Sentinel UEBA (User Entity Behavior Analytics) feature for baseline anomaly detection on admin accounts. This catches unusual patterns that static alert rules miss.'},
+      {id:'al05',sev:'HIGH',title:'Entra ID Sign-in Logs Retained and Anomalous Sign-ins Alerted',tags:['Audit','Sign-in Logs','Identity Protection'],
+       desc:'Entra ID sign-in logs record every authentication attempt — successful and failed. Without monitoring and retention, impossible travel, credential stuffing, and password spray attacks go undetected until after accounts are compromised.',
+       risk:'Password spray attacks use low-volume attempts across many accounts specifically to avoid lockout thresholds. Without sign-in log analysis, these attacks succeed and are invisible until the compromised account is used for mailbox access or data exfiltration.',
+       fix:'Stream Entra ID sign-in logs to Sentinel (Log Analytics workspace). Enable Identity Protection (P2) for automated risk detection. Create analytics rules for: multiple failed sign-ins across many accounts, successful sign-in from TOR/anonymous IP, impossible travel events, first-time country sign-in.',
+       ps:'// KQL: Detect password spray pattern\nSigninLogs\n| where TimeGenerated > ago(1h)\n| where ResultType != "0"  // failed sign-ins\n| summarize FailedAttempts=count(), DistinctUsers=dcount(UserPrincipalName)\n    by IPAddress, bin(TimeGenerated, 10m)\n| where DistinctUsers > 10 and FailedAttempts > 20\n// High distinct users from single IP = spray pattern\n\n// KQL: First-time country sign-in\nSigninLogs\n| where TimeGenerated > ago(1d)\n| where ResultType == "0"  // successful\n| summarize FirstSeen=min(TimeGenerated) by UserPrincipalName, Location\n| where FirstSeen > ago(1d)',
+       refs:[
+         {t:'Stream Entra ID logs to Sentinel',u:'https://learn.microsoft.com/en-us/entra/identity/monitoring-health/howto-stream-logs-to-event-hub'},
+         {t:'Entra ID Identity Protection risk detections',u:'https://learn.microsoft.com/en-us/entra/id-protection/concept-identity-protection-risks'}
+       ],
+       detect:'Sentinel → Analytics → review Entra ID-related rule templates. Enable: Sign-in from TOR IP, Impossible travel, Password spray attack, Mass failed sign-ins.',
+       note:'Entra ID sign-in logs are retained for only 30 days by default in the portal. Streaming to a Log Analytics workspace is required for longer retention and SIEM-based detection.'}
+    ]
+  }
+];
+
+/* ════════════════════════════════════════
+   STATE
+════════════════════════════════════════ */
+var state = {}; // id → 'pass'|'fail'|'na'|null
+var expanded = {}; // id → bool
+
+CATEGORIES.forEach(function(cat){
+  cat.items.forEach(function(item){ state[item.id] = null; });
+});
+
+// Load from localStorage
+try {
+  var saved = JSON.parse(localStorage.getItem('m365_checklist_v2'));
+  if(saved) Object.assign(state, saved);
+} catch(e){}
+
+function saveState(){
+  try { localStorage.setItem('m365_checklist_v2', JSON.stringify(state)); } catch(e){}
+}
+
+/* ════════════════════════════════════════
+   RENDER
+════════════════════════════════════════ */
+var SEV_CLS = {CRITICAL:'sev-c',HIGH:'sev-h',MEDIUM:'sev-m',LOW:'sev-l'};
+
+function buildPsBlock(ps, id){
+  if(!ps) return '';
+  var lines = ps.split('\n').map(function(line){
+    line = line.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    if(line.startsWith('#')) return '<span class="ps-comment">'+line+'</span>';
+    if(line.startsWith('Connect-') || line.startsWith('Get-') || line.startsWith('Set-') || line.startsWith('Install-') || line.startsWith('Search-')){
+      return '<span class="ps-ps">PS&gt;</span> <span class="ps-cmd">'+line+'</span>';
+    }
+    return '<span class="ps-cmd">'+line+'</span>';
+  });
+  return '<div class="ps-block"><button class="ps-copy" data-ps="'+id+'">Copy</button>'+lines.join('<br>')+'</div>';
+}
+
+function buildItem(item){
+  var st = state[item.id];
+  var stCls = st ? 'status-'+st : '';
+  var refsHtml = item.refs.map(function(r){
+    return '<a class="ref-link" href="https://learn.microsoft.com/en-us/search/?terms='+encodeURIComponent(r.t)+'" target="_blank" rel="noopener">'+r.t+'</a>';
+  }).join('');
+
+  return '<div class="check-item '+stCls+'" id="ci-'+item.id+'" data-id="'+item.id+'" data-sev="'+item.sev+'" data-cat="'+item.id.substring(0,2)+'">'
+    +'<div class="ci-main">'
+    +'<div class="ci-controls">'
+    +'<button class="ci-btn pass'+(st==='pass'?' active':'')+'" data-action="pass" data-id="'+item.id+'" title="Pass">&#10003;</button>'
+    +'<button class="ci-btn fail'+(st==='fail'?' active':'')+'" data-action="fail" data-id="'+item.id+'" title="Fail">&#10005;</button>'
+    +'<button class="ci-btn na'+(st==='na'?' active':'')+'" data-action="na" data-id="'+item.id+'" title="N/A">—</button>'
+    +'</div>'
+    +'<div class="ci-content">'
+    +'<div class="ci-top">'
+    +'<span class="ci-sev '+SEV_CLS[item.sev]+'">'+item.sev+'</span>'
+    +'<span class="ci-title">'+item.title+'</span>'
+    +'<div class="ci-tags">'+item.tags.map(function(t){ return '<span class="ci-tag">'+t+'</span>'; }).join('')+'</div>'
+    +'</div>'
+    +'<div class="ci-desc">'+item.desc+'</div>'
+    +'</div>'
+    +'</div>'
+
+    +'<div class="ci-expand" id="exp-'+item.id+'">'
+    +'<div class="ci-expand-inner">'
+    +'<div class="expand-col">'
+    +'<h4 class="risk-hd">Risk if Not Addressed</h4>'
+    +'<p>'+item.risk+'</p>'
+    +'</div>'
+    +'<div class="expand-col">'
+    +'<h4 class="fix-hd">How to Fix</h4>'
+    +'<p>'+item.fix+'</p>'
+    +(item.ps ? buildPsBlock(item.ps, item.id) : '')
+    +'</div>'
+    +'<div class="expand-col">'
+    +'<h4 class="ref-hd">Microsoft Documentation</h4>'
+    +'<div class="ref-links">'+refsHtml+'</div>'
+    +'</div>'
+    +'<div class="expand-col">'
+    +'<h4 class="detect-hd">Detection Guidance</h4>'
+    +'<p>'+item.detect+'</p>'
+    +'</div>'
+    +'</div>'
+    +(item.note ? '<div class="ci-note"><div class="ci-note-inner"><span class="ci-note-icon">&#9432;</span><span class="ci-note-text">'+item.note+'</span></div></div>' : '')
+    +'</div>'
+    +'</div>';
+}
+
+function buildCategory(cat){
+  var total = cat.items.length;
+  var done  = cat.items.filter(function(i){ return state[i.id]==='pass'; }).length;
+  var pct   = total ? Math.round(done/total*100) : 0;
+
+  return '<div class="cat-section" data-catid="'+cat.id+'">'
+    +'<div class="cat-header">'
+    +'<div class="cat-icon">'+cat.icon+'</div>'
+    +'<div class="cat-title">'+cat.title+'</div>'
+    +'<div class="cat-count">'+done+'/'+total+' passed</div>'
+    +'<div class="cat-progress"><div class="cat-progress-fill" id="cp-'+cat.id+'" style="width:'+pct+'%"></div></div>'
+    +'<div class="cat-toggle" id="ct-'+cat.id+'">▼</div>'
+    +'</div>'
+    +'<div class="cat-items" id="cat-items-'+cat.id+'">'+cat.items.map(buildItem).join('')+'</div>'
+    +'</div>';
+}
+
+function render(){
+  var root = document.getElementById('checklistRoot');
+  root.innerHTML = CATEGORIES.map(buildCategory).join('');
+  attachEvents();
+  updateStats();
+}
+
+/* ════════════════════════════════════════
+   EVENTS
+════════════════════════════════════════ */
+function attachEvents(){
+  // Status buttons
+  document.querySelectorAll('.ci-btn').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      var id     = btn.dataset.id;
+      var action = btn.dataset.action;
+      state[id]  = (state[id]===action) ? null : action;
+      saveState();
+      updateItem(id);
+      updateStats();
+    });
+  });
+
+  // Expand on row click
+  document.querySelectorAll('.ci-main').forEach(function(el){
+    el.addEventListener('click', function(){
+      var id = el.closest('.check-item').dataset.id;
+      expanded[id] = !expanded[id];
+      var expEl = document.getElementById('exp-'+id);
+      if(expEl) expEl.classList.toggle('open', expanded[id]);
+    });
+  });
+
+  // PS copy buttons
+  document.querySelectorAll('.ps-copy').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      var id = btn.dataset.ps;
+      var block = btn.closest('.ps-block');
+      var text = block ? block.innerText.replace('Copy','').trim() : '';
+      navigator.clipboard.writeText(text).then(function(){
+        btn.textContent='Copied!'; btn.style.color='var(--green)';
+        setTimeout(function(){ btn.textContent='Copy'; btn.style.color=''; },2000);
+      });
+    });
+  });
+
+  // Category collapse
+  document.querySelectorAll('.cat-header').forEach(function(hd){
+    hd.addEventListener('click', function(){
+      var catId = hd.closest('.cat-section').dataset.catid;
+      var items = document.getElementById('cat-items-'+catId);
+      var tog   = document.getElementById('ct-'+catId);
+      if(items){
+        items.classList.toggle('collapsed');
+        if(tog) tog.textContent = items.classList.contains('collapsed') ? '▶' : '▼';
+      }
+    });
+  });
+}
+
+function updateItem(id){
+  var el = document.getElementById('ci-'+id);
+  if(!el) return;
+  var st = state[id];
+  el.className = 'check-item'+(st?' status-'+st:'');
+  el.querySelectorAll('.ci-btn').forEach(function(btn){
+    btn.classList.toggle('active', btn.dataset.action===st);
+  });
+}
+
+/* ════════════════════════════════════════
+   STATS & SCORE
+════════════════════════════════════════ */
+function updateStats(){
+  var allItems = [];
+  CATEGORIES.forEach(function(c){ c.items.forEach(function(i){ allItems.push(i); }); });
+  var total   = allItems.length;
+  var passed  = allItems.filter(function(i){ return state[i.id]==='pass'; }).length;
+  var failed  = allItems.filter(function(i){ return state[i.id]==='fail'; }).length;
+  var na      = allItems.filter(function(i){ return state[i.id]==='na'; }).length;
+  var pending = total - passed - failed - na;
+  var done    = passed + failed + na;
+
+  document.getElementById('stTotal').textContent  = total;
+  document.getElementById('stPass').textContent   = passed;
+  document.getElementById('stFail').textContent   = failed;
+  document.getElementById('stPending').textContent= pending;
+  document.getElementById('stNA').textContent     = na;
+  document.getElementById('progressDone').textContent = done;
+  document.getElementById('progressTotal').textContent= total;
+
+  // Score — weighted by severity, only for assessed items
+  var weights = {CRITICAL:4, HIGH:3, MEDIUM:2, LOW:1};
+  var maxScore = 0, actualScore = 0;
+  allItems.forEach(function(item){
+    var w = weights[item.sev]||1;
+    if(state[item.id]==='pass' || state[item.id]==='fail'){
+      maxScore += w;
+      if(state[item.id]==='pass') actualScore += w;
+    }
+  });
+
+  var pct = maxScore ? Math.round(actualScore/maxScore*100) : 0;
+  var scoreEl  = document.getElementById('scorePct');
+  var gradeEl  = document.getElementById('scoreGrade');
+  var circleEl = document.getElementById('scoreCircle');
+  var circumference = 289;
+
+  if(maxScore === 0){
+    scoreEl.textContent = '—';
+    scoreEl.style.color = 'var(--muted)';
+    gradeEl.textContent = 'Not started';
+    gradeEl.style.color = 'var(--muted)';
+    circleEl.style.strokeDashoffset = circumference;
+    return;
+  }
+
+  scoreEl.textContent = pct;
+  circleEl.style.strokeDashoffset = circumference - (pct/100)*circumference;
+
+  var grade, col;
+  if(pct>=90){grade='Excellent';col='var(--green)';}
+  else if(pct>=75){grade='Good';col='var(--teal)';}
+  else if(pct>=60){grade='Fair';col='var(--yellow)';}
+  else if(pct>=40){grade='At Risk';col='var(--orange)';}
+  else{grade='Critical';col='var(--red)';}
+
+  scoreEl.style.color = col;
+  gradeEl.textContent = grade;
+  gradeEl.style.color = col;
+  circleEl.style.stroke = col;
+
+  // Update category progress bars
+  CATEGORIES.forEach(function(cat){
+    var catPassed = cat.items.filter(function(i){ return state[i.id]==='pass'; }).length;
+    var pct2 = Math.round(catPassed/cat.items.length*100);
+    var bar = document.getElementById('cp-'+cat.id);
+    if(bar) bar.style.width = pct2+'%';
+    var countEl = document.querySelector('[data-catid="'+cat.id+'"] .cat-count');
+    if(countEl) countEl.textContent = catPassed+'/'+cat.items.length+' passed';
+  });
+}
+
+/* ════════════════════════════════════════
+   FILTER
+════════════════════════════════════════ */
+document.querySelectorAll('.filter-btn').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    applyFilter(btn.dataset.filter);
+  });
+});
+
+function applyFilter(f){
+  document.querySelectorAll('.check-item').forEach(function(el){
+    var id  = el.dataset.id;
+    var sev = el.dataset.sev;
+    var st  = state[id];
+    var show = true;
+    if(f==='all') show=true;
+    else if(f==='CRITICAL'||f==='HIGH'||f==='MEDIUM'||f==='LOW') show=(sev===f);
+    else if(f==='fail')    show=(st==='fail');
+    else if(f==='pass')    show=(st==='pass');
+    else if(f==='pending') show=(!st);
+    else if(['identity','exchange','sharepoint','teams','powerplatform','defender'].indexOf(f)>=0){
+      var cat = el.closest('.cat-section');
+      show = cat && cat.dataset.catid===f;
+    }
+    el.style.display = show ? '' : 'none';
+  });
+
+  // Hide empty category sections
+  document.querySelectorAll('.cat-section').forEach(function(sec){
+    var visible = Array.from(sec.querySelectorAll('.check-item')).some(function(el){ return el.style.display!=='none'; });
+    sec.style.display = visible ? '' : 'none';
+  });
+}
+
+/* ════════════════════════════════════════
+   RESET
+════════════════════════════════════════ */
+document.getElementById('resetBtn').addEventListener('click', function(){
+  if(!confirm('Reset all checks? This cannot be undone.')) return;
+  CATEGORIES.forEach(function(c){ c.items.forEach(function(i){ state[i.id]=null; }); });
+  saveState();
+  document.querySelectorAll('.check-item').forEach(function(el){
+    el.className='check-item';
+    el.querySelectorAll('.ci-btn').forEach(function(b){ b.classList.remove('active'); });
+  });
+  updateStats();
+  applyFilter('all');
+});
+
+/* ════════════════════════════════════════
+   EXPORT REPORT
+════════════════════════════════════════ */
+document.getElementById('exportBtn').addEventListener('click', function(){ showReport(); });
+
+function showReport(){
+  var allItems=[];
+  CATEGORIES.forEach(function(c){c.items.forEach(function(i){allItems.push(Object.assign({cat:c.title,catId:c.id,catIcon:c.icon},i));});});
+  var failed =allItems.filter(function(i){return state[i.id]==='fail';});
+  var passed =allItems.filter(function(i){return state[i.id]==='pass';});
+  var pending=allItems.filter(function(i){return !state[i.id];});
+  var na     =allItems.filter(function(i){return state[i.id]==='na';});
+
+  var weights={CRITICAL:4,HIGH:3,MEDIUM:2,LOW:1};
+  var maxScore=0,actScore=0;
+  allItems.forEach(function(i){
+    var w=weights[i.sev]||1;
+    if(state[i.id]==='pass'||state[i.id]==='fail'){maxScore+=w;if(state[i.id]==='pass')actScore+=w;}
+  });
+  var pct=maxScore?Math.round(actScore/maxScore*100):0;
+
+  var catScores=CATEGORIES.map(function(c){
+    var cMax=0,cAct=0,cFail=0,cPass=0,cPend=0;
+    c.items.forEach(function(i){
+      var w=weights[i.sev]||1;
+      if(state[i.id]==='pass'){cMax+=w;cAct+=w;cPass++;}
+      else if(state[i.id]==='fail'){cMax+=w;cFail++;}
+      else if(!state[i.id]){cPend++;}
+    });
+    return{id:c.id,icon:c.icon,title:c.title,pct:cMax?Math.round(cAct/cMax*100):null,
+           pass:cPass,fail:cFail,pend:cPend,total:c.items.length};
+  });
+
+  var grade='';var gCol='#666';var gHex='#666';
+  if(maxScore===0){grade='Not Assessed';}
+  else if(pct>=90){grade='Excellent';gCol='var(--green)';gHex='#00c853';}
+  else if(pct>=75){grade='Good';gCol='var(--teal)';gHex='#00bcd4';}
+  else if(pct>=60){grade='Fair';gCol='var(--yellow)';gHex='#f9a825';}
+  else if(pct>=40){grade='At Risk';gCol='var(--orange)';gHex='#e65100';}
+  else{grade='Critical Risk';gCol='var(--red)';gHex='#c62828';}
+
+  var critFails=allItems.filter(function(i){return state[i.id]==='fail'&&i.sev==='CRITICAL';}).length;
+  var highFails=allItems.filter(function(i){return state[i.id]==='fail'&&i.sev==='HIGH';}).length;
+  var SEV_CLS={CRITICAL:'sev-c',HIGH:'sev-h',MEDIUM:'sev-m',LOW:'sev-l'};
+
+  /* ── SVG Radar (web modal version) ── */
+  function buildRadar(scores,size,bg){
+    var N=scores.length,cx=size/2,cy=size/2,R=size*0.37,innerR=size*0.07;
+    var angleStep=2*Math.PI/N;
+    var rings=[0.25,0.5,0.75,1.0];
+    var ringC=bg?['rgba(0,0,0,.04)','rgba(0,0,0,.06)','rgba(0,0,0,.08)','rgba(0,0,0,.1)']:
+                 ['rgba(255,255,255,.03)','rgba(255,255,255,.04)','rgba(255,255,255,.05)','rgba(255,255,255,.06)'];
+    var axisC=bg?'rgba(0,0,0,.1)':'rgba(255,255,255,.08)';
+    var lblC=bg?'#555':'rgba(138,159,181,.85)';
+    var textC=bg?'#111':'#dde6f0';
+    var mutedC=bg?'#888':'#4d6070';
+    var axes=[];
+    for(var i=0;i<N;i++){var a=i*angleStep-Math.PI/2;axes.push({x:cx+R*Math.cos(a),y:cy+R*Math.sin(a),angle:a});}
+    var ringSvg='';
+    rings.forEach(function(r,ri){
+      var pts=axes.map(function(ax){return (cx+(innerR+(R-innerR)*r)*Math.cos(ax.angle))+','+(cy+(innerR+(R-innerR)*r)*Math.sin(ax.angle));}).join(' ');
+      ringSvg+='<polygon points="'+pts+'" fill="'+ringC[ri]+'" stroke="'+axisC+'" stroke-width="0.5"/>';
+    });
+    var axisSvg=axes.map(function(ax){return '<line x1="'+cx+'" y1="'+cy+'" x2="'+ax.x+'" y2="'+ax.y+'" stroke="'+axisC+'" stroke-width="0.5"/>';}).join('');
+    var dataPts=scores.map(function(s,i){
+      var v=s.pct!==null?(s.pct/100):0;
+      var r2=innerR+(R-innerR)*v;
+      var a=i*angleStep-Math.PI/2;
+      return (cx+r2*Math.cos(a))+','+(cy+r2*Math.sin(a));
+    }).join(' ');
+    function scoreCol(p){if(p===null)return bg?'#ccc':'rgba(74,80,104,0.8)';if(p>=75)return'#00c853';if(p>=50)return'#00bcd4';if(p>=25)return'#ff8f00';return'#c62828';}
+    var dataFill='<polygon points="'+dataPts+'" fill="'+(bg?'rgba(0,188,212,.12)':'rgba(45,212,191,.12)')+'" stroke="'+(bg?'#00bcd4':'#2dd4bf')+'" stroke-width="1.2" stroke-linejoin="round"/>';
+    var dots=scores.map(function(s,i){
+      var v=s.pct!==null?(s.pct/100):0;var r2=innerR+(R-innerR)*v;var a=i*angleStep-Math.PI/2;
+      var px=cx+r2*Math.cos(a),py=cy+r2*Math.sin(a);
+      return '<circle cx="'+px+'" cy="'+py+'" r="'+(size*0.012)+'" fill="'+scoreCol(s.pct)+'" stroke="'+(bg?'#fff':'#070a0d')+'" stroke-width="1"/>';
+    }).join('');
+    var lOff=size*0.05;
+    var labels=axes.map(function(ax,i){
+      var lx=cx+(R+lOff)*Math.cos(ax.angle),ly=cy+(R+lOff)*Math.sin(ax.angle);
+      var anchor=lx<cx-5?'end':lx>cx+5?'start':'middle';
+      var ln=scores[i].title.replace('Microsoft ','').replace(' & ','\n').split('\n');
+      var lH=size*0.033,baseY=ly-(ln.length-1)*lH/2;
+      return ln.map(function(l,li){return '<text x="'+lx+'" y="'+(baseY+li*lH)+'" text-anchor="'+anchor+'" font-size="'+(size*0.027)+'" fill="'+lblC+'" letter-spacing=".03em">'+l+'</text>';}).join('');
+    }).join('');
+    var centre='<text x="'+cx+'" y="'+(cy-size*0.025)+'" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="'+(size*0.085)+'" fill="'+textC+'" letter-spacing=".02em">'+pct+'%</text>'
+      +'<text x="'+cx+'" y="'+(cy+size*0.045)+'" text-anchor="middle" font-size="'+(size*0.027)+'" fill="'+mutedC+'" letter-spacing=".08em">OVERALL</text>';
+    return '<svg viewBox="0 0 '+size+' '+size+'" width="'+size+'" height="'+size+'" xmlns="http://www.w3.org/2000/svg">'+ringSvg+axisSvg+dataFill+dots+labels+centre+'</svg>';
+  }
+
+  /* ── Category grid (web) ── */
+  function buildCatGrid(scores){
+    function col(p){if(p===null)return'var(--dim)';if(p>=75)return'var(--green)';if(p>=50)return'var(--teal)';if(p>=25)return'var(--orange)';return'var(--red)';}
+    var sn={identity:'Identity',exchange:'Exchange',sharepoint:'SharePoint',teams:'Teams',powerplatform:'Power Platform',defender:'Defender',endpoint:'Endpoint',auditlog:'Audit & Logs'};
+    return scores.map(function(s){
+      var p=s.pct!==null?s.pct:0,c=col(s.pct),label=s.pct!==null?s.pct+'%':'—';
+      return '<div class="csg-cell"><div class="csg-icon">'+s.icon+'</div><div class="csg-name">'+(sn[s.id]||s.id)+'</div><div class="csg-pct" style="color:'+c+'">'+label+'</div><div class="csg-bar"><div class="csg-bar-fill" style="width:'+p+'%;background:'+c+'"></div></div><div style="font-family:monospace;font-size:8px;color:var(--muted);margin-top:4px">'+s.pass+'P / '+s.fail+'F / '+s.pend+'?</div></div>';
+    }).join('');
+  }
+
+  /* ── Legend (web) ── */
+  function buildLegend(scores){
+    function col(p){if(p===null)return'#4a5068';if(p>=75)return'#00e676';if(p>=50)return'#2dd4bf';if(p>=25)return'#ffa657';return'#ff3d3d';}
+    var sn={identity:'Identity & Access',exchange:'Exchange & Email',sharepoint:'SharePoint & OneDrive',teams:'Microsoft Teams',powerplatform:'Power Platform',defender:'Defender Suite',endpoint:'Endpoint Mgmt',auditlog:'Audit & Monitoring'};
+    return scores.map(function(s){
+      var p=s.pct!==null?s.pct:0,c=col(s.pct),label=s.pct!==null?s.pct+'%':'N/A';
+      return '<div class="rl-row"><div class="rl-dot" style="background:'+c+'"></div><div class="rl-label">'+(sn[s.id]||s.id)+'</div><div class="rl-bar"><div class="rl-bar-fill" style="width:'+p+'%;background:'+c+'"></div></div><div class="rl-pct" style="color:'+c+'">'+label+'</div></div>';
+    }).join('');
+  }
+
+  /* ── Finding row (web modal) ── */
+  function findingRow(item,status){
+    var cls=status==='fail'?'f-fail':'f-pass';
+    return '<div class="rd-finding-row '+cls+'"><div class="rdf-top"><span class="ci-sev '+SEV_CLS[item.sev]+'">'+item.sev+'</span><span class="rdf-title">'+item.title+'</span>'
+      +(status==='fail'?'<span style="font-family:monospace;font-size:10px;color:var(--red)">&#10005; FAIL</span>':'<span style="font-family:monospace;font-size:10px;color:var(--green)">&#10003; PASS</span>')
+      +'</div>'+(status==='fail'?'<div class="rdf-body"><strong>Risk:</strong> '+item.risk+'<br><strong>Remediation:</strong> '+item.fix+'</div>':'')+'</div>';
+  }
+
+  var failHtml =failed.length ?failed.map(function(i){return findingRow(i,'fail');}).join(''):'<p style="color:var(--dim);font-size:12px">No failed checks.</p>';
+  var passHtml =passed.length ?passed.map(function(i){return findingRow(i,'pass');}).join(''):'<p style="color:var(--dim);font-size:12px">No passed checks.</p>';
+  var pendHtml =pending.length?pending.map(function(i){return '<div style="font-size:12px;color:var(--muted);padding:5px 0;border-bottom:1px solid var(--border)">'+i.title+' <span style="font-family:monospace;font-size:10px;color:var(--dim)">— pending</span></div>';}).join(''):'<p style="color:var(--dim);font-size:12px">None pending.</p>';
+
+  /* ── Render web modal ── */
+  document.getElementById('rmBody').innerHTML=''
+    +'<div class="rdoc">'
+    +'<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:12px">'
+    +'<div><div class="rd-title">M365 SECURITY<br><span>POSTURE REPORT</span></div><div class="rd-sub">Microsoft 365 Misconfiguration Checklist &nbsp;&#183;&nbsp; eusebio@it-sec</div></div>'
+    +'<div style="text-align:right;flex-shrink:0"><div style="font-family:var(--font-bebas,sans-serif);font-size:52px;line-height:1;color:'+gCol+'">'+pct+'%</div><div style="font-family:monospace;font-size:11px;color:'+gCol+';letter-spacing:.1em">'+grade.toUpperCase()+'</div></div>'
+    +'</div>'
+    +'<div class="rd-meta"><div class="rd-mc"><div class="rd-ml">Report Date</div><div class="rd-mv">'+new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})+'</div></div><div class="rd-mc"><div class="rd-ml">Checks Completed</div><div class="rd-mv">'+(passed.length+failed.length)+' / '+allItems.length+'</div></div><div class="rd-mc"><div class="rd-ml">Critical / High Fails</div><div class="rd-mv" style="color:var(--red)">'+critFails+' CRITICAL &nbsp; '+highFails+' HIGH</div></div></div>'
+    +'<div class="rd-sev-bar">'
+    +'<div class="rd-seg" style="background:rgba(255,61,61,.08);border:1px solid rgba(255,61,61,.15)"><div class="rd-seg-num" style="color:var(--red)">'+critFails+'</div><div class="rd-seg-lbl">Critical Fails</div></div>'
+    +'<div class="rd-seg" style="background:rgba(255,166,87,.07);border:1px solid rgba(255,166,87,.15)"><div class="rd-seg-num" style="color:var(--orange)">'+highFails+'</div><div class="rd-seg-lbl">High Fails</div></div>'
+    +'<div class="rd-seg" style="background:rgba(0,230,118,.06);border:1px solid rgba(0,230,118,.15)"><div class="rd-seg-num" style="color:var(--green)">'+passed.length+'</div><div class="rd-seg-lbl">Passed</div></div>'
+    +'<div class="rd-seg" style="background:rgba(255,213,79,.05);border:1px solid rgba(255,213,79,.15)"><div class="rd-seg-num" style="color:var(--yellow)">'+pending.length+'</div><div class="rd-seg-lbl">Pending</div></div>'
+    +'<div class="rd-seg" style="background:rgba(45,212,191,.05);border:1px solid rgba(45,212,191,.15)"><div class="rd-seg-num" style="color:var(--teal)">'+na.length+'</div><div class="rd-seg-lbl">N/A</div></div>'
+    +'</div>'
+    +'<div class="rd-sec-title">Security Posture by Domain</div>'
+    +'<div class="radar-wrap"><div class="radar-svg-box">'+buildRadar(catScores,320,false)+'</div><div class="radar-legend">'+buildLegend(catScores)+'</div></div>'
+    +'<div class="rd-sec-title">Domain Score Breakdown</div>'
+    +'<div class="cat-score-grid">'+buildCatGrid(catScores)+'</div>'
+    +'<div class="rd-sec-title">Failed Controls — Require Remediation ('+failed.length+')</div>'+failHtml
+    +'<div class="rd-sec-title">Passed Controls ('+passed.length+')</div>'+passHtml
+    +'<div class="rd-sec-title">Pending Assessment ('+pending.length+')</div>'+pendHtml
+    +'<div class="rd-disclaimer"><strong>Methodology:</strong> Control set aligned to the CIS Microsoft 365 Foundations Benchmark and Microsoft Secure Score; domains map to Microsoft Zero Trust pillars. Weighted scoring (Critical 4 / High 3 / Medium 2 / Low 1). Validate findings against the live tenant before remediation.<br>Generated by M365 Misconfiguration Checklist &nbsp;&#183;&nbsp; eusebio@it-sec &nbsp;&#183;&nbsp; '+new Date().toUTCString()+'. For authorised internal use only.</div>'
+    +'</div>';
+
+  document.getElementById('reportModal').classList.add('show');
+
+  /* ── Build print doc (separate clean document) ── */
+  buildPrintDoc(catScores,failed,passed,pending,na,pct,grade,gHex,critFails,highFails,allItems.length);
+  LASTREPORT={pct:pct,grade:grade,catScores:catScores,failed:failed,passed:passed,pending:pending,na:na,critFails:critFails,highFails:highFails,total:allItems.length,date:new Date().toUTCString()};
+}
+
+/* ════════════════════════════════
+   BUILD PRINT DOCUMENT
+════════════════════════════════ */
+function buildPrintDoc(catScores,failed,passed,pending,na,pct,grade,gHex,critFails,highFails,total){
+  var dateStr=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
+  var weights={CRITICAL:4,HIGH:3,MEDIUM:2,LOW:1};
+  var checked=failed.length+passed.length;
+
+  function scoreCol(p){if(p===null)return'#aaa';if(p>=75)return'#00c853';if(p>=50)return'#00bcd4';if(p>=25)return'#ff8f00';return'#c62828';}
+  function sevCls(s){return{CRITICAL:'pd-sev-c',HIGH:'pd-sev-h',MEDIUM:'pd-sev-m',LOW:'pd-sev-l'}[s]||'';}
+  var sn={identity:'Identity & Access',exchange:'Exchange & Email',sharepoint:'SharePoint & OneDrive',teams:'Microsoft Teams',powerplatform:'Power Platform',defender:'Defender Suite',endpoint:'Endpoint Mgmt',auditlog:'Audit & Monitoring'};
+
+  /* Executive summary text */
+  var execParas='';
+  var riskLevel=pct>=75?'an acceptable':'a below-acceptable';
+  execParas+='<p class="pd-exec-para">This report presents the results of a Microsoft 365 security posture assessment conducted using the M365 Misconfiguration Checklist tool. The assessment evaluated <strong>'+total+' security controls</strong> across eight domains: Identity &amp; Access, Exchange Online, SharePoint Online, Microsoft Teams, Power Platform, Microsoft Defender, Endpoint Management, and Audit Logging.</p>';
+  execParas+='<p class="pd-exec-para">The overall security score of <strong style="color:'+gHex+'">'+pct+'% ('+grade+')</strong> reflects '+riskLevel+' security posture. Of '+checked+' controls assessed, <strong>'+passed.length+'</strong> are compliant, <strong>'+failed.length+'</strong> require remediation, and <strong>'+pending.length+'</strong> remain pending assessment.</p>';
+
+  if(critFails>0||highFails>0){
+    execParas+='<p class="pd-exec-para"><strong>Immediate attention is required:</strong> '+critFails+' Critical and '+highFails+' High severity controls are non-compliant. Critical findings represent direct attack vectors that could result in full tenant compromise, data exfiltration, or regulatory breach. These should be remediated within 30 days.</p>';
+  } else if(failed.length>0){
+    execParas+='<p class="pd-exec-para">No Critical findings were identified. The '+failed.length+' failed controls represent medium to lower-severity risks that should be addressed in the next review cycle.</p>';
+  } else {
+    execParas+='<p class="pd-exec-para">All assessed controls are compliant. Maintain the current security configuration and continue regular assessment cycles to detect configuration drift.</p>';
+  }
+
+  /* Top 3 priority items for executive bullets */
+  var topFails=failed.slice().sort(function(a,b){return (weights[b.sev]||1)-(weights[a.sev]||1);}).slice(0,3);
+  if(topFails.length){
+    execParas+='<p class="pd-exec-para"><strong>Priority remediation items:</strong></p><ul class="pd-exec-bullets">';
+    topFails.forEach(function(i){execParas+='<li><strong>'+i.title+'</strong> ('+i.sev+'): '+i.risk.substring(0,120)+(i.risk.length>120?'...':'')+'</li>';});
+    execParas+='</ul>';
+  }
+
+  /* ── Print radar ── */
+  function buildPrintRadar(scores){
+    var N=scores.length,size=280,cx=size/2,cy=size/2,R=size*0.36,innerR=size*0.07;
+    var angleStep=2*Math.PI/N;
+    var rings=[0.25,0.5,0.75,1.0];
+    var axes=[];
+    for(var i=0;i<N;i++){var a=i*angleStep-Math.PI/2;axes.push({x:cx+R*Math.cos(a),y:cy+R*Math.sin(a),angle:a});}
+    var ringSvg='';
+    rings.forEach(function(r){
+      var pts=axes.map(function(ax){return (cx+(innerR+(R-innerR)*r)*Math.cos(ax.angle))+','+(cy+(innerR+(R-innerR)*r)*Math.sin(ax.angle));}).join(' ');
+      ringSvg+='<polygon points="'+pts+'" fill="rgba(0,0,0,.03)" stroke="rgba(0,0,0,.08)" stroke-width="0.5"/>';
+    });
+    var axisSvg=axes.map(function(ax){return '<line x1="'+cx+'" y1="'+cy+'" x2="'+ax.x+'" y2="'+ax.y+'" stroke="rgba(0,0,0,.1)" stroke-width="0.5"/>';}).join('');
+    var dataPts=scores.map(function(s,i){
+      var v=s.pct!==null?(s.pct/100):0,r2=innerR+(R-innerR)*v,a=i*angleStep-Math.PI/2;
+      return (cx+r2*Math.cos(a))+','+(cy+r2*Math.sin(a));
+    }).join(' ');
+    var dataFill='<polygon points="'+dataPts+'" fill="rgba(0,188,212,.1)" stroke="#0097a7" stroke-width="1.2" stroke-linejoin="round"/>';
+    var dots=scores.map(function(s,i){
+      var v=s.pct!==null?(s.pct/100):0,r2=innerR+(R-innerR)*v,a=i*angleStep-Math.PI/2;
+      var px=cx+r2*Math.cos(a),py=cy+r2*Math.sin(a);
+      return '<circle cx="'+px+'" cy="'+py+'" r="'+(size*0.014)+'" fill="'+scoreCol(s.pct)+'" stroke="#fff" stroke-width="0.8"/>';
+    }).join('');
+    var lOff=size*0.055;
+    var labels=axes.map(function(ax,i){
+      var lx=cx+(R+lOff)*Math.cos(ax.angle),ly=cy+(R+lOff)*Math.sin(ax.angle);
+      var anchor=lx<cx-8?'end':lx>cx+8?'start':'middle';
+      var ln=(sn[scores[i].id]||scores[i].id).replace(' & ','\n').split('\n');
+      var lH=size*0.037,baseY=ly-(ln.length-1)*lH/2;
+      return ln.map(function(l,li){return '<text x="'+lx+'" y="'+(baseY+li*lH)+'" text-anchor="'+anchor+'" font-family="Arial,sans-serif" font-size="'+(size*0.033)+'" fill="#555">'+l+'</text>';}).join('');
+    }).join('');
+    var centre='<text x="'+cx+'" y="'+(cy-size*0.03)+'" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="'+(size*0.1)+'" fill="'+gHex+'">'+pct+'%</text>'
+      +'<text x="'+cx+'" y="'+(cy+size*0.055)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="'+(size*0.032)+'" fill="#888" letter-spacing=".06em">OVERALL</text>';
+    return '<svg viewBox="0 0 '+size+' '+size+'" xmlns="http://www.w3.org/2000/svg">'+ringSvg+axisSvg+dataFill+dots+labels+centre+'</svg>';
+  }
+
+  /* ── Legend table for print ── */
+  var legendRows=catScores.map(function(s){
+    var c=scoreCol(s.pct),p=s.pct!==null?s.pct:0,label=s.pct!==null?s.pct+'%':'N/A';
+    return '<tr>'
+      +'<td><span class="pd-l-dot" style="background:'+c+';width:7pt;height:7pt;border-radius:50%;display:inline-block"></span></td>'
+      +'<td class="pd-l-name">'+(sn[s.id]||s.id)+'</td>'
+      +'<td class="pd-l-bar-wrap"><div class="pd-l-bar"><div class="pd-l-bar-fill" style="width:'+p+'%;background:'+c+'"></div></div></td>'
+      +'<td class="pd-l-pct" style="color:'+c+'">'+label+'</td>'
+      +'<td style="font-size:7pt;color:#888;text-align:right">'+s.pass+'P &nbsp; '+s.fail+'F &nbsp; '+s.pend+'?</td>'
+      +'</tr>';
+  }).join('');
+
+  /* ── Domain grid for print ── */
+  var domainGrid=catScores.map(function(s){
+    var c=scoreCol(s.pct),p=s.pct!==null?s.pct:0,label=s.pct!==null?s.pct+'%':'—';
+    var shortN={identity:'Identity',exchange:'Exchange',sharepoint:'SharePoint',teams:'Teams',powerplatform:'Power Platform',defender:'Defender',endpoint:'Endpoint',auditlog:'Audit & Logs'};
+    return '<div class="pd-domain-cell">'
+      +'<div class="pd-d-icon">'+s.icon+'</div>'
+      +'<div class="pd-d-name">'+(shortN[s.id]||s.id)+'</div>'
+      +'<div class="pd-d-pct" style="color:'+c+'">'+label+'</div>'
+      +'<div class="pd-d-bar"><div class="pd-d-bar-fill" style="width:'+p+'%;background:'+c+'"></div></div>'
+      +'<div class="pd-d-counts">'+s.pass+' pass &nbsp; '+s.fail+' fail &nbsp; '+s.pend+' pending</div>'
+      +'</div>';
+  }).join('');
+
+  /* ── Full finding card for print ── */
+  function printFinding(item,status){
+    var statCls=status==='fail'?'pf-fail':status==='pass'?'pf-pass':'pf-na';
+    var statBadge=status==='fail'?'<span class="pd-status-badge pd-status-fail">&#10005; FAIL</span>':status==='pass'?'<span class="pd-status-badge pd-status-pass">&#10003; PASS</span>':'<span class="pd-status-badge pd-status-na">N/A</span>';
+    var catBadge=item.cat?'<span class="pd-cat-badge">'+item.cat+'</span>':'';
+    var tagsHtml=item.tags?'<div class="pd-tags">'+catBadge+item.tags.map(function(t){return'<span class="pd-tag">'+t+'</span>';}).join('')+'</div>':'';
+    var bodyHtml='';
+    if(status==='fail'){
+      bodyHtml+='<div class="pd-block">'
+        +'<div class="pd-block-label lbl-risk">&#9652; Risk</div>'
+        +'<div class="pd-block-text">'+item.risk+'</div>'
+        +'</div>';
+      bodyHtml+='<div class="pd-block">'
+        +'<div class="pd-block-label lbl-fix">&#10227; Required Remediation</div>'
+        +'<div class="pd-block-text">'+item.fix+'</div>'
+        +'</div>';
+      if(item.detect){
+        bodyHtml+='<div class="pd-block">'
+          +'<div class="pd-block-label" style="color:#7a4f00">&#128270; How to Detect</div>'
+          +'<div class="pd-block-text">'+item.detect+'</div>'
+          +'</div>';
+      }
+    } else if(status==='pass'){
+      bodyHtml+='<div class="pd-block">'
+        +'<div class="pd-block-label lbl-ach">&#10003; What This Control Achieves</div>'
+        +'<div class="pd-block-text">'+item.desc+'</div>'
+        +'</div>';
+      if(item.detect){
+        bodyHtml+='<div class="pd-block">'
+          +'<div class="pd-block-label" style="color:#555">&#128270; Ongoing Monitoring</div>'
+          +'<div class="pd-block-text">'+item.detect+'</div>'
+          +'</div>';
+      }
+    }
+    if(item.note&&item.note.trim()){
+      bodyHtml+='<div style="font-size:8pt;color:#7a6000;background:#fffbe6;border-left:2pt solid #f9a825;padding:2mm 3mm;margin-top:2mm">&#9888; '+item.note+'</div>';
+    }
+    return '<div class="pd-finding '+statCls+'">'
+      +'<div class="pd-finding-head">'
+      +'<span class="pd-sev '+sevCls(item.sev)+'">'+item.sev+'</span>'
+      +'<span class="pd-finding-title">'+item.title+'</span>'
+      +statBadge
+      +'</div>'
+      +(tagsHtml||bodyHtml?'<div class="pd-finding-body">'+tagsHtml+bodyHtml+'</div>':'')
+      +'</div>';
+  }
+
+  /* ── Pending table ── */
+  var pendingRows=pending.length?pending.map(function(i){
+    return '<tr>'
+      +'<td><span class="pd-sev '+sevCls(i.sev)+'">'+i.sev+'</span></td>'
+      +'<td>'+i.title+'</td>'
+      +'<td style="color:#888;font-style:italic">'+i.cat+'</td>'
+      +'<td style="color:#888;font-style:italic">Not yet assessed</td>'
+      +'</tr>';
+  }).join(''):'<tr><td colspan="4" style="color:#aaa;text-align:center;padding:4mm">All controls have been assessed.</td></tr>';
+
+  /* ── Assemble print document ── */
+  var html='';
+
+  /* PAGE 1: Cover */
+  html+='<div class="pd-cover">'
+    +'<div class="pd-cover-band">'
+    +'<div class="pd-cover-tag">Confidential &nbsp;&#183;&nbsp; Internal Use Only</div>'
+    +'<div class="pd-cover-title">Microsoft 365<br><span>Security Posture</span><br>Report</div>'
+    +'<div class="pd-cover-sub">M365 Misconfiguration Checklist &nbsp;&#183;&nbsp; eusebio@it-sec</div>'
+    +'<div class="pd-cover-score-row">'
+    +'<div class="pd-cover-score-num" style="color:'+gHex+'">'+pct+'%</div>'
+    +'<div class="pd-cover-score-meta">'
+    +'<div class="pd-cover-grade" style="color:'+gHex+'">'+grade+'</div>'
+    +'<div class="pd-cover-date">Assessment Date: '+dateStr+'</div>'
+    +'<div class="pd-cover-date">'+checked+' of '+total+' controls assessed &nbsp;&#183;&nbsp; '+failed.length+' require remediation</div>'
+    +'</div></div></div>'
+    +'<div class="pd-cover-white">'
+    +'<div class="pd-kpi"><div class="pd-kpi-num" style="color:#c62828">'+critFails+'</div><div class="pd-kpi-lbl">Critical Fails</div></div>'
+    +'<div class="pd-kpi"><div class="pd-kpi-num" style="color:#e65100">'+highFails+'</div><div class="pd-kpi-lbl">High Fails</div></div>'
+    +'<div class="pd-kpi"><div class="pd-kpi-num" style="color:#00c853">'+passed.length+'</div><div class="pd-kpi-lbl">Controls Passed</div></div>'
+    +'<div class="pd-kpi"><div class="pd-kpi-num" style="color:#666">'+pending.length+'</div><div class="pd-kpi-lbl">Pending Review</div></div>'
+    +'</div></div>';
+
+  /* PAGE 2: Executive Summary + Radar */
+  html+='<div class="pd-page-break">'
+    +'<div class="pd-sec-title">Executive Summary</div>'
+    +'<div class="pd-exec-box"><h3>Assessment Overview</h3>'+execParas+'</div>'
+    +'<div class="pd-sec-title">Security Posture by Domain</div>'
+    +'<div class="pd-radar-row">'
+    +'<div>'+buildPrintRadar(catScores)+'</div>'
+    +'<table class="pd-legend-table">'+legendRows+'</table>'
+    +'</div>'
+    +'<div class="pd-sec-title">Domain Score Breakdown</div>'
+    +'<div class="pd-domain-grid">'+domainGrid+'</div>'
+    +'</div>';
+
+  /* PAGE 3+: Failed Controls */
+  if(failed.length){
+    var sortedFails=failed.slice().sort(function(a,b){return(weights[b.sev]||1)-(weights[a.sev]||1);});
+    html+='<div class="pd-page-break">'
+      +'<div class="pd-sec-title">Section A — Failed Controls Requiring Remediation ('+failed.length+')</div>'
+      +sortedFails.map(function(i){return printFinding(i,'fail');}).join('')
+      +'</div>';
+  }
+
+  /* Passed Controls */
+  if(passed.length){
+    html+='<div class="pd-page-break">'
+      +'<div class="pd-sec-title">Section B — Compliant Controls ('+passed.length+')</div>'
+      +passed.map(function(i){return printFinding(i,'pass');}).join('')
+      +'</div>';
+  }
+
+  /* Pending Table */
+  html+='<div class="pd-page-break">'
+    +'<div class="pd-sec-title">Section C — Pending Assessment ('+pending.length+')</div>'
+    +'<table class="pd-pending-table">'
+    +'<thead><tr><th>Severity</th><th>Control</th><th>Domain</th><th>Status</th></tr></thead>'
+    +'<tbody>'+pendingRows+'</tbody>'
+    +'</table>';
+
+  /* Disclaimer */
+  html+='<div class="pd-disclaimer">'
+    +'<strong>Methodology &amp; Standards:</strong> The control set is aligned to the CIS Microsoft 365 Foundations Benchmark and Microsoft Secure Score recommendations, organised by Microsoft Zero Trust pillars (identity, devices, applications, data). Scoring is weighted by severity (Critical 4 / High 3 / Medium 2 / Low 1); domain and overall scores express passed weight as a percentage of assessed weight.<br><br><strong>Disclaimer:</strong> This report was generated by the M365 Misconfiguration Checklist tool by eusebio@it-sec. Results are based on manual assessment inputs provided by the assessor and reflect the state of the Microsoft 365 environment at the time of assessment ('
+    +new Date().toUTCString()+'). Findings should be validated against the live Microsoft 365 tenant by a qualified engineer before remediation activities are initiated. This document is classified as Confidential and is intended for authorised internal use only. Do not distribute externally without appropriate redaction.'
+    +'</div></div>';
+
+  document.getElementById('printDoc').innerHTML=html;
+}
+
+document.getElementById('rmClose').addEventListener('click',  function(){ document.getElementById('reportModal').classList.remove('show'); });
+document.getElementById('rmClose2').addEventListener('click', function(){ document.getElementById('reportModal').classList.remove('show'); });
+document.getElementById('reportModal').addEventListener('click', function(e){ if(e.target===this) this.classList.remove('show'); });
+
+document.getElementById('rmCopy').addEventListener('click', function(){
+  var text = buildMarkdownReport();
+  navigator.clipboard.writeText(text).then(function(){
+    var btn = document.getElementById('rmCopy');
+    btn.textContent='Copied!'; btn.style.color='var(--green)';
+    setTimeout(function(){ btn.textContent='Copy Markdown'; btn.style.color=''; },2000);
+  });
+});
+
+document.getElementById('rmPrint').addEventListener('click', function(){ window.print(); });
+
+document.getElementById('rmPdf').addEventListener('click', function(){
+  var btn=document.getElementById('rmPdf');
+  btn.textContent='Preparing...';
+  /* Ensure print doc is built then print */
+  setTimeout(function(){
+    window.print();
+    setTimeout(function(){btn.textContent='⬇ Export PDF';},500);
+  },300);
+});
+
+/* ── INIT ── */
+render();
+
+})();
+</script>
+<div id="fxToast" class="fx-toast" role="status" aria-live="polite"></div>
+<script>
+(function(){
+  function fxToast(msg){var t=document.getElementById('fxToast');if(!t)return;t.textContent=msg;t.classList.add('show');clearTimeout(t._to);t._to=setTimeout(function(){t.classList.remove('show');},2200);}
+  window.fxToast=fxToast;
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText){ var _w=navigator.clipboard.writeText.bind(navigator.clipboard); navigator.clipboard.writeText=function(x){return _w(x).then(function(r){fxToast('Copied to clipboard');return r;});}; } }catch(e){}
+})();
+</script>
+</body>
+</html>
