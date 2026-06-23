@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Power Automate Flow Analyzer — eusebio@it-sec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=JetBrains+Mono:wght@300;400;500;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+
+:root{
+  --void:#070809;--bg:#070809;--bg2:#0d0f13;--card:#13161d;--card2:#191d26;
+  --border:rgba(255,255,255,.07);--line:rgba(255,255,255,.07);--line-2:rgba(255,255,255,.14);
+  --cyan:#00e5ff;--blue:#2f81f7;--red:#ff3b4e;--green:#22e584;--orange:#ffb454;--yellow:#ffd166;--purple:#b98aff;--violet:#b98aff;--teal:#2dd4bf;--lime:#a3e635;
+  --text:#e7ebf2;--soft:#8a93a3;--muted:#525c6b;--dim:#2a303a;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+body{background:var(--void);color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;line-height:1.65;overflow-x:hidden;min-height:100vh}
+::selection{background:var(--lime);color:#13200a}
+#bg-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.5}
+#bg-glow{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(60% 50% at 18% 12%,rgba(163,230,53,.06),transparent 70%),radial-gradient(55% 45% at 85% 88%,rgba(0,229,255,.05),transparent 70%)}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(18px,3vw,40px);height:58px;background:rgba(7,8,9,.62);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+.nav-brand{font-family:'JetBrains Mono',monospace;font-size:13px;display:flex;align-items:center;text-decoration:none;color:var(--text)}
+.nu{color:#79c0ff}.na{color:var(--muted)}.nh{color:var(--cyan)}.nt{color:var(--orange)}.nd{color:var(--lime);margin-left:5px}
+.nc{display:inline-block;width:7px;height:14px;background:var(--lime);margin-left:4px;vertical-align:middle;animation:blink .9s steps(1) infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.nav-path{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}.nav-path span{color:var(--lime)}
+.nav-back{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);text-decoration:none;letter-spacing:.06em;transition:color .2s}
+.nav-back:hover{color:var(--cyan)}
+
+.app-shell{display:grid;grid-template-columns:432px 1fr;min-height:calc(100vh - 58px);margin-top:58px;position:relative;z-index:2}
+.col-left{border-right:1px solid var(--line);background:rgba(13,15,19,.8);backdrop-filter:blur(10px);overflow-y:auto;position:sticky;top:58px;height:calc(100vh - 58px);display:flex;flex-direction:column}
+.col-right{background:transparent;overflow-y:auto;position:relative}
+
+.lp-header{padding:24px 24px 16px;border-bottom:1px solid var(--line)}
+.lp-header h1{font-family:'Syne',sans-serif;font-weight:800;font-size:25px;letter-spacing:-.02em;line-height:1.02;margin-bottom:6px}
+.lp-header h1 span{color:var(--lime)}
+.lp-header p{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.04em}
+
+.tab-bar{display:flex;border-bottom:1px solid var(--line)}
+.tab-btn{flex:1;padding:11px 6px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.07em;text-transform:uppercase;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;transition:color .2s,border-color .2s}
+.tab-btn:hover{color:var(--text)}.tab-btn.active{color:var(--lime);border-bottom-color:var(--lime)}
+.tab-panel{display:none;padding:16px 20px;flex:1;overflow-y:auto}.tab-panel.active{display:block}
+
+.upload-zone{border:1px dashed rgba(163,230,53,.32);background:rgba(163,230,53,.03);padding:26px 20px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:14px;border-radius:12px}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--lime);background:rgba(163,230,53,.06)}
+.upload-zone.has-file{border-color:rgba(163,230,53,.6);background:rgba(163,230,53,.05);border-style:solid}
+.uz-icon{font-size:28px;margin-bottom:8px}
+.uz-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--lime);margin-bottom:4px}
+.uz-sub{font-size:11px;color:var(--muted);line-height:1.6}
+.uz-filename{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--lime);margin-top:6px;word-break:break-all}
+#fileInput{display:none}
+
+.paste-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:block}
+.paste-area{width:100%;padding:12px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.6;outline:none;resize:vertical;min-height:180px;transition:border-color .2s,box-shadow .2s;border-radius:9px}
+.paste-area:focus{border-color:var(--lime);box-shadow:0 0 0 3px rgba(163,230,53,.08)}
+.paste-area::placeholder{color:var(--dim);font-size:10px}
+
+.fg{margin-bottom:10px}
+.fg label{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.fi{width:100%;padding:9px 11px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;outline:none;transition:border-color .2s,box-shadow .2s;border-radius:8px;-webkit-appearance:none;appearance:none}
+.fi:focus{border-color:var(--lime);box-shadow:0 0 0 3px rgba(163,230,53,.08)}.fi::placeholder{color:var(--dim)}
+select.fi{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23525c6b' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:28px}
+select.fi option{background:#0d0f13}
+
+.opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px}
+.opt-item{display:flex;align-items:flex-start;gap:8px;padding:9px 10px;border:1px solid var(--line);background:var(--bg2);cursor:pointer;transition:border-color .15s,background .15s;user-select:none;border-radius:9px}
+.opt-item:hover{border-color:rgba(163,230,53,.3)}
+.opt-item.checked{border-color:rgba(163,230,53,.5);background:rgba(163,230,53,.05)}
+.opt-check{width:15px;height:15px;border:1px solid var(--muted);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .15s;border-radius:4px}
+.opt-item.checked .opt-check{background:var(--lime);border-color:var(--lime)}
+.opt-item.checked .opt-check::after{content:'✓';color:#13200a;font-size:9px;font-weight:700}
+.opt-label{font-size:11px;color:var(--soft);line-height:1.4}
+.opt-label strong{color:var(--text);font-size:11px;display:block;margin-bottom:1px}
+
+.analyze-btn{width:100%;padding:13px;background:var(--lime);color:#13200a;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:500;border-radius:9px;transition:box-shadow .2s,transform .1s}
+.analyze-btn:hover{box-shadow:0 0 22px rgba(163,230,53,.35)}.analyze-btn:active{transform:scale(.99)}
+.analyze-btn:disabled{background:var(--muted);cursor:not-allowed}
+.btn-row{display:flex;gap:8px;margin-top:8px}
+.sec-btn{flex:1;padding:9px;background:transparent;color:var(--soft);border:1px solid var(--line-2);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;transition:border-color .2s,color .2s;border-radius:8px}
+.sec-btn:hover{border-color:var(--soft);color:var(--text)}
+.lp-footer{padding:14px 20px;border-top:1px solid var(--line)}
+
+.rp-shell{padding:30px clamp(18px,3vw,40px);max-width:980px;position:relative;z-index:2}
+.rp-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.rt-info{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}.rt-info span{color:var(--lime)}
+.rt-acts{display:flex;gap:8px}
+.rt-btn{padding:8px 15px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .2s;border:1px solid var(--line-2);background:transparent;color:var(--soft);border-radius:8px}
+.rt-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.rt-btn.pri{background:var(--lime);border-color:var(--lime);color:#13200a}
+.rt-btn.pri:hover{box-shadow:0 0 18px rgba(163,230,53,.35)}
+
+.estate{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:62vh;gap:14px;opacity:.65;position:relative;z-index:2}
+.es-big{font-family:'Syne',sans-serif;font-weight:800;font-size:64px;color:var(--dim);line-height:1;letter-spacing:.02em}
+.es-mono{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.06em;text-align:center}
+.eloader{display:none;flex-direction:column;align-items:flex-start;justify-content:center;min-height:62vh;padding:0 0 0 4px;position:relative;z-index:2}
+.eloader.show{display:flex}
+.el-terminal{background:rgba(13,15,19,.92);border:1px solid rgba(163,230,53,.22);padding:20px 24px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:2;min-width:440px;border-radius:11px;backdrop-filter:blur(6px)}
+.el-ps{color:var(--lime)}.el-cmd{color:var(--text)}.el-out{color:var(--muted)}.el-ok{color:var(--green)}.el-warn{color:var(--orange)}.el-err{color:var(--red)}.el-hi{color:var(--cyan)}
+.el-line{opacity:0;animation:elFade .2s ease forwards}
+@keyframes elFade{to{opacity:1}}
+.el-cursor{display:inline-block;width:7px;height:13px;background:var(--lime);vertical-align:middle;animation:blink .9s steps(1) infinite}
+
+.results-wrap{position:relative;z-index:2}
+
+.score-header{display:grid;grid-template-columns:auto 1fr auto;gap:20px;align-items:center;padding:24px 28px;background:var(--card);border:1px solid var(--line);margin-bottom:20px;border-radius:14px}
+.sh-score{font-family:'Syne',sans-serif;font-weight:800;font-size:58px;line-height:1;letter-spacing:-.02em;margin-bottom:2px}
+.sh-grade{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+.sh-flowname{font-family:'Syne',sans-serif;font-weight:700;font-size:21px;letter-spacing:-.01em;margin-bottom:6px}
+.sh-meta{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);line-height:1.85}
+.sh-meta span{color:var(--soft)}
+.sh-right{text-align:right}
+.sh-stats{display:flex;flex-direction:column;gap:5px}
+.sh-stat{font-family:'JetBrains Mono',monospace;font-size:11px;display:flex;justify-content:flex-end;gap:8px}
+.sh-stat-label{color:var(--muted)}
+.sh-stat-val{font-weight:500;min-width:20px;text-align:right}
+
+.risk-bars{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
+.rb-cell{background:var(--card);border:1px solid var(--line);padding:14px 16px;text-align:center;border-radius:11px}
+.rb-num{font-family:'Syne',sans-serif;font-weight:800;font-size:30px;line-height:1;margin-bottom:3px}
+.rb-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.rb-c .rb-num{color:var(--red)}.rb-h .rb-num{color:var(--orange)}.rb-m .rb-num{color:var(--yellow)}.rb-l .rb-num{color:var(--blue)}
+
+.assess-summary{font-size:13px;color:var(--soft);line-height:1.85;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:16px 18px;margin-bottom:20px}
+.assess-summary strong{color:var(--text);font-weight:500}
+
+.findings-list{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.finding-item{background:var(--card);overflow:hidden;transition:border-color .15s,background .15s;border:1px solid var(--line);border-radius:11px}
+.finding-item:hover{border-color:var(--line-2)}
+.fi-main{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;cursor:pointer}
+.fi-sev-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.sdc{background:var(--red);box-shadow:0 0 7px rgba(255,59,78,.55)}
+.sdh{background:var(--orange);box-shadow:0 0 7px rgba(255,180,84,.45)}
+.sdm{background:var(--yellow);box-shadow:0 0 6px rgba(255,209,102,.35)}
+.sdl{background:var(--blue)}
+.fi-body{flex:1;min-width:0}
+.fi-top{display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap}
+.fi-sev{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.06em;padding:2px 8px;flex-shrink:0;border-radius:100px}
+.fc-c{background:rgba(255,59,78,.12);color:var(--red);border:1px solid rgba(255,59,78,.3)}
+.fc-h{background:rgba(255,180,84,.12);color:var(--orange);border:1px solid rgba(255,180,84,.3)}
+.fc-m{background:rgba(255,209,102,.1);color:var(--yellow);border:1px solid rgba(255,209,102,.3)}
+.fc-l{background:rgba(47,129,247,.1);color:var(--blue);border:1px solid rgba(47,129,247,.3)}
+.fi-title{font-size:13px;font-weight:600;color:var(--text);flex:1}
+.fi-tags{display:flex;gap:5px;margin-left:auto;flex-wrap:wrap;align-items:center}
+.fi-tag{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 7px;border:1px solid var(--line);color:var(--muted);border-radius:100px}
+.fi-fw{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 8px;border-radius:100px;background:rgba(185,138,255,.1);color:var(--violet);border:1px solid rgba(185,138,255,.3);white-space:nowrap}
+.fi-desc{font-size:12px;color:var(--soft);line-height:1.75}
+.fi-location{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:5px;word-break:break-all}
+.fi-location span{color:var(--orange)}
+.fi-arrow{color:var(--muted);font-size:12px;flex-shrink:0;margin-top:4px;transition:transform .2s}
+.finding-item.open .fi-arrow{transform:rotate(90deg)}
+
+.fi-expand{display:none;border-top:1px solid var(--line);background:rgba(0,0,0,.2)}
+.fi-expand.open{display:block}
+.fi-expand-inner{padding:16px 16px 16px 38px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.exp-col h4{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px;display:flex;align-items:center;gap:6px}
+.exp-col h4::before{content:'//';color:var(--dim);font-size:9px}
+.eh-risk{color:var(--red)}.eh-fix{color:var(--lime)}.eh-ref{color:var(--cyan)}.eh-loc{color:var(--orange)}
+.exp-col p,.exp-col li{font-size:12px;color:var(--soft);line-height:1.8}
+.exp-col ul{padding-left:15px}.exp-col li::marker{color:var(--lime)}
+.exp-col strong{color:var(--text);font-weight:500}
+.code-block{background:#0a0c10;border:1px solid var(--line);padding:9px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--lime);line-height:1.7;margin-top:8px;white-space:pre-wrap;word-break:break-all;position:relative;border-radius:9px}
+.code-val{color:#ff8a80}
+.ref-lnk{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cyan);text-decoration:none;margin-bottom:4px;transition:color .2s;word-break:break-all}
+.ref-lnk::before{content:'↗ '}.ref-lnk:hover{color:var(--text)}
+
+.section-title{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--lime);margin:24px 0 12px;display:flex;align-items:center;gap:10px}
+.section-title::after{content:'';flex:1;height:1px;background:var(--line)}
+
+.conn-table,.actions-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:20px;border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.conn-table th,.actions-table th{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);background:rgba(255,255,255,.02)}
+.conn-table td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle;color:var(--soft)}
+.actions-table td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--soft);font-size:12px}
+.conn-table tr:last-child td,.actions-table tr:last-child td{border-bottom:none}
+.conn-table tr:hover td,.actions-table tr:hover td{background:rgba(255,255,255,.02)}
+.conn-risk{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 8px;border-radius:100px}
+.cr-high{background:rgba(255,59,78,.1);color:var(--red);border:1px solid rgba(255,59,78,.25)}
+.cr-med{background:rgba(255,180,84,.1);color:var(--orange);border:1px solid rgba(255,180,84,.25)}
+.cr-low{background:rgba(163,230,53,.08);color:var(--lime);border:1px solid rgba(163,230,53,.2)}
+.action-name{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text)}
+.action-type{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)}
+.action-flag{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 7px;border-radius:100px}
+.af-warn{background:rgba(255,209,102,.1);color:var(--yellow);border:1px solid rgba(255,209,102,.25)}
+.af-ok{background:rgba(163,230,53,.07);color:var(--lime);border:1px solid rgba(163,230,53,.2)}
+
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--dim);border-radius:3px}
+
+@media print{
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}
+  html,body{background:#fff !important}
+  #bg-canvas,#bg-glow,nav,.col-left,.rp-toolbar,.eloader{display:none !important}
+  .app-shell{display:block !important;margin:0 !important}
+  .col-right,.rp-shell,.results-wrap{background:#fff !important}
+  .col-right{overflow:visible !important}
+  .rp-shell{padding:0 !important;max-width:100% !important}
+  .score-header,.rb-cell,.finding-item,.fi-expand,.conn-table,.actions-table,.conn-table td,.conn-table th,.actions-table td,.actions-table th,.assess-summary{background:#fff !important;border-color:#dcdcdc !important}
+  .score-header{box-shadow:none !important}
+  body,.sh-meta,.sh-stat-label,.fi-desc,.fi-location,.exp-col p,.exp-col li,.conn-table td,.actions-table td,.rb-lbl,.es-mono,.assess-summary,.action-type{color:#333 !important}
+  .sh-meta span,.sh-stat-label{color:#555 !important}
+  .sh-flowname,.fi-title,.exp-col strong,.fi-location span,.assess-summary strong,.action-name{color:#000 !important}
+  .section-title{color:#3a7d00 !important}.section-title::after{background:#ddd !important}
+  .fi-expand{display:block !important;background:#fafafa !important}
+  .fi-tag{color:#555 !important;border-color:#ccc !important}
+  .fi-fw{background:#f3eaff !important;color:#6b3fa0 !important;border-color:#d7c2ff !important}
+  .exp-col h4::before{color:#bbb !important}
+  .eh-risk{color:#c0392b !important}.eh-fix{color:#4a7a00 !important}.eh-ref{color:#1a5fb4 !important}
+  .ref-lnk{color:#1a5fb4 !important}
+  .conn-table th,.actions-table th{background:#f5f5f5 !important;color:#555 !important}
+  .finding-item,.assess-summary,.score-header,.rb-cell,.conn-table tr,.actions-table tr{page-break-inside:avoid;break-inside:avoid}
+  .section-title{page-break-after:avoid;break-after:avoid}
+  @page{margin:1.4cm;size:A4}
+}
+
+@media(max-width:900px){
+  .el-terminal{min-width:0 !important;width:100% !important}
+  .col-right table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap}
+  .app-shell{grid-template-columns:1fr}.col-left{position:static;height:auto;top:auto;border-right:none;border-bottom:1px solid var(--line)}
+  nav{padding:0 18px}.rp-shell{padding:18px}
+  .fi-expand-inner{grid-template-columns:1fr}
+  .score-header{grid-template-columns:1fr;gap:12px}
+  .risk-bars{grid-template-columns:repeat(2,1fr)}
+}
+
+.fx-local{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#8a93a3;border:1px solid rgba(255,255,255,.12);padding:3px 9px;border-radius:100px;white-space:nowrap}
+.fx-local::before{content:'';width:6px;height:6px;border-radius:50%;background:#22e584;box-shadow:0 0 6px rgba(34,229,132,.6)}
+@media(max-width:620px){.fx-local{display:none}}
+
+.fx-toast{position:fixed;right:18px;bottom:18px;z-index:1200;background:#191d26;border:1px solid rgba(255,255,255,.14);border-left:3px solid #22e584;border-radius:10px;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#e7ebf2;box-shadow:0 12px 32px rgba(0,0,0,.45);opacity:0;transform:translateY(10px);transition:opacity .25s,transform .25s;pointer-events:none;max-width:300px}
+.fx-toast.show{opacity:1;transform:none}
+@media(max-width:620px){.fx-toast{left:12px;right:12px;bottom:12px;max-width:none}}
+.fx-spin{display:inline-block;width:11px;height:11px;border:2px solid rgba(255,255,255,.25);border-top-color:currentColor;border-radius:50%;animation:fxspin .6s linear infinite;vertical-align:-1px;margin-right:5px}
+@keyframes fxspin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div id="bg-glow"></div>
+
+
+
+<nav>
+  <a href="index.html" class="nav-brand">
+    <span class="nu">eusebio</span><span class="na">@</span><span class="nh">it-sec</span><span class="na">:</span><span class="nt">~</span><span class="nd">$</span><span class="nc"></span>
+  </a>
+  <span class="nav-path">~/tools/<span>flow-analyzer</span></span>
+  <span class="fx-local" title="Runs entirely in your browser — no data is uploaded or sent anywhere">Local-only</span>
+  <a href="projects.html" class="nav-back">&#8592; Projects</a>
+</nav>
+
+<div class="app-shell">
+
+  <!-- LEFT -->
+  <div class="col-left">
+    <div class="lp-header">
+      <h1>FLOW <span>ANALYZER</span></h1>
+      <p>Power Automate Security Scanner &nbsp;&#183;&nbsp; eusebio@it-sec</p>
+    </div>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tb-upload">Upload / Paste</button>
+      <button class="tab-btn" id="tb-options">Options</button>
+      <button class="tab-btn" id="tb-howto">How To Export</button>
+    </div>
+
+    <!-- UPLOAD TAB -->
+    <div class="tab-panel active" id="panel-upload">
+      <div class="upload-zone" id="uploadZone">
+        <div class="uz-icon">&#9650;</div>
+        <div class="uz-title">Drop Flow JSON here</div>
+        <div class="uz-sub">or click to browse<br><span style="color:var(--dim);font-size:10px">Exported .json from Power Automate</span></div>
+        <div class="uz-filename" id="uzFilename"></div>
+      </div>
+      <input type="file" id="fileInput" accept=".json,application/json"/>
+
+      <label class="paste-label">— or paste JSON directly —</label>
+      <textarea class="paste-area" id="pasteArea" placeholder='Paste your Power Automate flow export JSON here...
+
+{
+  "name": "My Flow",
+  "properties": {
+    "definition": {
+      "triggers": { ... },
+      "actions": { ... }
+    }
+  }
+}'></textarea>
+
+      <div style="margin-top:12px">
+        <div class="fg">
+          <label>Flow Name (optional — overrides JSON)</label>
+          <input type="text" id="flowNameOverride" class="fi" placeholder="Leave blank to auto-detect"/>
+        </div>
+        <div class="fg">
+          <label>Environment</label>
+          <select id="envSelect" class="fi">
+            <option value="production">Production</option>
+            <option value="staging">Staging / UAT</option>
+            <option value="development">Development</option>
+            <option value="default">Default Environment</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPTIONS TAB -->
+    <div class="tab-panel" id="panel-options">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--lime);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border)">//&nbsp; Analysis Rules</div>
+      <div class="opt-grid" id="optGrid">
+        <div class="opt-item checked" data-opt="secrets">
+          <div class="opt-check"></div>
+          <div class="opt-label"><strong>Hardcoded Secrets</strong>API keys, passwords, tokens in values</div>
+        </div>
+        <div class="opt-item checked" data-opt="http">
+          <div class="opt-check"></div>
+          <div class="opt-label"><strong>HTTP Security</strong>Plain HTTP, missing auth, open endpoints</div>
+        </div>
+        <div class="opt-item checked" data-opt="connectors">
+          <div class="opt-check"></div>
+          <div class="opt-label"><strong>Risky Connectors</strong>Consumer services, social media, file shares</div>
+        </div>
+        <div class="opt-item checked" data-opt="errorhandling">
+          <div class="opt-check"></div>
+          <div class="opt-label"><strong>Error Handling</strong>Missing try/catch, unconfigured run-after</div>
+        </div>
+        <div class="opt-item checked" data-opt="dataexfil">
+          <div class="opt-check"></div>
+          <div class="opt-label"><strong>Data Exfil Patterns</strong>External sends, email forwards, file writes</div>
+        </div>
+        <div class="opt-item checked" data-opt="permissions">
+          <div class="opt-check"></div>
+          <div class="opt-label"><strong>Overprivileged Access</strong>Broad SharePoint, Dataverse scopes</div>
+        </div>
+        <div class="opt-item checked" data-opt="dlp">
+          <div class="opt-check"></div>
+          <div class="opt-label"><strong>DLP Violations</strong>Cross-boundary connector mixing</div>
+        </div>
+        <div class="opt-item checked" data-opt="sensitive">
+          <div class="opt-check"></div>
+          <div class="opt-label"><strong>Sensitive Data Handling</strong>PII, passwords in compose/variables</div>
+        </div>
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--lime);margin:14px 0 10px;padding-top:10px;border-top:1px solid var(--border)">//&nbsp; Sensitivity Level</div>
+      <div class="fg">
+        <label>Report Threshold</label>
+        <select id="threshold" class="fi">
+          <option value="all">All (Critical + High + Medium + Low)</option>
+          <option value="medium">Medium and above</option>
+          <option value="high" selected>High and above only</option>
+          <option value="critical">Critical only</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- HOW TO TAB -->
+    <div class="tab-panel" id="panel-howto">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--lime);margin-bottom:12px">//&nbsp; How to Export a Flow</div>
+      <div style="display:flex;flex-direction:column;gap:12px;font-size:12px;color:var(--soft);line-height:1.8">
+        <div><strong style="color:var(--text);display:block;margin-bottom:3px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--lime)">// Method 1 — Export from Power Automate Portal</strong>
+          1. Go to <a href="https://make.powerautomate.com" target="_blank" style="color:var(--cyan)">make.powerautomate.com</a><br>
+          2. Open the flow you want to analyse<br>
+          3. Click <strong style="color:var(--text)">&#8942; (three dots)</strong> → <strong style="color:var(--text)">Export</strong> → <strong style="color:var(--text)">Package (.zip)</strong><br>
+          4. Unzip the package → inside is a <strong style="color:var(--lime)">definition.json</strong> file<br>
+          5. Paste the contents of that file here
+        </div>
+        <div><strong style="color:var(--text);display:block;margin-bottom:3px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--lime)">// Method 2 — PowerShell / Power Platform CLI</strong>
+          <div style="background:var(--card);border:1px solid var(--border);padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--lime);line-height:1.8;margin-top:4px">
+            <span style="color:var(--muted)"># Install CLI</span><br>
+            npm install -g @microsoft/powerplatform-cli<br>
+            <span style="color:var(--muted)"># Export flow</span><br>
+            pac flow export --flow-id &lt;GUID&gt; --output flow.json
+          </div>
+        </div>
+        <div><strong style="color:var(--text);display:block;margin-bottom:3px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--lime)">// Method 3 — Load Sample for Demo</strong>
+          Click <strong style="color:var(--lime)">Load Sample Flow</strong> below to analyse a pre-built example flow with security issues already embedded.
+        </div>
+        <div style="padding:10px;border:1px solid rgba(255,213,79,.2);background:rgba(255,213,79,.04)">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--yellow)">&#9432; NOTE:</span>
+          <span style="font-size:11px;color:var(--muted);margin-left:6px">This tool runs entirely in your browser. No flow data is sent to any server.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="lp-footer">
+      <button class="analyze-btn" id="analyzeBtn">&#9654; Analyze Flow</button>
+      <div class="btn-row">
+        <button class="sec-btn" id="clearBtn">Clear</button>
+        <button class="sec-btn" id="sampleBtn">Load Sample Flow</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="col-right">
+    <div class="rp-shell">
+      <div class="rp-toolbar">
+        <div class="rt-info"><span>eusebio@it-sec</span>:~/tools/flow-analyzer$ — v2.0</div>
+        <div class="rt-acts">
+          <button class="rt-btn" id="copyBtn">Copy Markdown</button>
+          <button class="rt-btn pri" id="printBtn">Export / Print</button>
+        </div>
+      </div>
+
+      <div class="eloader" id="loader">
+        <div class="el-terminal" id="loaderTerminal"></div>
+      </div>
+
+      <div class="estate" id="emptyState">
+        <div class="es-big">SCAN</div>
+        <p class="es-mono"><span style="color:var(--lime)">eusebio@it-sec:~/tools/flow-analyzer$</span> awaiting input</p>
+        <p class="es-mono">Upload or paste a Power Automate flow JSON,<br>then click Analyze Flow</p>
+        <p class="es-mono" style="margin-top:6px;color:var(--dim)">or click "Load Sample Flow" to see a demo scan</p>
+      </div>
+
+      <div class="results-wrap" id="resultsWrap" style="display:none"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ── smooth 3D background: sparse drifting points (usability-first) ── */
+(function(){
+  var canvas=document.getElementById('bg-canvas'); if(!canvas) return;
+  if(typeof THREE==='undefined'){canvas.style.display='none';return;}
+  var renderer; try{renderer=new THREE.WebGLRenderer({canvas:canvas,alpha:true,antialias:true});}catch(e){canvas.style.display='none';return;}
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){canvas.style.opacity='.2';}
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(innerWidth,innerHeight);
+  var scene=new THREE.Scene(), camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,1,400);
+  camera.position.z=60; var group=new THREE.Group(); scene.add(group);
+  var N=innerWidth<760?55:120, R=40, base=new Float32Array(N*3), pos=new Float32Array(N*3), col=new Float32Array(N*3);
+  var C=new THREE.Color(0xa3e635), C2=new THREE.Color(0x00e5ff), i;
+  for(i=0;i<N;i++){ base[i*3]=(Math.random()*2-1)*R*1.9; base[i*3+1]=(Math.random()*2-1)*R*1.2; base[i*3+2]=(Math.random()*2-1)*R*0.6; var c=Math.random()<0.3?C2:C; col[i*3]=c.r;col[i*3+1]=c.g;col[i*3+2]=c.b; }
+  var sc=document.createElement('canvas');sc.width=sc.height=64;var sx=sc.getContext('2d');var g=sx.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.4,'rgba(255,255,255,.5)');g.addColorStop(1,'rgba(255,255,255,0)');sx.fillStyle=g;sx.beginPath();sx.arc(32,32,32,0,7);sx.fill();
+  var geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(pos,3)); geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  var mat=new THREE.PointsMaterial({size:1.5,map:new THREE.CanvasTexture(sc),vertexColors:true,transparent:true,opacity:.9,depthWrite:false,blending:THREE.AdditiveBlending});
+  group.add(new THREE.Points(geo,mat));
+  var mx=0,my=0; window.addEventListener('mousemove',function(e){mx=(e.clientX/innerWidth)*2-1;my=-(e.clientY/innerHeight)*2+1;},{passive:true});
+  var t=0; function loop(){ t+=0.006; group.rotation.y+=0.0009; camera.position.x+=(mx*6-camera.position.x)*0.03; camera.position.y+=(my*4-camera.position.y)*0.03; camera.lookAt(0,0,0); for(i=0;i<N;i++){ pos[i*3]=base[i*3]+Math.sin(t*0.6+i)*1.3; pos[i*3+1]=base[i*3+1]+Math.cos(t*0.5+i*1.3)*1.3; pos[i*3+2]=base[i*3+2]+Math.sin(t*0.4+i)*1.0; } geo.attributes.position.needsUpdate=true; renderer.render(scene,camera); requestAnimationFrame(loop); }
+  loop();
+  window.addEventListener('resize',function(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+  var glow=document.getElementById('bg-glow');
+  function hideForPrint(){ try{ if(canvas.parentNode) canvas.parentNode.removeChild(canvas); if(glow) glow.style.display='none'; }catch(e){} }
+  function showAfterPrint(){ try{ if(!canvas.parentNode) document.body.insertBefore(canvas, document.body.firstChild); if(glow) glow.style.display=''; }catch(e){} }
+  window.addEventListener('beforeprint', hideForPrint);
+  window.addEventListener('afterprint', showAfterPrint);
+  if(window.matchMedia){ var mqp=window.matchMedia('print'); var mqh=function(e){ e.matches?hideForPrint():showAfterPrint(); }; if(mqp.addEventListener) mqp.addEventListener('change',mqh); else if(mqp.addListener) mqp.addListener(mqh); }
+})();
+
+/* ── framework mapping + letter grade + Markdown export ── */
+var LAST=null;
+function letterGrade(s){ if(s>=90)return 'A'; if(s>=80)return 'B'; if(s>=70)return 'C'; if(s>=60)return 'D'; return 'F'; }
+function frameworkFor(f){
+  var hay=((f.title||'')+' '+((f.tags||[]).join(' '))).toLowerCase();
+  if(/secret|credential|password|token|api key|api-key|hardcoded/.test(hay)) return 'ATT&CK T1552 · Unsecured Credentials';
+  if(/http|external|exfil|egress|public|webhook|forward|outbound|send email|mail/.test(hay)) return 'ATT&CK T1567 · Exfil to Cloud';
+  if(/inject|unvalidated|untrusted|expression|eval|input/.test(hay)) return 'ATT&CK T1059 · Cmd & Scripting';
+  if(/permission|scope|owner|admin|privilege|connection|connector/.test(hay)) return 'ATT&CK T1098 · Account Manipulation';
+  if(/dlp|boundary|policy/.test(hay)) return 'Governance · DLP';
+  if(/error|run-after|retry|timeout|logging|monitor|resilience|concurrency/.test(hay)) return 'Governance · Resilience';
+  return 'Power Platform · Governance';
+}
+function mdStrip(s){ return String(s).replace(/<[^>]+>/g,' ').replace(/&amp;/g,'&').replace(/\s+/g,' ').trim(); }
+function buildMarkdownFromLast(){
+  if(!LAST) return document.getElementById('resultsWrap').innerText;
+  var a=LAST, L=[];
+  L.push('# Power Automate Flow Security Analysis');
+  L.push('**Flow:** '+a.flowName+'  ');
+  L.push('**Environment:** '+a.envName+'  ');
+  L.push('**Security grade:** '+letterGrade(a.secScore)+' — '+a.secScore+'/100 ('+a.grade+', higher is better)  ');
+  L.push('**Inventory:** '+a.actionCount+' actions · '+a.connCount+' connectors\n');
+  L.push('**Findings:** '+a.nCrit+' Critical · '+a.nHigh+' High · '+a.nMed+' Medium · '+a.nLow+' Low\n');
+  L.push('## Assessment Summary\nAutomated security review of flow **'+a.flowName+'** ('+a.envName+' environment) across '+a.actionCount+' actions and '+a.connCount+' connectors. Overall posture: **'+a.grade+'** ('+a.secScore+'/100).\n');
+  L.push('## Security Findings ('+a.findings.length+')');
+  if(!a.findings.length) L.push('\n_No issues found above the selected threshold._');
+  a.findings.forEach(function(f,i){
+    L.push('\n### F-'+String(i+1).padStart(2,'0')+' — '+f.title+' ['+f.sev+']');
+    L.push('- **Mapping:** '+frameworkFor(f));
+    if(f.tags&&f.tags.length) L.push('- **Tags:** '+f.tags.join(', '));
+    L.push('- **Description:** '+mdStrip(f.desc));
+    if(f.location) L.push('- **Location:** '+mdStrip(f.location));
+    L.push('- **Risk & impact:** '+mdStrip(f.risk));
+    L.push('- **Remediation:** '+mdStrip(f.fix));
+    if(f.refs&&f.refs.length) L.push('- **References:** '+f.refs.map(function(r){return r.t+' (https://learn.microsoft.com/en-us/search/?terms='+encodeURIComponent(r.t)+')';}).join('; '));
+  });
+  L.push('\n## Methodology & Standards');
+  L.push('- Findings mapped to MITRE ATT&CK where an attacker technique applies (over-permissioned or malicious flows are a recognised persistence/exfiltration vector).');
+  L.push('- Remediation aligned to Microsoft Power Platform security, Power Platform DLP, and governance guidance.');
+  L.push('- Analysis runs entirely client-side; no flow data is transmitted.');
+  L.push('\n_Generated by eusebio@it-sec / flow-analyzer v2.0 — '+new Date().toUTCString()+'_');
+  return L.join('\n');
+}
+
+
+/* ── TABS ── */
+var TABS = ['upload','options','howto'];
+TABS.forEach(function(t){
+  document.getElementById('tb-'+t).addEventListener('click', function(){
+    TABS.forEach(function(x){
+      document.getElementById('tb-'+x).classList.remove('active');
+      document.getElementById('panel-'+x).classList.remove('active');
+    });
+    document.getElementById('tb-'+t).classList.add('active');
+    document.getElementById('panel-'+t).classList.add('active');
+  });
+});
+
+/* ── OPTIONS ── */
+document.querySelectorAll('.opt-item').forEach(function(el){
+  el.addEventListener('click', function(){ el.classList.toggle('checked'); });
+});
+function getOpts(){
+  var o={};
+  document.querySelectorAll('.opt-item').forEach(function(el){
+    o[el.dataset.opt] = el.classList.contains('checked');
+  });
+  return o;
+}
+
+/* ── FILE UPLOAD ── */
+var fileData = null;
+var uploadZone = document.getElementById('uploadZone');
+var fileInput  = document.getElementById('fileInput');
+
+uploadZone.addEventListener('click', function(){ fileInput.click(); });
+uploadZone.addEventListener('dragover', function(e){ e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', function(){ uploadZone.classList.remove('drag-over'); });
+uploadZone.addEventListener('drop', function(e){
+  e.preventDefault(); uploadZone.classList.remove('drag-over');
+  var file = e.dataTransfer.files[0];
+  if(file) loadFile(file);
+});
+fileInput.addEventListener('change', function(){
+  if(fileInput.files[0]) loadFile(fileInput.files[0]);
+});
+
+function loadFile(file){
+  var reader = new FileReader();
+  reader.onload = function(e){
+    fileData = e.target.result;
+    document.getElementById('pasteArea').value = fileData;
+    document.getElementById('uzFilename').textContent = file.name;
+    uploadZone.classList.add('has-file');
+  };
+  reader.readAsText(file);
+}
+
+/* ── ANALYZE ── */
+document.getElementById('analyzeBtn').addEventListener('click', doAnalyze);
+
+function doAnalyze(){
+  var raw = document.getElementById('pasteArea').value.trim();
+  if(!raw){ alert('Please paste or upload a flow JSON first.'); return; }
+  var parsed;
+  try { parsed = JSON.parse(raw); }
+  catch(e){ alert('Invalid JSON: ' + e.message); return; }
+  runAnalysis(parsed);
+}
+
+/* ── LOADER TERMINAL ── */
+function showLoader(lines, callback){
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('resultsWrap').style.display='none';
+  var loader = document.getElementById('loader');
+  var term   = document.getElementById('loaderTerminal');
+  loader.classList.add('show');
+  term.innerHTML='';
+  var delay = 0;
+  lines.forEach(function(l, i){
+    setTimeout(function(){
+      var div = document.createElement('div');
+      div.className='el-line';
+      div.innerHTML = l;
+      div.style.animationDelay = '0s';
+      term.appendChild(div);
+    }, delay);
+    delay += l.includes('Scanning') ? 250 : l.includes('CRIT') ? 120 : 160;
+  });
+  setTimeout(function(){
+    loader.classList.remove('show');
+    callback();
+  }, delay + 400);
+}
+
+/* ════════════════════════════════════════
+   ANALYSIS ENGINE
+════════════════════════════════════════ */
+
+var RISKY_CONNECTORS = {
+  'shared_gmail':            {risk:'HIGH',   label:'Gmail',             reason:'External email connector — data leaving M365 boundary'},
+  'shared_twitter':          {risk:'HIGH',   label:'Twitter / X',       reason:'Public social platform — potential data exposure'},
+  'shared_dropbox':          {risk:'HIGH',   label:'Dropbox',           reason:'Personal cloud storage — unmanaged data destination'},
+  'shared_googledrive':      {risk:'HIGH',   label:'Google Drive',      reason:'Competitor cloud storage — outside M365 governance'},
+  'shared_googlesheets':     {risk:'HIGH',   label:'Google Sheets',     reason:'External data storage — outside M365 DLP control'},
+  'shared_slack':            {risk:'MEDIUM', label:'Slack',             reason:'Third-party messaging — data leaving tenant boundary'},
+  'shared_trello':           {risk:'MEDIUM', label:'Trello',            reason:'External project tool — potentially uncontrolled data'},
+  'shared_airtable':         {risk:'MEDIUM', label:'Airtable',          reason:'External database — data stored outside tenant'},
+  'shared_salesforce':       {risk:'MEDIUM', label:'Salesforce',        reason:'External CRM — verify data sharing approval'},
+  'shared_box':              {risk:'MEDIUM', label:'Box',               reason:'External file storage — verify DLP policy covers this'},
+  'shared_ftp':              {risk:'HIGH',   label:'FTP',               reason:'Unencrypted file transfer — data exfiltration risk'},
+  'shared_sftp':             {risk:'MEDIUM', label:'SFTP',              reason:'External file transfer — verify destination is approved'},
+  'shared_azureblob':        {risk:'LOW',    label:'Azure Blob',        reason:'Microsoft storage — verify access keys are secured'},
+  'shared_sharepointonline':  {risk:'LOW',   label:'SharePoint Online', reason:'M365 native — verify scope is not overly broad'},
+  'shared_office365':        {risk:'LOW',    label:'Office 365',        reason:'M365 native connector — verify delegated permissions'},
+  'shared_office365users':   {risk:'LOW',    label:'Office 365 Users',  reason:'M365 native — verify minimal permission scope'},
+  'shared_teams':            {risk:'LOW',    label:'Microsoft Teams',   reason:'M365 native — verify channel access scope'},
+  'shared_commondataservice': {risk:'LOW',   label:'Dataverse',         reason:'M365 native — verify Dataverse table permissions'},
+  'shared_sql':              {risk:'MEDIUM', label:'SQL Server',        reason:'Database connector — verify credentials are not hardcoded'},
+  'shared_keyvault':         {risk:'LOW',    label:'Azure Key Vault',   reason:'Secrets management — good practice if used for credentials'},
+  'shared_http':             {risk:'HIGH',   label:'HTTP',              reason:'Raw HTTP calls — arbitrary external endpoint access'},
+  'shared_sendgrid':         {risk:'MEDIUM', label:'SendGrid',          reason:'External email service — potential phishing/spam abuse'},
+  'shared_twilio':           {risk:'MEDIUM', label:'Twilio',            reason:'External SMS service — verify approved use and API key security'},
+  'shared_github':           {risk:'MEDIUM', label:'GitHub',            reason:'External code repository — verify data being accessed'},
+};
+
+var SECRET_PATTERNS = [
+  {name:'API Key',          pattern:/api[_\-]?key[\s]*[:=][\s]*["']?([A-Za-z0-9\-_]{16,})/i},
+  {name:'Password',         pattern:/pass(?:word)?[\s]*[:=][\s]*["']([^"']{6,})/i},
+  {name:'Token',            pattern:/token[\s]*[:=][\s]*["']?([A-Za-z0-9\-_.]{20,})/i},
+  {name:'Secret',           pattern:/secret[\s]*[:=][\s]*["']?([A-Za-z0-9\-_]{12,})/i},
+  {name:'Bearer Token',     pattern:/bearer\s+([A-Za-z0-9\-_.]{20,})/i},
+  {name:'Authorization Header', pattern:/authorization[\s]*[:=][\s]*["']?([A-Za-z0-9\-_ .]{12,})/i},
+  {name:'Connection String',pattern:/(?:server|data source|initial catalog)[\s]*=[\s]*[^;]{5,}/i},
+  {name:'Private Key',      pattern:/-----BEGIN\s+(?:RSA\s+)?PRIVATE\s+KEY-----/},
+  {name:'AWS Key',          pattern:/AKIA[0-9A-Z]{16}/},
+  {name:'Subscription Key', pattern:/subscription[_\-]?key[\s]*[:=][\s]*["']?([A-Za-z0-9\-_]{16,})/i},
+];
+
+function flattenObject(obj, prefix){
+  var results = [];
+  prefix = prefix || '';
+  if(!obj || typeof obj !== 'object') return results;
+  Object.keys(obj).forEach(function(key){
+    var val = obj[key];
+    var path = prefix ? prefix+'.'+key : key;
+    if(typeof val === 'string'){
+      results.push({path:path, value:val});
+    } else if(typeof val === 'object' && val !== null){
+      results = results.concat(flattenObject(val, path));
+    }
+  });
+  return results;
+}
+
+function runAnalysis(flowJson){
+  var opts     = getOpts();
+  var threshold = document.getElementById('threshold').value;
+
+  // Extract flow metadata
+  var flowName = document.getElementById('flowNameOverride').value.trim()
+    || flowJson.name
+    || flowJson.properties && flowJson.properties.displayName
+    || flowJson.properties && flowJson.properties.definition && 'Unnamed Flow'
+    || 'Unnamed Flow';
+
+  var envName  = document.getElementById('envSelect').value;
+  var def      = flowJson.properties && flowJson.properties.definition
+               ? flowJson.properties.definition
+               : flowJson.definition || flowJson;
+
+  var triggers   = def.triggers   || def['$triggers']   || {};
+  var actions    = def.actions    || def['$actions']    || {};
+  var parameters = def.parameters || {};
+
+  // Flatten for secret scanning
+  var allFields  = flattenObject(def);
+  var findings   = [];
+  var connectors = {};
+  var actionList = [];
+
+  /* ── COLLECT CONNECTORS ── */
+  function walkActions(actObj, depth){
+    depth = depth||0;
+    Object.keys(actObj).forEach(function(name){
+      var act = actObj[name];
+      if(!act || typeof act !== 'object') return;
+      var type = (act.type||'').toLowerCase();
+      var connRef = act.metadata && act.metadata.operationMetadataId
+        ? act.metadata.operationMetadataId : null;
+      var apiId = (act.inputs && act.inputs.host && act.inputs.host.apiId)
+        || (act.inputs && act.inputs.api && act.inputs.api.id)
+        || '';
+      var connName = '';
+      if(apiId){
+        var parts = apiId.split('/');
+        connName = parts[parts.length-1] || '';
+      }
+
+      // record action
+      var actionEntry = {
+        name: name,
+        type: act.type||'Unknown',
+        connectorId: connName,
+        hasRunAfter: act.runAfter && Object.keys(act.runAfter).length>0,
+        inputs: act.inputs||{}
+      };
+      actionList.push(actionEntry);
+
+      // track connector
+      if(connName){
+        if(!connectors[connName]) connectors[connName] = {count:0, actions:[]};
+        connectors[connName].count++;
+        connectors[connName].actions.push(name);
+      }
+
+      // recurse into branches
+      if(act.actions) walkActions(act.actions, depth+1);
+      if(act.else && act.else.actions) walkActions(act.else.actions, depth+1);
+      if(act.branches) Object.keys(act.branches).forEach(function(b){ if(act.branches[b].actions) walkActions(act.branches[b].actions, depth+1); });
+      if(act.cases) Object.keys(act.cases).forEach(function(c){ if(act.cases[c].actions) walkActions(act.cases[c].actions, depth+1); });
+    });
+  }
+  walkActions(triggers);
+  walkActions(actions);
+
+  /* ── RULE 1: HARDCODED SECRETS ── */
+  if(opts.secrets){
+    allFields.forEach(function(field){
+      if(field.path.indexOf('runAfter')>=0) return;
+      SECRET_PATTERNS.forEach(function(pat){
+        if(pat.pattern.test(field.value)){
+          var preview = field.value.length > 60 ? field.value.substring(0,60)+'...' : field.value;
+          findings.push({
+            sev:'CRITICAL',
+            title:'Hardcoded '+pat.name+' Detected',
+            tags:['Secrets','Data Exposure'],
+            desc:'A potential '+pat.name+' was found hardcoded in the flow definition. Hardcoded credentials are embedded in the flow export and visible to anyone with access to the flow package.',
+            location:'Path: '+field.path,
+            preview: preview,
+            risk:'If this flow is exported, shared, or accessed by another admin, the credential is fully exposed. Hardcoded secrets cannot be rotated without editing the flow. If the credential is compromised, detection and remediation is difficult.',
+            fix:'<ul><li>Move this credential to <strong>Azure Key Vault</strong> and use the Key Vault connector to retrieve it at runtime.</li><li>Use Power Automate <strong>Connection References</strong> which store credentials securely in the platform.</li><li>If this is a test value, remove it before deploying to production.</li></ul>',
+            refs:[
+              {t:'Use Azure Key Vault in Power Automate',u:'https://learn.microsoft.com/en-us/power-automate/use-azure-key-vault-secrets'},
+              {t:'Connection references overview',u:'https://learn.microsoft.com/en-us/power-apps/maker/data-platform/create-connection-reference'}
+            ]
+          });
+        }
+      });
+    });
+  }
+
+  /* ── RULE 2: HTTP SECURITY ── */
+  if(opts.http){
+    allFields.forEach(function(field){
+      if((field.path.toLowerCase().indexOf('uri')>=0 || field.path.toLowerCase().indexOf('url')>=0 || field.path.toLowerCase().indexOf('endpoint')>=0) && typeof field.value==='string'){
+        if(/^http:\/\//i.test(field.value)){
+          findings.push({
+            sev:'HIGH',
+            title:'Plain HTTP Endpoint (Not HTTPS)',
+            tags:['HTTP','Encryption'],
+            desc:'A flow action is calling an HTTP endpoint over plain HTTP (unencrypted). Data transmitted is exposed to man-in-the-middle interception.',
+            location:'URL: '+field.value,
+            preview: field.value,
+            risk:'Any data sent to or received from this endpoint can be intercepted in transit. In enterprise environments, network monitoring tools and proxy servers will log this traffic in plaintext.',
+            fix:'<ul><li>Change all HTTP URLs to <strong>HTTPS</strong>.</li><li>If the destination service does not support HTTPS, that service should be upgraded or replaced.</li><li>Verify the destination server\'s TLS certificate is valid.</li></ul>',
+            refs:[
+              {t:'HTTP connector in Power Automate',u:'https://learn.microsoft.com/en-us/power-automate/desktop-flows/actions-reference/web'}
+            ]
+          });
+        }
+      }
+    });
+
+    // Check HTTP actions without authentication
+    actionList.forEach(function(act){
+      if(act.type && act.type.toLowerCase()==='http'){
+        var auth = act.inputs && act.inputs.authentication;
+        if(!auth || auth.type==='None' || auth.type===undefined){
+          findings.push({
+            sev:'HIGH',
+            title:'HTTP Action with No Authentication',
+            tags:['HTTP','Auth'],
+            desc:'An HTTP connector action is configured without authentication. Any request to the endpoint is sent without credentials, potentially accessing or exposing unauthenticated APIs.',
+            location:'Action: '+act.name,
+            preview:'',
+            risk:'Unauthenticated HTTP calls may expose internal APIs, hit rate-limited public endpoints inappropriately, or send data to endpoints without identity accountability.',
+            fix:'<ul><li>Add <strong>authentication</strong> to the HTTP action (Basic, OAuth, Managed Identity, or API Key as appropriate).</li><li>Prefer <strong>Managed Identity</strong> authentication for Azure endpoints to avoid credential management.</li><li>If the endpoint is internal, consider using a custom connector with proper auth configuration.</li></ul>',
+            refs:[
+              {t:'HTTP connector authentication',u:'https://learn.microsoft.com/en-us/connectors/custom-connectors/create-web-api-connector'}
+            ]
+          });
+        }
+      }
+    });
+  }
+
+  /* ── RULE 3: RISKY CONNECTORS ── */
+  if(opts.connectors){
+    Object.keys(connectors).forEach(function(connId){
+      var info = RISKY_CONNECTORS[connId];
+      if(!info) return;
+      var threshold_map = {HIGH:['HIGH','CRITICAL'],MEDIUM:['MEDIUM','HIGH','CRITICAL'],LOW:['LOW','MEDIUM','HIGH','CRITICAL']};
+      if(info.risk==='HIGH'){
+        findings.push({
+          sev:'HIGH',
+          title:'High-Risk Connector: '+info.label,
+          tags:['Connector','DLP'],
+          desc:info.reason+'. This connector is used '+connectors[connId].count+' time(s) in this flow.',
+          location:'Actions: '+connectors[connId].actions.join(', '),
+          preview:'',
+          risk:'Data flowing through '+info.label+' leaves the Microsoft 365 governance boundary and is subject to that service\'s data handling policies. DLP policies may not control what data reaches this connector.',
+          fix:'<ul><li>Review whether this connector is <strong>approved</strong> in your Power Platform DLP policy.</li><li>If the integration is legitimate, ensure the connector is in the <strong>Business tier</strong> in your DLP policy alongside M365 connectors.</li><li>If not approved, <strong>remove this connector</strong> and re-architect using an approved alternative.</li><li>Document the business justification for this integration.</li></ul>',
+          refs:[
+            {t:'DLP connector classification',u:'https://learn.microsoft.com/en-us/power-platform/admin/dlp-connector-classification'},
+            {t:'Create a DLP policy',u:'https://learn.microsoft.com/en-us/power-platform/admin/create-dlp-policy'}
+          ]
+        });
+      } else if(info.risk==='MEDIUM'){
+        findings.push({
+          sev:'MEDIUM',
+          title:'Medium-Risk Connector: '+info.label,
+          tags:['Connector','DLP'],
+          desc:info.reason+'. Used '+connectors[connId].count+' time(s) in this flow.',
+          location:'Actions: '+connectors[connId].actions.join(', '),
+          preview:'',
+          risk:'This connector may move data outside the M365 governance boundary or interact with third-party systems that have different data retention and security standards.',
+          fix:'<ul><li>Confirm this connector is included in your <strong>DLP policy</strong>.</li><li>Review the data being sent to this service and ensure it meets your data classification requirements.</li><li>Document approval for this integration with IT/Security sign-off.</li></ul>',
+          refs:[{t:'DLP policies for Power Platform',u:'https://learn.microsoft.com/en-us/power-platform/admin/wp-data-loss-prevention'}]
+        });
+      }
+    });
+
+    // HTTP connector specifically
+    if(connectors['shared_http'] || actionList.some(function(a){ return a.type&&a.type.toLowerCase()==='http'; })){
+      findings.push({
+        sev:'CRITICAL',
+        title:'HTTP Connector Detected — Unrestricted Outbound Calls',
+        tags:['HTTP Connector','Data Exfil'],
+        desc:'The raw HTTP connector is used in this flow. This allows the flow to make HTTP requests to ANY external URL, completely bypassing DLP connector controls.',
+        location:'HTTP connector actions detected',
+        preview:'',
+        risk:'The HTTP connector is the most dangerous connector in Power Automate because it cannot be restricted to specific endpoints via DLP policies. A flow with HTTP access can exfiltrate any data to any URL on the internet.',
+        fix:'<ul><li>Replace HTTP connector actions with <strong>named custom connectors</strong> pointing to approved endpoints — custom connectors CAN be governed by DLP policies.</li><li>If HTTP connector is required, <strong>restrict it via DLP policy</strong> to the Non-Business tier to isolate it from M365 data connectors.</li><li>Require <strong>IT review and approval</strong> before any flow using the HTTP connector goes to production.</li></ul>',
+        refs:[
+          {t:'Govern the HTTP connector',u:'https://learn.microsoft.com/en-us/power-platform/admin/governance-considerations#http-connector-and-api-management'},
+          {t:'Custom connectors in Power Platform',u:'https://learn.microsoft.com/en-us/connectors/custom-connectors/'}
+        ]
+      });
+    }
+  }
+
+  /* ── RULE 4: ERROR HANDLING ── */
+  if(opts.errorhandling){
+    var noErrorHandling = actionList.filter(function(act){
+      return !act.hasRunAfter && act.type && act.type.toLowerCase()!=='trigger';
+    });
+    var pct = actionList.length ? Math.round((noErrorHandling.length/actionList.length)*100) : 0;
+    if(noErrorHandling.length > 3 && pct > 50){
+      findings.push({
+        sev:'MEDIUM',
+        title:'Missing Error Handling — '+noErrorHandling.length+' Actions ('+pct+'%)',
+        tags:['Error Handling','Reliability'],
+        desc:noErrorHandling.length+' of '+actionList.length+' actions ('+pct+'%) do not have configured run-after error conditions. Failures will silently propagate or cause unexpected behaviour.',
+        location:'Affected: '+noErrorHandling.slice(0,5).map(function(a){ return a.name; }).join(', ')+(noErrorHandling.length>5?' and '+(noErrorHandling.length-5)+' more':''),
+        preview:'',
+        risk:'Without error handling, a failed action may cause the flow to continue processing with invalid data, send partial/incorrect outputs, or fail silently without notifying anyone. In production flows, this can cause data corruption, missed approvals, or silent data loss.',
+        fix:'<ul><li>Add <strong>Scope actions</strong> with configure-run-after settings to catch errors in groups of related actions.</li><li>Use <strong>Try/Catch pattern</strong>: wrap actions in a Scope, add a parallel error branch with run-after set to "has failed".</li><li>Send an <strong>email or Teams notification</strong> in the error branch with the error details and flow run URL.</li><li>Enable <strong>flow failure notifications</strong> in the flow settings.</li></ul>',
+        refs:[
+          {t:'Error handling in Power Automate',u:'https://learn.microsoft.com/en-us/power-automate/error-handling'},
+          {t:'Scope action for try/catch',u:'https://learn.microsoft.com/en-us/power-automate/error-handling#scope-action'}
+        ]
+      });
+    }
+  }
+
+  /* ── RULE 5: DATA EXFILTRATION PATTERNS ── */
+  if(opts.dataexfil){
+    // Check for send-email actions going to external addresses
+    allFields.forEach(function(field){
+      if(field.path.toLowerCase().indexOf('to')>=0 && typeof field.value==='string'){
+        var emails = field.value.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g)||[];
+        emails.forEach(function(email){
+          var domain = email.split('@')[1]||'';
+          // Generic external domain check (not fully qualified - just demonstrative)
+          if(domain && !domain.includes('onmicrosoft') && domain !== 'yourdomain.com'){
+            findings.push({
+              sev:'MEDIUM',
+              title:'Email Sent to Potential External Address',
+              tags:['Email','Data Exfil'],
+              desc:'This flow sends email to an address that may be external to the organisation. If this contains M365 data, it may violate data governance policies.',
+              location:'Field: '+field.path+' | Value: '+email,
+              preview: email,
+              risk:'Automated flows sending business data to external email addresses can be used for deliberate data exfiltration or may inadvertently share sensitive information outside the organisation.',
+              fix:'<ul><li>Verify this email address is an <strong>approved business recipient</strong>.</li><li>If sending to a dynamic address from flow inputs, <strong>validate and sanitise</strong> the input before using it as an email recipient.</li><li>Consider restricting outbound email from flows to an <strong>approved domain allow-list</strong>.</li></ul>',
+              refs:[{t:'Power Automate governance considerations',u:'https://learn.microsoft.com/en-us/power-platform/admin/governance-considerations'}]
+            });
+          }
+        });
+      }
+    });
+
+    // Check for "Create file" or write actions going to non-M365 paths
+    actionList.forEach(function(act){
+      if(act.type && (act.type.toLowerCase().indexOf('createfile')>=0 || act.type.toLowerCase().indexOf('writefile')>=0)){
+        if(act.connectorId && (act.connectorId.indexOf('dropbox')>=0 || act.connectorId.indexOf('googledrive')>=0 || act.connectorId.indexOf('box')>=0 || act.connectorId.indexOf('ftp')>=0)){
+          findings.push({
+            sev:'HIGH',
+            title:'File Written to External Storage Service',
+            tags:['File Write','Data Exfil'],
+            desc:'This flow writes files to an external storage service ('+act.connectorId+'). Business data written to external services is outside M365 governance and DLP controls.',
+            location:'Action: '+act.name,
+            preview:'',
+            risk:'Files containing business data written to external cloud storage are outside the organisation\'s control. The external service may have different retention, access, and security policies.',
+            fix:'<ul><li>Redirect file writes to <strong>SharePoint Online</strong> or <strong>OneDrive for Business</strong>.</li><li>If external storage is required, ensure the destination service is <strong>approved by IT and covered by a DLP policy</strong>.</li><li>Classify the data being written and ensure it meets the data residency requirements for the destination.</li></ul>',
+            refs:[{t:'SharePoint connector for Power Automate',u:'https://learn.microsoft.com/en-us/connectors/sharepointonline/'}]
+          });
+        }
+      }
+    });
+  }
+
+  /* ── RULE 6: OVERPRIVILEGED ACCESS ── */
+  if(opts.permissions){
+    allFields.forEach(function(field){
+      if(typeof field.value !== 'string') return;
+      if(field.value.includes('/_api/web') && field.path.toLowerCase().indexOf('uri')>=0){
+        if(!field.value.includes('/lists/') && !field.value.includes('/items/')){
+          findings.push({
+            sev:'MEDIUM',
+            title:'Broad SharePoint REST API Access',
+            tags:['SharePoint','Permissions'],
+            desc:'This flow accesses the SharePoint REST API at the web/site level, potentially with broader permissions than needed for the specific operation.',
+            location:'Field: '+field.path,
+            preview: field.value.length>60?field.value.substring(0,60)+'...':field.value,
+            risk:'Site-level SharePoint API access may grant the flow\'s connection identity read/write access to all lists and documents within the site, beyond what the business logic requires.',
+            fix:'<ul><li>Apply the <strong>principle of least privilege</strong>: access only the specific list or library the flow needs.</li><li>Use the SharePoint connector\'s built-in actions instead of raw REST API calls where possible.</li><li>Review the connection identity permissions on the SharePoint site.</li></ul>',
+            refs:[{t:'SharePoint connector actions',u:'https://learn.microsoft.com/en-us/connectors/sharepointonline/'}]
+          });
+        }
+      }
+    });
+  }
+
+  /* ── RULE 7: SENSITIVE DATA IN COMPOSE/VARIABLES ── */
+  if(opts.sensitive){
+    allFields.forEach(function(field){
+      if(field.path.toLowerCase().indexOf('compose')>=0 || field.path.toLowerCase().indexOf('variable')>=0 || field.path.toLowerCase().indexOf('initialize')>=0){
+        if(typeof field.value === 'string'){
+          var sensitiveKeywords = ['ssn','social security','passport','dob','date of birth','credit card','cvv','iban','swift','account number','salary','compensation','medical record','diagnosis','prescription'];
+          sensitiveKeywords.forEach(function(kw){
+            if(field.value.toLowerCase().indexOf(kw)>=0){
+              findings.push({
+                sev:'MEDIUM',
+                title:'Potential PII/Sensitive Data in Flow Variable',
+                tags:['PII','Data Classification'],
+                desc:'The flow appears to handle potentially sensitive data ('+kw+') in a variable or compose action. Ensure appropriate data handling controls are applied.',
+                location:'Field: '+field.path,
+                preview: kw,
+                risk:'Sensitive personal or financial data stored in flow variables is included in flow run history by default. Anyone with access to the flow\'s run history in Power Automate can view this data.',
+                fix:'<ul><li>Enable <strong>Secure Inputs/Outputs</strong> on actions that handle sensitive data (available in action settings → Secure Inputs/Outputs toggle).</li><li>Apply <strong>Microsoft Purview sensitivity labels</strong> to identify and protect flows handling sensitive data.</li><li>Review who has access to the flow run history and restrict it to authorised personnel only.</li></ul>',
+                refs:[
+                  {t:'Securing sensitive data in Power Automate',u:'https://learn.microsoft.com/en-us/power-automate/prevent-data-loss'},
+                  {t:'Secure inputs and outputs',u:'https://learn.microsoft.com/en-us/power-automate/desktop-flows/how-to/secure-sensitive-inputs-outputs'}
+                ]
+              });
+            }
+          });
+        }
+      }
+    });
+  }
+
+  /* ── RULE 8: DLP BOUNDARY VIOLATIONS ── */
+  if(opts.dlp){
+    var m365Connectors = Object.keys(connectors).filter(function(c){ return c.indexOf('shared_office')>=0||c.indexOf('shared_sharepoint')>=0||c.indexOf('shared_teams')>=0||c.indexOf('shared_commondataservice')>=0; });
+    var externalConnectors = Object.keys(connectors).filter(function(c){ return RISKY_CONNECTORS[c] && (RISKY_CONNECTORS[c].risk==='HIGH'||RISKY_CONNECTORS[c].risk==='MEDIUM'); });
+    if(m365Connectors.length>0 && externalConnectors.length>0){
+      findings.push({
+        sev:'HIGH',
+        title:'DLP Boundary Violation — M365 + External Connectors Mixed',
+        tags:['DLP','Boundary'],
+        desc:'This flow mixes Microsoft 365 connectors ('+m365Connectors.map(function(c){ return RISKY_CONNECTORS[c]?RISKY_CONNECTORS[c].label:c; }).join(', ')+') with external/consumer connectors ('+externalConnectors.map(function(c){ return RISKY_CONNECTORS[c]?RISKY_CONNECTORS[c].label:c; }).join(', ')+'). This crosses DLP Business/Non-Business boundaries.',
+        location:'Mixed connectors detected in flow',
+        preview:'',
+        risk:'Flows that mix M365 business data connectors with external consumer connectors can move sensitive business data to uncontrolled external services, bypassing organisational data governance policies.',
+        fix:'<ul><li>Review your <strong>DLP policy connector classification</strong> — M365 connectors should be in the "Business" tier and consumer connectors in "Non-Business".</li><li>A well-configured DLP policy will <strong>block this flow from running</strong> until the external connectors are removed.</li><li>If the external connection is legitimate, classify the external connector as Business-tier with appropriate documentation and approval.</li></ul>',
+        refs:[
+          {t:'DLP policies overview',u:'https://learn.microsoft.com/en-us/power-platform/admin/wp-data-loss-prevention'},
+          {t:'Connector classification',u:'https://learn.microsoft.com/en-us/power-platform/admin/dlp-connector-classification'}
+        ]
+      });
+    }
+  }
+
+  /* ── FILTER BY THRESHOLD ── */
+  var threshMap = {all:['CRITICAL','HIGH','MEDIUM','LOW'],medium:['CRITICAL','HIGH','MEDIUM'],high:['CRITICAL','HIGH'],critical:['CRITICAL']};
+  var allowed = threshMap[threshold]||threshMap['all'];
+  findings = findings.filter(function(f){ return allowed.indexOf(f.sev)>=0; });
+
+  /* ── DEDUPLICATE similar titles ── */
+  var seen = {};
+  findings = findings.filter(function(f){
+    if(seen[f.title]) return false;
+    seen[f.title] = true; return true;
+  });
+
+  /* ── SORT by severity ── */
+  var sevOrd={CRITICAL:0,HIGH:1,MEDIUM:2,LOW:3};
+  findings.sort(function(a,b){ return (sevOrd[a.sev]||4)-(sevOrd[b.sev]||4); });
+
+  /* ── BUILD LOADER LINES ── */
+  var loaderLines = [
+    '<span class="el-ps">eusebio@it-sec:~/tools/flow-analyzer$</span> <span class="el-cmd">./flow-scan --flow "'+flowName+'"</span>',
+    '<span class="el-hi">[*]</span> <span class="el-out">Parsing flow definition...</span>',
+    '<span class="el-ok">[+]</span> <span class="el-out">Actions found: <span class="el-hi">'+actionList.length+'</span></span>',
+    '<span class="el-ok">[+]</span> <span class="el-out">Connectors detected: <span class="el-hi">'+Object.keys(connectors).length+'</span></span>',
+    '<span class="el-hi">[*]</span> <span class="el-out">Scanning for hardcoded secrets...</span>',
+    '<span class="el-hi">[*]</span> <span class="el-out">Checking HTTP security...</span>',
+    '<span class="el-hi">[*]</span> <span class="el-out">Analysing connector risk profile...</span>',
+    '<span class="el-hi">[*]</span> <span class="el-out">Checking error handling coverage...</span>',
+    '<span class="el-hi">[*]</span> <span class="el-out">Scanning for data exfiltration patterns...</span>',
+    '<span class="el-hi">[*]</span> <span class="el-out">Checking DLP boundary compliance...</span>',
+  ];
+
+  var nCrit = findings.filter(function(f){ return f.sev==='CRITICAL'; }).length;
+  var nHigh = findings.filter(function(f){ return f.sev==='HIGH'; }).length;
+  var nMed  = findings.filter(function(f){ return f.sev==='MEDIUM'; }).length;
+  var nLow  = findings.filter(function(f){ return f.sev==='LOW'; }).length;
+
+  if(nCrit>0) loaderLines.push('<span class="el-err">[CRITICAL]</span> <span class="el-err">'+nCrit+' critical issue'+(nCrit>1?'s':'')+' found</span>');
+  if(nHigh>0) loaderLines.push('<span class="el-warn">[HIGH]</span> <span class="el-warn">'+nHigh+' high severity issue'+(nHigh>1?'s':'')+' found</span>');
+  if(nMed>0)  loaderLines.push('<span class="el-hi">[MEDIUM]</span> <span class="el-out">'+nMed+' medium severity issue'+(nMed>1?'s':'')+' found</span>');
+  if(findings.length===0) loaderLines.push('<span class="el-ok">[+]</span> <span class="el-ok">No issues found above threshold</span>');
+  loaderLines.push('<span class="el-ok">[+]</span> <span class="el-out">Building report...</span>');
+
+  var _ab=document.getElementById('analyzeBtn'),_abh=_ab?_ab.innerHTML:'';
+  if(_ab){_ab.disabled=true;_ab.innerHTML='<span class="fx-spin"></span>Analyzing\u2026';}
+  showLoader(loaderLines, function(){
+    renderResults(flowName, envName, flowJson, actionList, connectors, findings, loaderLines);
+    if(_ab){_ab.disabled=false;_ab.innerHTML=_abh;}
+    if(window.fxToast&&LAST)window.fxToast('Analysis complete \u2014 Grade '+letterGrade(LAST.secScore)+' \u00b7 '+LAST.secScore+'/100');
+  });
+}
+
+/* ════════════════════════════════════════
+   RENDER RESULTS
+════════════════════════════════════════ */
+function renderResults(flowName, envName, flowJson, actionList, connectors, findings, loaderLines){
+  var nCrit = findings.filter(function(f){ return f.sev==='CRITICAL'; }).length;
+  var nHigh = findings.filter(function(f){ return f.sev==='HIGH'; }).length;
+  var nMed  = findings.filter(function(f){ return f.sev==='MEDIUM'; }).length;
+  var nLow  = findings.filter(function(f){ return f.sev==='LOW'; }).length;
+  var total = findings.length;
+
+  // Score — based on severity of findings
+  var grade, gradeCol, secScore;
+  if(nCrit > 0){
+    grade='CRITICAL RISK'; gradeCol='var(--red)';
+    secScore = Math.max(5, 100 - Math.min(90, nCrit*20 + nHigh*8 + nMed*3));
+  } else if(nHigh > 0){
+    grade='HIGH RISK'; gradeCol='var(--orange)';
+    secScore = Math.max(10, 100 - (nHigh*15 + nMed*5));
+  } else if(nMed > 0){
+    grade='MODERATE'; gradeCol='var(--yellow)';
+    secScore = Math.max(40, 100 - (nMed*8));
+  } else if(nLow > 0){
+    grade='LOW RISK'; gradeCol='var(--lime)';
+    secScore = Math.max(75, 100 - (nLow*5));
+  } else {
+    grade='SECURE'; gradeCol='var(--green)';
+    secScore = 100;
+  }
+
+  var SEV_CLS_MAP = {CRITICAL:'fc-c',HIGH:'fc-h',MEDIUM:'fc-m',LOW:'fc-l'};
+  var SEV_DOT_MAP = {CRITICAL:'sdc',HIGH:'sdh',MEDIUM:'sdm',LOW:'sdl'};
+
+  // Build findings HTML
+  var findingsHtml = '';
+  if(total===0){
+    findingsHtml = '<div style="padding:20px;background:var(--card);border:1px solid var(--border);font-family:\'JetBrains Mono\',monospace;font-size:12px;color:var(--green)">&#10003; No security issues found above the selected threshold. Good job.</div>';
+  } else {
+    findings.forEach(function(f, i){
+      var cls = SEV_CLS_MAP[f.sev]||'fc-l';
+      var dot = SEV_DOT_MAP[f.sev]||'sdl';
+      var refsHtml = '';
+      if(f.refs) f.refs.forEach(function(r){ refsHtml += '<a class="ref-lnk" href="https://learn.microsoft.com/en-us/search/?terms='+encodeURIComponent(r.t)+'" target="_blank" rel="noopener">'+r.t+'</a>'; });
+
+      findingsHtml += '<div class="finding-item" id="fi-'+i+'">'
+        +'<div class="fi-main">'
+        +'<div class="fi-sev-dot '+dot+'"></div>'
+        +'<div class="fi-body">'
+        +'<div class="fi-top">'
+        +'<span class="fi-sev '+cls+'">'+f.sev+'</span>'
+        +'<span class="fi-title">'+f.title+'</span>'
+        +'<div class="fi-tags"><span class="fi-fw" title="MITRE ATT&CK / Power Platform governance">'+frameworkFor(f)+'</span>'+f.tags.map(function(t){ return '<span class="fi-tag">'+t+'</span>'; }).join('')+'</div>'
+        +'</div>'
+        +'<div class="fi-desc">'+f.desc+'</div>'
+        +(f.location?'<div class="fi-location">&#9656; <span>'+f.location+'</span></div>':'')
+        +(f.preview?'<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;background:rgba(0,0,0,.3);padding:4px 8px;margin-top:5px;color:var(--orange);word-break:break-all">'+f.preview+'</div>':'')
+        +'</div>'
+        +'<span class="fi-arrow">&#9656;</span>'
+        +'</div>'
+        +'<div class="fi-expand" id="fex-'+i+'">'
+        +'<div class="fi-expand-inner">'
+        +'<div class="exp-col"><h4 class="eh-risk">Risk &amp; Impact</h4><p>'+f.risk+'</p></div>'
+        +'<div class="exp-col"><h4 class="eh-fix">Remediation</h4><p>'+f.fix+'</p></div>'
+        +(refsHtml?'<div class="exp-col"><h4 class="eh-ref">References</h4>'+refsHtml+'</div>':'')
+        +'</div>'
+        +'</div>'
+        +'</div>';
+    });
+  }
+
+  // Connectors table
+  var connHtml = '';
+  Object.keys(connectors).forEach(function(cid){
+    var info = RISKY_CONNECTORS[cid];
+    var label = info ? info.label : cid.replace('shared_','');
+    var risk  = info ? info.risk  : 'LOW';
+    var reason= info ? info.reason: 'Native/known connector';
+    var riskCls = risk==='HIGH'?'cr-high':risk==='MEDIUM'?'cr-med':'cr-low';
+    connHtml += '<tr>'
+      +'<td><span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:var(--text)">'+label+'</span></td>'
+      +'<td style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:var(--muted)">'+cid+'</td>'
+      +'<td>'+connectors[cid].count+'</td>'
+      +'<td><span class="conn-risk '+riskCls+'">'+risk+'</span></td>'
+      +'<td>'+reason+'</td>'
+      +'</tr>';
+  });
+  if(!connHtml) connHtml='<tr><td colspan="5" style="color:var(--dim);text-align:center">No named connectors detected</td></tr>';
+
+  // Actions table
+  var actHtml = '';
+  actionList.slice(0,30).forEach(function(act){
+    var flag = act.hasRunAfter ? '<span class="action-flag af-ok">Has run-after</span>' : '<span class="action-flag af-warn">No run-after</span>';
+    actHtml += '<tr>'
+      +'<td><span class="action-name">'+act.name+'</span></td>'
+      +'<td><span class="action-type">'+act.type+'</span></td>'
+      +'<td>'+(act.connectorId?'<span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:var(--muted)">'+act.connectorId+'</span>':'<span style="color:var(--dim)">—</span>')+'</td>'
+      +'<td>'+flag+'</td>'
+      +'</tr>';
+  });
+  if(actionList.length>30) actHtml += '<tr><td colspan="4" style="color:var(--muted);font-family:\'JetBrains Mono\',monospace;font-size:10px">... and '+(actionList.length-30)+' more actions</td></tr>';
+  if(!actHtml) actHtml='<tr><td colspan="4" style="color:var(--dim);text-align:center">No actions detected</td></tr>';
+
+  var analysisDate = new Date().toUTCString();
+  var critHigh = nCrit + nHigh;
+  var summaryTail = critHigh>0 ? ' The critical and high-severity findings below should be remediated before this flow is promoted to production.' : (total>0 ? ' Review the findings below and remediate in line with your Power Platform governance baseline.' : ' No issues were detected above the selected reporting threshold.');
+  var assessSummary = '<div class="section-title">Assessment Summary</div><div class="assess-summary">This automated security review of flow <strong>'+flowName+'</strong> ('+envName+' environment) evaluated <strong>'+actionList.length+'</strong> actions and <strong>'+Object.keys(connectors).length+'</strong> connectors. It identified <strong>'+total+' finding'+(total===1?'':'s')+'</strong> &mdash; '+nCrit+' critical, '+nHigh+' high, '+nMed+' medium, '+nLow+' low &mdash; for an overall security posture of <strong style="color:'+gradeCol+'">'+grade+'</strong> ('+secScore+'/100).'+summaryTail+'</div>';
+
+  var html = ''
+  +'<div class="score-header">'
+  +'<div class="sh-left"><div style="font-family:JetBrains Mono,monospace;font-size:9px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin-bottom:4px">SECURITY GRADE</div><div class="sh-score" style="color:'+gradeCol+'">'+letterGrade(secScore)+'</div><div class="sh-grade" style="color:'+gradeCol+'">'+grade+'</div><div style="font-family:JetBrains Mono,monospace;font-size:10px;color:var(--muted);margin-top:6px">Score '+secScore+'/100 &middot; higher is better</div></div>'
+  +'<div class="sh-mid"><div class="sh-flowname">'+flowName+'</div><div class="sh-meta"><span>Environment:</span> '+envName+'<br><span>Analysed:</span> '+analysisDate+'<br><span>Actions:</span> '+actionList.length+' &nbsp;|&nbsp; <span>Connectors:</span> '+Object.keys(connectors).length+'</div></div>'
+  +'<div class="sh-right"><div class="sh-stats">'
+  +'<div class="sh-stat"><span class="sh-stat-label">Critical</span><span class="sh-stat-val" style="color:var(--red)">'+nCrit+'</span></div>'
+  +'<div class="sh-stat"><span class="sh-stat-label">High</span><span class="sh-stat-val" style="color:var(--orange)">'+nHigh+'</span></div>'
+  +'<div class="sh-stat"><span class="sh-stat-label">Medium</span><span class="sh-stat-val" style="color:var(--yellow)">'+nMed+'</span></div>'
+  +'<div class="sh-stat"><span class="sh-stat-label">Low</span><span class="sh-stat-val" style="color:var(--blue)">'+nLow+'</span></div>'
+  +'</div></div>'
+  +'</div>'
+
+  +'<div class="risk-bars">'
+  +'<div class="rb-cell rb-c"><div class="rb-num">'+nCrit+'</div><div class="rb-lbl">Critical</div></div>'
+  +'<div class="rb-cell rb-h"><div class="rb-num">'+nHigh+'</div><div class="rb-lbl">High</div></div>'
+  +'<div class="rb-cell rb-m"><div class="rb-num">'+nMed+'</div><div class="rb-lbl">Medium</div></div>'
+  +'<div class="rb-cell rb-l"><div class="rb-num">'+nLow+'</div><div class="rb-lbl">Low</div></div>'
+  +'</div>'
+
+  +assessSummary
+  +'<div class="section-title">Security Findings ('+total+')</div>'
+  +'<div class="findings-list">'+findingsHtml+'</div>'
+
+  +'<div class="section-title">Connector Risk Profile</div>'
+  +'<table class="conn-table"><thead><tr><th>Connector</th><th>ID</th><th>Uses</th><th>Risk</th><th>Notes</th></tr></thead><tbody>'+connHtml+'</tbody></table>'
+
+  +'<div class="section-title">Action Inventory ('+actionList.length+')</div>'
+  +'<table class="actions-table"><thead><tr><th>Action Name</th><th>Type</th><th>Connector</th><th>Error Handling</th></tr></thead><tbody>'+actHtml+'</tbody></table>'
+
+  +'<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:var(--dim);padding:14px;border:1px solid var(--border);margin-top:8px;line-height:1.8">Report generated by <strong style="color:var(--lime)">eusebio@it-sec / flow-analyzer v2.0</strong> &nbsp;&#183;&nbsp; '+analysisDate+'<br>Findings mapped to MITRE ATT&amp;CK where an attacker technique applies. Remediation aligned to Microsoft Power Platform security, DLP, and governance guidance.<br>Analysis runs entirely in your browser — no flow data is transmitted externally.</div>';
+
+  LAST={flowName:flowName,envName:envName,actionCount:actionList.length,connCount:Object.keys(connectors).length,findings:findings,grade:grade,secScore:secScore,nCrit:nCrit,nHigh:nHigh,nMed:nMed,nLow:nLow};
+  var wrap = document.getElementById('resultsWrap');
+  wrap.innerHTML = html;
+  wrap.style.display = 'block';
+
+  // Expand/collapse findings
+  document.querySelectorAll('.finding-item').forEach(function(el, i){
+    var main = el.querySelector('.fi-main');
+    if(main){
+      main.addEventListener('click', function(){
+        el.classList.toggle('open');
+        var exp = document.getElementById('fex-'+i);
+        if(exp) exp.classList.toggle('open');
+      });
+    }
+  });
+
+  document.querySelector('.col-right').scrollTo({top:0, behavior:'smooth'});
+}
+
+/* ── CLEAR ── */
+document.getElementById('clearBtn').addEventListener('click', function(){
+  document.getElementById('pasteArea').value='';
+  document.getElementById('flowNameOverride').value='';
+  document.getElementById('uzFilename').textContent='';
+  document.getElementById('uploadZone').classList.remove('has-file');
+  fileData=null;
+  document.getElementById('resultsWrap').style.display='none';
+  document.getElementById('emptyState').style.display='flex';
+  document.getElementById('loader').classList.remove('show');
+});
+
+/* ── SAMPLE FLOW ── */
+var SAMPLE_FLOW = {
+  name: "Invoice_Approval_Flow",
+  properties: {
+    displayName: "Invoice Approval & Notification Flow",
+    definition: {
+      triggers: {
+        "When_a_new_email_arrives": {
+          type: "ApiConnection",
+          inputs: {
+            host: { apiId: "/providers/Microsoft.PowerApps/apis/shared_office365", connection: "shared_office365" },
+            method: "get", path: "/Mail/OnNewEmail"
+          }
+        }
+      },
+      actions: {
+        "Initialize_InvoiceData": {
+          type: "InitializeVariable",
+          inputs: { variables: [{ name: "InvoiceAmount", type: "float", value: 0 }] },
+          runAfter: {}
+        },
+        "Get_Manager": {
+          type: "ApiConnection",
+          inputs: {
+            host: { apiId: "/providers/Microsoft.PowerApps/apis/shared_office365users" },
+            method: "get", path: "/codelessGetManager/@{triggerBody()?['From']}"
+          },
+          runAfter: { "Initialize_InvoiceData": ["Succeeded"] }
+        },
+        "Call_Approval_API": {
+          type: "Http",
+          inputs: {
+            method: "POST",
+            uri: "http://internal-approvals.company.com/api/invoice",
+            headers: {
+              "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.hardcoded.token",
+              "api_key": "sk-prod-a8f3c2b1e9d4f7a2c5b8e1d4f7a2c5b8"
+            },
+            body: { amount: "@variables('InvoiceAmount')", from: "@triggerBody()?['From']" }
+          },
+          runAfter: {}
+        },
+        "Send_to_Gmail": {
+          type: "ApiConnection",
+          inputs: {
+            host: { apiId: "/providers/Microsoft.PowerApps/apis/shared_gmail" },
+            method: "post", path: "/Mail",
+            body: { To: "finance-backup@gmail.com", Subject: "Invoice Copy", Body: "@body('Call_Approval_API')" }
+          },
+          runAfter: {}
+        },
+        "Save_to_Dropbox": {
+          type: "ApiConnection",
+          inputs: {
+            host: { apiId: "/providers/Microsoft.PowerApps/apis/shared_dropbox" },
+            method: "post", path: "/datasets/default/files",
+            body: { name: "invoice.pdf", body: "@triggerBody()?['Attachments']" }
+          },
+          runAfter: {}
+        },
+        "Compose_SSN": {
+          type: "Compose",
+          inputs: "Processing SSN: @{triggerBody()?['ssn']} for salary payment @{variables('InvoiceAmount')}",
+          runAfter: {}
+        },
+        "Update_SharePoint": {
+          type: "ApiConnection",
+          inputs: {
+            host: { apiId: "/providers/Microsoft.PowerApps/apis/shared_sharepointonline" },
+            method: "post", path: "/datasets/@{encodeURIComponent('https://company.sharepoint.com/sites/Finance')}/_api/web/lists/getbytitle('Invoices')/items",
+            body: { Title: "@triggerBody()?['Subject']", Amount: "@variables('InvoiceAmount')" }
+          },
+          runAfter: { "Call_Approval_API": ["Succeeded"] }
+        },
+        "Notify_Teams": {
+          type: "ApiConnection",
+          inputs: {
+            host: { apiId: "/providers/Microsoft.PowerApps/apis/shared_teams" },
+            method: "post", path: "/beta/teams/messageSend",
+            body: { body: { content: "Invoice processed: @{variables('InvoiceAmount')}" } }
+          },
+          runAfter: { "Update_SharePoint": ["Succeeded"] }
+        }
+      }
+    }
+  }
+};
+
+document.getElementById('sampleBtn').addEventListener('click', function(){
+  document.getElementById('pasteArea').value = JSON.stringify(SAMPLE_FLOW, null, 2);
+  document.getElementById('uzFilename').textContent = 'Sample: Invoice_Approval_Flow.json';
+  uploadZone.classList.add('has-file');
+  document.getElementById('envSelect').value = 'production';
+  doAnalyze();
+});
+
+/* ── COPY / PRINT ── */
+document.getElementById('copyBtn').addEventListener('click', function(){
+  var wrap = document.getElementById('resultsWrap');
+  if(!wrap || wrap.style.display==='none'){ alert('Run an analysis first.'); return; }
+  navigator.clipboard.writeText(buildMarkdownFromLast()).then(function(){
+    var btn=document.getElementById('copyBtn');
+    btn.textContent='Copied Markdown'; btn.style.color='var(--green)';
+    setTimeout(function(){ btn.textContent='Copy Markdown'; btn.style.color=''; },2000);
+  });
+});
+
+document.getElementById('printBtn').addEventListener('click', function(){
+  if(document.getElementById('resultsWrap').style.display==='none'){ alert('Run an analysis first.'); return; }
+  window.print();
+});
+
+})();
+</script>
+<div id="fxToast" class="fx-toast" role="status" aria-live="polite"></div>
+<script>
+(function(){
+  function fxToast(msg){var t=document.getElementById('fxToast');if(!t)return;t.textContent=msg;t.classList.add('show');clearTimeout(t._to);t._to=setTimeout(function(){t.classList.remove('show');},2200);}
+  window.fxToast=fxToast;
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText){ var _w=navigator.clipboard.writeText.bind(navigator.clipboard); navigator.clipboard.writeText=function(x){return _w(x).then(function(r){fxToast('Copied to clipboard');return r;});}; } }catch(e){}
+})();
+</script>
+</body>
+</html>

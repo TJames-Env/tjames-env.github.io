@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Entra ID Conditional Access — The Gaps Attackers Look For</title>
+<meta name="description" content="From an admin who's built and broken CA policies — common bypass conditions and how to build policies that actually hold under pressure.">
+<link rel="canonical" href="https://tjames-env.github.io/entra-id-ca.html">
+<meta name="twitter:title" content="Entra ID Conditional Access — The Gaps Attackers Look For">
+<meta name="twitter:description" content="From an admin who's built and broken CA policies — common bypass conditions and how to build policies that actually hold under pressure.">
+<meta name="author" content="Timothy James Eusebio">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Entra ID Conditional Access — The Gaps Attackers Look For">
+<meta property="og:description" content="Common bypass conditions and how to build CA policies that actually hold under pressure.">
+<meta property="og:url" content="https://tjames-env.github.io/entra-id-ca.html">
+<meta name="twitter:card" content="summary_large_image">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #08090c;
+    --bg-card: #0f1117;
+    --bg-card2: #13161e;
+    --ink: #e8eaf0;
+    --ink-muted: #8b92a5;
+    --ink-dim: #4a5068;
+    --accent: #f97316;
+    --accent-red: #ef4444;
+    --accent-green: #22c55e;
+    --accent-blue: #3b82f6;
+    --accent-yellow: #eab308;
+    --border: #1e2232;
+    --border-bright: #2a2f45;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.8;
+    font-size: 17px;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    position: fixed; top: 0; left: 0;
+    height: 2px;
+    background: linear-gradient(to right, var(--accent), var(--accent-red));
+    width: 0%; z-index: 200;
+    transition: width 0.1s linear;
+  }
+
+  /* Topbar */
+  .topbar {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(8,9,12,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .topbar-brand { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ink-dim); }
+  .topbar-brand span { color: var(--accent); }
+  .topbar-links { display: flex; gap: 20px; align-items: center; }
+  .topbar-links a {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--ink-dim); text-decoration: none; transition: color 0.2s;
+  }
+  .topbar-links a:hover { color: var(--accent); }
+  .topbar-links .btn-medium {
+    background: var(--accent); color: var(--bg) !important;
+    padding: 6px 14px; border-radius: 4px; font-weight: 500;
+  }
+  .topbar-links .btn-medium:hover { background: #ea6a0a; }
+
+  /* Hero */
+  .hero {
+    min-height: 520px;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    text-align: center; padding: 80px 24px 60px;
+    position: relative; overflow: hidden;
+    background: var(--bg);
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(249,115,22,0.12) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 40% at 20% 80%, rgba(239,68,68,0.08) 0%, transparent 60%);
+  }
+  .hero-grid {
+    position: absolute; inset: 0; opacity: 0.04;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: var(--accent); border: 1px solid rgba(249,115,22,0.3);
+    padding: 5px 16px; border-radius: 3px; margin-bottom: 28px; position: relative;
+  }
+  .hero-eyebrow::before { content: ''; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(30px, 5.5vw, 58px);
+    font-weight: 800;
+    line-height: 1.05;
+    max-width: 880px;
+    margin: 0 auto 20px;
+    position: relative;
+    letter-spacing: -1px;
+    color: var(--ink);
+  }
+  .hero h1 .accent { color: var(--accent); }
+  .hero h1 .red { color: var(--accent-red); }
+
+  .hero-sub {
+    font-size: 16px; color: var(--ink-muted); max-width: 560px;
+    margin: 0 auto 36px; position: relative; font-weight: 300;
+  }
+  .hero-meta {
+    display: flex; align-items: center; justify-content: center; gap: 20px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--ink-dim); position: relative;
+  }
+  .hero-meta .dot { width: 3px; height: 3px; background: var(--ink-dim); border-radius: 50%; }
+
+  /* Warning banner */
+  .hero-banner {
+    background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 6px; padding: 14px 24px; margin-top: 32px;
+    max-width: 640px; position: relative;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .hero-banner p { font-size: 14px; color: rgba(232,234,240,0.7); line-height: 1.5; }
+  .hero-banner strong { color: var(--accent-red); }
+
+  /* Article */
+  .article { max-width: 760px; margin: 0 auto; padding: 64px 24px 100px; }
+
+  .intro {
+    font-size: 19px; line-height: 1.8; color: var(--ink-muted);
+    border-left: 3px solid var(--accent);
+    padding-left: 24px; margin-bottom: 48px; font-weight: 300;
+  }
+
+  /* Gap severity cards */
+  .gap-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 56px; }
+  .gap-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px 20px;
+  }
+  .gap-card .gap-num {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    color: var(--ink-dim); margin-bottom: 6px;
+  }
+  .gap-card .gap-name { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .gap-card .gap-sev {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    padding: 2px 8px; border-radius: 3px; display: inline-block;
+  }
+  .sev-critical { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+  .sev-high { background: rgba(249,115,22,0.12); color: #fb923c; border: 1px solid rgba(249,115,22,0.3); }
+
+  /* TOC */
+  .toc {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 28px 32px; margin-bottom: 60px;
+  }
+  .toc-title {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    text-transform: uppercase; letter-spacing: 2px; color: var(--ink-dim); margin-bottom: 16px;
+  }
+  .toc ol { list-style: none; counter-reset: toc; padding: 0; }
+  .toc li {
+    counter-increment: toc; display: flex; align-items: center; gap: 12px;
+    padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 14px;
+  }
+  .toc li:last-child { border-bottom: none; }
+  .toc li::before {
+    content: counter(toc, decimal-leading-zero);
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    color: var(--accent); flex-shrink: 0; width: 20px;
+  }
+  .toc a { color: var(--ink-muted); text-decoration: none; }
+  .toc a:hover { color: var(--accent); }
+  .toc-badge {
+    margin-left: auto; font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; flex-shrink: 0;
+  }
+
+  /* Gap sections */
+  .gap { margin-bottom: 80px; scroll-margin-top: 60px; }
+  .gap-header { display: flex; align-items: flex-start; gap: 20px; margin-bottom: 24px; }
+  .gap-number {
+    font-family: 'Syne', sans-serif; font-size: 60px; font-weight: 800;
+    color: var(--border-bright); line-height: 1; flex-shrink: 0;
+    margin-top: -8px; user-select: none;
+  }
+  .gap-title-group { flex: 1; }
+  .gap-category {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    text-transform: uppercase; letter-spacing: 2px; color: var(--accent); margin-bottom: 6px;
+  }
+  .gap-title { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; line-height: 1.15; }
+  .gap-divider {
+    height: 1px; background: linear-gradient(to right, var(--accent), transparent);
+    margin-bottom: 24px; opacity: 0.2;
+  }
+  .gap p { color: var(--ink-muted); margin-bottom: 16px; font-weight: 300; }
+
+  /* Section tags */
+  .section-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 1px;
+    padding: 4px 12px; border-radius: 3px; margin-bottom: 12px; margin-top: 8px;
+  }
+  .tag-what { background: rgba(59,130,246,0.1); color: #93c5fd; border: 1px solid rgba(59,130,246,0.2); }
+  .tag-attack { background: rgba(239,68,68,0.1); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+  .tag-fix { background: rgba(34,197,94,0.1); color: #86efac; border: 1px solid rgba(34,197,94,0.2); }
+  .tag-detect { background: rgba(168,85,247,0.1); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.2); }
+  .tag-new { background: rgba(249,115,22,0.1); color: #fdba74; border: 1px solid rgba(249,115,22,0.2); }
+
+  /* Code blocks */
+  .code-block { background: #020408; border-radius: 10px; overflow: hidden; margin: 20px 0; font-size: 13px; border: 1px solid var(--border); }
+  .code-header {
+    background: #0a0d14; padding: 8px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .code-header span { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ink-dim); }
+  .code-dots { display: flex; gap: 6px; }
+  .code-dots i { width: 10px; height: 10px; border-radius: 50%; display: block; }
+  .dot-red { background: #ff5f57; } .dot-yellow { background: #febc2e; } .dot-green { background: #28c840; }
+  .code-block pre {
+    padding: 16px 20px; overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+    color: #adbac7; line-height: 1.7; white-space: pre;
+  }
+  .c { color: #545d68; } .k { color: #f47067; } .s { color: #96d0ff; }
+  .v { color: #6cb6ff; } .f { color: #dcbdfb; } .n { color: #57ab5a; }
+  .w { color: #e3b341; }
+
+  /* Alert boxes */
+  .alert {
+    border-radius: 8px; padding: 16px 20px; margin: 20px 0;
+    font-size: 15px; line-height: 1.65; display: flex; gap: 14px; align-items: flex-start;
+  }
+  .alert-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+  .alert-red { background: rgba(239,68,68,0.07); border-left: 3px solid var(--accent-red); }
+  .alert-orange { background: rgba(249,115,22,0.07); border-left: 3px solid var(--accent); }
+  .alert-green { background: rgba(34,197,94,0.07); border-left: 3px solid var(--accent-green); }
+  .alert-blue { background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent-blue); }
+  .alert p { margin: 0; color: var(--ink-muted); font-weight: 300; }
+  .alert strong { color: var(--ink); }
+
+  /* Checklist */
+  .checklist { list-style: none; margin: 12px 0 20px; }
+  .checklist li {
+    padding: 8px 0 8px 28px; position: relative;
+    font-size: 15px; color: var(--ink-muted);
+    border-bottom: 1px solid var(--border); font-weight: 300;
+  }
+  .checklist li:last-child { border-bottom: none; }
+  .checklist li::before { content: '→'; position: absolute; left: 0; color: var(--accent-green); font-weight: 700; }
+
+  /* Attack path visualization */
+  .attack-path {
+    background: var(--bg-card); border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 10px; padding: 24px; margin: 20px 0;
+  }
+  .attack-path-title {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    text-transform: uppercase; letter-spacing: 2px; color: #f87171; margin-bottom: 16px;
+  }
+  .attack-steps { display: flex; flex-direction: column; gap: 8px; }
+  .attack-step { display: flex; align-items: flex-start; gap: 12px; }
+  .attack-step-num {
+    background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.25);
+    color: #f87171; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    padding: 2px 8px; border-radius: 3px; flex-shrink: 0; margin-top: 2px;
+  }
+  .attack-step-text { font-size: 14px; color: var(--ink-muted); font-weight: 300; }
+  .attack-step-text strong { color: var(--ink); }
+
+  /* Sep */
+  .section-sep { display: flex; align-items: center; gap: 16px; margin: 48px 0; }
+  .section-sep hr { flex: 1; border: none; border-top: 1px solid var(--border); }
+  .section-sep span { font-size: 18px; }
+
+  /* Closing */
+  .closing {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 44px 40px; margin-top: 64px; position: relative; overflow: hidden;
+  }
+  .closing::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 100% 0%, rgba(249,115,22,0.08) 0%, transparent 60%);
+  }
+  .closing h2 { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; margin-bottom: 16px; position: relative; }
+  .closing p { color: var(--ink-muted); margin-bottom: 14px; font-size: 16px; font-weight: 300; position: relative; }
+
+  /* Footer */
+  .footer {
+    text-align: center; padding: 40px 24px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ink-dim);
+    border-top: 1px solid var(--border);
+  }
+  .footer a { color: var(--accent); text-decoration: none; }
+
+  @media (max-width: 600px) {
+    .gap-grid { grid-template-columns: 1fr; }
+    .gap-number { font-size: 42px; }
+    .gap-title { font-size: 21px; }
+    .topbar-links .hide-mobile { display: none; }
+  }
+  .topbar-links .btn-writeups{border:1px solid currentColor;border-radius:6px;padding:6px 12px;text-decoration:none;font-weight:500;opacity:.8;transition:opacity .2s,background .2s;white-space:nowrap}
+  .topbar-links .btn-writeups:hover{opacity:1;background:rgba(128,128,128,.14)}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<nav class="topbar">
+  <div class="topbar-brand">// <span>Entra ID</span> · CA Security</div>
+  <div class="topbar-links">
+    <a href="#gap1" class="hide-mobile">Legacy Auth</a>
+    <a href="#gap2" class="hide-mobile">Exclusions</a>
+    <a href="#gap3" class="hide-mobile">OIDC Bypass</a>
+    <a href="#gap4" class="hide-mobile">Device Trust</a>
+    <a href="#gap5" class="hide-mobile">Tokens</a>
+    <a href="https://medium.com/@timothy_jameseusebio" target="_blank" class="btn-medium">Read on Medium →</a>
+    <a href="https://tjames-env.github.io/projects.html#writeups" target="_blank" rel="noopener" class="btn-writeups">More Write-ups ↗</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-eyebrow">🔴 Identity Security · Penetration Testing Perspective</div>
+  <h1>Entra ID Conditional Access —<br>The <span class="red">Gaps</span> <span class="accent">Attackers</span> Look For</h1>
+  <p class="hero-sub">From an admin who's built and broken CA policies — common bypass conditions and how to build policies that actually hold under pressure.</p>
+  <div class="hero-meta">
+    <span>May 2026</span>
+    <span class="dot"></span>
+    <span>~14 min read</span>
+    <span class="dot"></span>
+    <span>Updated · March–May 2026 Changes</span>
+  </div>
+  <div class="hero-banner">
+    <span style="font-size:20px; flex-shrink:0;">⚠️</span>
+    <p><strong>Active change:</strong> Microsoft is closing a long-standing CA enforcement gap (March–June 2026). OIDC-only sign-ins on policies with resource exclusions now trigger full policy evaluation. If you have exclusions on your "All resources" policy, you are likely affected right now.</p>
+  </div>
+</header>
+
+<article class="article">
+
+  <p class="intro">
+    Most organizations believe they are protected once Conditional Access is enabled. The board gets a reassuring slide: "MFA deployed, identity secured." That is a dangerous oversimplification. I've spent years building CA policies for enterprises and testing them as an attacker. The gaps are predictable, consistent, and surprisingly easy to miss from the inside.
+  </p>
+
+  <div class="gap-grid">
+    <div class="gap-card">
+      <div class="gap-num">GAP 01</div>
+      <div class="gap-name">Legacy Auth Protocols</div>
+      <span class="gap-sev sev-critical">CRITICAL</span>
+    </div>
+    <div class="gap-card">
+      <div class="gap-num">GAP 02</div>
+      <div class="gap-name">Unmanaged Exclusion Groups</div>
+      <span class="gap-sev sev-critical">CRITICAL</span>
+    </div>
+    <div class="gap-card">
+      <div class="gap-num">GAP 03</div>
+      <div class="gap-name">OIDC Scope Bypass (NEW 2026)</div>
+      <span class="gap-sev sev-critical">CRITICAL</span>
+    </div>
+    <div class="gap-card">
+      <div class="gap-num">GAP 04</div>
+      <div class="gap-name">Device Compliance Spoofing</div>
+      <span class="gap-sev sev-high">HIGH</span>
+    </div>
+    <div class="gap-card">
+      <div class="gap-num">GAP 05</div>
+      <div class="gap-name">Token Lifetime & Session Gaps</div>
+      <span class="gap-sev sev-high">HIGH</span>
+    </div>
+    <div class="gap-card">
+      <div class="gap-num">GAP 06</div>
+      <div class="gap-name">Report-Only Policies Never Enforced</div>
+      <span class="gap-sev sev-high">HIGH</span>
+    </div>
+  </div>
+
+  <nav class="toc">
+    <div class="toc-title">Table of Contents</div>
+    <ol>
+      <li><a href="#gap1">Legacy Authentication — MFA's Blind Spot</a><span class="toc-badge sev-critical gap-sev">CRITICAL</span></li>
+      <li><a href="#gap2">Exclusion Groups — The Unmaintained Backdoor</a><span class="toc-badge sev-critical gap-sev">CRITICAL</span></li>
+      <li><a href="#gap3">OIDC Scope Bypass — The Silent 2026 Fix</a><span class="toc-badge sev-critical gap-sev">CRITICAL</span></li>
+      <li><a href="#gap4">Device Compliance Spoofing</a><span class="toc-badge sev-high gap-sev">HIGH</span></li>
+      <li><a href="#gap5">Token Lifetime & Session Control Gaps</a><span class="toc-badge sev-high gap-sev">HIGH</span></li>
+      <li><a href="#gap6">Report-Only Policies That Never Got Enforced</a><span class="toc-badge sev-high gap-sev">HIGH</span></li>
+      <li><a href="#detection">Detection & The What If Tool</a><span class="toc-badge gap-sev" style="color:var(--ink-dim);border-color:var(--border)">DETECT</span></li>
+      <li><a href="#baseline">Enterprise CA Baseline That Holds</a><span class="toc-badge gap-sev" style="color:var(--accent-green);border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.1)">FIX</span></li>
+    </ol>
+  </nav>
+
+  <!-- GAP 01 -->
+  <section class="gap" id="gap1">
+    <div class="gap-header">
+      <div class="gap-number">01</div>
+      <div class="gap-title-group">
+        <div class="gap-category">Authentication Protocols</div>
+        <h2 class="gap-title">Legacy Authentication — MFA's Blind Spot</h2>
+      </div>
+    </div>
+    <div class="gap-divider"></div>
+
+    <div class="section-tag tag-what">🔍 What It Is</div>
+    <p>Legacy authentication protocols — SMTP, IMAP, POP3, Basic Auth, Exchange ActiveSync — authenticate with username and password only. They have no capability to process MFA challenges or honor Conditional Access policies. They are structurally incapable of being secured through CA alone.</p>
+
+    <div class="section-tag tag-attack">💀 How Attackers Exploit It</div>
+    <div class="attack-path">
+      <div class="attack-path-title">⚔️ Attack Path — Password Spray via Legacy Auth</div>
+      <div class="attack-steps">
+        <div class="attack-step"><span class="attack-step-num">01</span><div class="attack-step-text">Attacker enumerates valid accounts via Microsoft's public autodiscover endpoint</div></div>
+        <div class="attack-step"><span class="attack-step-num">02</span><div class="attack-step-text">Runs a <strong>password spray</strong> against IMAP endpoint (port 993) — one password attempt per account avoids lockout</div></div>
+        <div class="attack-step"><span class="attack-step-num">03</span><div class="attack-step-text">Successful authentication via IMAP <strong>bypasses MFA entirely</strong> — CA policy never evaluated</div></div>
+        <div class="attack-step"><span class="attack-step-num">04</span><div class="attack-step-text">Attacker reads mailbox, sets forwarding rules, exfiltrates data — all silently</div></div>
+      </div>
+    </div>
+
+    <div class="alert alert-red">
+      <div class="alert-icon">🚨</div>
+      <p><strong>Real-world case:</strong> In 2024, a healthcare org experienced a breach through a forgotten SMTP relay using Basic Authentication. Attackers used stolen credentials to send 50,000 phishing emails before detection. No MFA prompt was ever triggered.</p>
+    </div>
+
+    <div class="section-tag tag-detect">🔎 Detection — Who Is Still Using It</div>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><i class="dot-red"></i><i class="dot-yellow"></i><i class="dot-green"></i></div>
+        <span>Entra ID · KQL — Legacy Auth Sign-ins</span>
+      </div>
+      <pre><span class="c"># Log Analytics → Entra ID Sign-in logs</span>
+<span class="f">SigninLogs</span>
+| <span class="k">where</span> ClientAppUsed <span class="k">in</span> (
+    <span class="s">"Exchange ActiveSync"</span>, <span class="s">"IMAP4"</span>, <span class="s">"POP3"</span>,
+    <span class="s">"SMTP"</span>, <span class="s">"Other clients"</span>, <span class="s">"Authenticated SMTP"</span>
+  )
+| <span class="k">where</span> ResultType == <span class="s">"0"</span>
+| <span class="k">summarize</span> LastSeen=<span class="f">max</span>(TimeGenerated), Count=<span class="f">count</span>()
+    <span class="k">by</span> UserPrincipalName, ClientAppUsed, AppDisplayName
+| <span class="k">order by</span> LastSeen <span class="k">desc</span>
+
+<span class="c"># Run for 30 days minimum before blocking</span>
+<span class="c"># Any result here = active legacy auth usage = active bypass risk</span></pre>
+    </div>
+
+    <div class="section-tag tag-fix">✅ Fix — Block via Conditional Access</div>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><i class="dot-red"></i><i class="dot-yellow"></i><i class="dot-green"></i></div>
+        <span>Entra Admin Center · CA Policy — Block Legacy Auth</span>
+      </div>
+      <pre><span class="c"># Entra ID → Security → Conditional Access → New Policy</span>
+
+Name:          <span class="s">"BLOCK — Legacy Authentication"</span>
+Users:         <span class="n">All users</span>
+Exclude:       <span class="w">Break-glass accounts only</span>  <span class="c">← keep this list SHORT</span>
+
+Target:        <span class="n">All resources</span>
+Conditions → Client apps:
+  ☑ <span class="n">Exchange ActiveSync clients</span>
+  ☑ <span class="n">Other clients</span>
+  <span class="c"># Do NOT check modern auth boxes</span>
+
+Grant:         <span class="k">Block access</span>
+State:         <span class="w">Report-only</span>  <span class="c">← run 2 weeks, review, then enable</span></pre>
+    </div>
+  </section>
+
+  <div class="section-sep"><hr/><span>✦</span><hr/></div>
+
+  <!-- GAP 02 -->
+  <section class="gap" id="gap2">
+    <div class="gap-header">
+      <div class="gap-number">02</div>
+      <div class="gap-title-group">
+        <div class="gap-category">Policy Exclusions</div>
+        <h2 class="gap-title">Exclusion Groups — The Unmaintained Backdoor</h2>
+      </div>
+    </div>
+    <div class="gap-divider"></div>
+
+    <div class="section-tag tag-what">🔍 What It Is</div>
+    <p>Every CA policy has an exclusion list — accounts or groups that bypass the policy entirely. In every mature tenant I've reviewed, these exclusion groups have grown silently over years. Break-glass accounts, service accounts, vendor accounts, VIP user requests, "temporary" exceptions that became permanent. In many cases, ex-employees or ex-contractors remain in these groups long after their accounts are otherwise disabled.</p>
+
+    <div class="section-tag tag-attack">💀 How Attackers Exploit It</div>
+    <div class="attack-path">
+      <div class="attack-path-title">⚔️ Attack Path — Exclusion Group Abuse</div>
+      <div class="attack-steps">
+        <div class="attack-step"><span class="attack-step-num">01</span><div class="attack-step-text">Attacker compromises any Global Admin or Privileged Role Admin account</div></div>
+        <div class="attack-step"><span class="attack-step-num">02</span><div class="attack-step-text">Enumerates CA policy exclusion groups via Microsoft Graph API</div></div>
+        <div class="attack-step"><span class="attack-step-num">03</span><div class="attack-step-text">Adds a controlled account to the exclusion group — <strong>that account now bypasses all CA policies</strong></div></div>
+        <div class="attack-step"><span class="attack-step-num">04</span><div class="attack-step-text">Operates from the excluded account with no MFA, no device compliance, no location restrictions</div></div>
+      </div>
+    </div>
+
+    <div class="alert alert-orange">
+      <div class="alert-icon">⚠️</div>
+      <p><strong>The real risk:</strong> Exclusion groups are rarely monitored. An attacker who adds a user to an exclusion group and removes themselves hours later may never be caught — unless you have an alert on group membership changes for CA-excluded groups.</p>
+    </div>
+
+    <div class="section-tag tag-detect">🔎 Detection — Audit Your Exclusion Groups</div>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><i class="dot-red"></i><i class="dot-yellow"></i><i class="dot-green"></i></div>
+        <span>PowerShell · Graph — Enumerate CA Exclusions</span>
+      </div>
+      <pre><span class="c"># List all CA policies and their exclusions</span>
+<span class="f">Connect-MgGraph</span> <span class="v">-Scopes</span> <span class="s">"Policy.Read.All"</span>
+<span class="f">Get-MgIdentityConditionalAccessPolicy</span> | <span class="f">Select-Object</span> DisplayName, State,
+  @{N=<span class="s">'ExcludedUsers'</span>;E={$_.Conditions.Users.ExcludeUsers}},
+  @{N=<span class="s">'ExcludedGroups'</span>;E={$_.Conditions.Users.ExcludeGroups}}
+
+<span class="c"># Then for each excluded group, list members:</span>
+<span class="f">Get-MgGroupMember</span> <span class="v">-GroupId</span> <span class="s">"&lt;GroupId&gt;"</span> | <span class="f">Select-Object</span> DisplayName, UserPrincipalName
+
+<span class="c"># Alert rule: Sentinel — Group membership change on CA exclusion groups</span>
+<span class="f">AuditLogs</span>
+| <span class="k">where</span> OperationName == <span class="s">"Add member to group"</span>
+| <span class="k">where</span> TargetResources[<span class="s">0</span>].DisplayName <span class="k">in</span> (<span class="s">"CA-Exclusions"</span>, <span class="s">"BreakGlass-Accounts"</span>)
+| <span class="f">project</span> TimeGenerated, InitiatedBy, TargetResources</pre>
+    </div>
+
+    <div class="section-tag tag-fix">✅ Fix — Governance Controls for Exclusions</div>
+    <ul class="checklist">
+      <li>Keep a <strong>single named group</strong> per policy for exclusions — never add individual accounts directly</li>
+      <li>Enable <strong>Entra ID Access Reviews</strong> on every CA exclusion group — quarterly review, auto-remove if no reviewer response</li>
+      <li>Set a <strong>Sentinel alert</strong> on any membership change to exclusion groups — high-priority alert, 15-minute response SLA</li>
+      <li>Limit who can add members to exclusion groups — scope this to a dedicated Identity Admin role, not Global Admin</li>
+      <li>Document every exclusion with a <strong>justification and expiry date</strong> — use group description field as the audit trail</li>
+    </ul>
+  </section>
+
+  <div class="section-sep"><hr/><span>✦</span><hr/></div>
+
+  <!-- GAP 03 -->
+  <section class="gap" id="gap3">
+    <div class="gap-header">
+      <div class="gap-number">03</div>
+      <div class="gap-title-group">
+        <div class="gap-category">⚡ New · March–June 2026</div>
+        <h2 class="gap-title">OIDC Scope Bypass — The Silent 2026 Fix</h2>
+      </div>
+    </div>
+    <div class="gap-divider"></div>
+
+    <div class="section-tag tag-new">🆕 Active Rollout: March 27 – June 2026</div>
+    <div class="section-tag tag-what">🔍 What It Was</div>
+    <p>This is the gap most enterprise admins didn't know existed. When a CA policy targets "All resources" with at least one resource exclusion, and an application requests only low-privilege OIDC or directory scopes (<code>openid</code>, <code>profile</code>, <code>email</code>, <code>User.Read</code>), the policy was <strong>silently skipped entirely</strong>. No MFA prompt. No device compliance check. Nothing.</p>
+
+    <p>Your policy said <em>"require MFA for all cloud apps."</em> The reality was <em>"require MFA for all cloud apps, except when an app requests only basic scopes and your policy has any resource exclusion."</em> Most admins had no idea this was happening.</p>
+
+    <div class="alert alert-red">
+      <div class="alert-icon">🚨</div>
+      <p><strong>Who is affected:</strong> Any tenant with a CA policy targeting "All cloud apps" or "All resources" that has at least one resource exclusion configured. This includes almost every mature enterprise tenant. Azure CLI, developer tools, and vendor apps commonly request only OIDC scopes — these have been bypassing your policies silently.</p>
+    </div>
+
+    <div class="section-tag tag-attack">💀 Attack Scenario Before the Fix</div>
+    <div class="attack-path">
+      <div class="attack-path-title">⚔️ Attack Path — OIDC Scope Bypass</div>
+      <div class="attack-steps">
+        <div class="attack-step"><span class="attack-step-num">01</span><div class="attack-step-text">Attacker has valid credentials for a user in your tenant</div></div>
+        <div class="attack-step"><span class="attack-step-num">02</span><div class="attack-step-text">Authenticates using Azure CLI or a custom app requesting only <strong>openid + profile + User.Read</strong></div></div>
+        <div class="attack-step"><span class="attack-step-num">03</span><div class="attack-step-text">Because your "All resources" policy has a resource exclusion (e.g., a legacy app), the OIDC sign-in <strong>bypasses the policy entirely</strong></div></div>
+        <div class="attack-step"><span class="attack-step-num">04</span><div class="attack-step-text">Attacker obtains a valid token without MFA or device compliance — uses it to access Microsoft Graph</div></div>
+      </div>
+    </div>
+
+    <div class="section-tag tag-detect">🔎 Detection — Find Affected Sign-ins</div>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><i class="dot-red"></i><i class="dot-yellow"></i><i class="dot-green"></i></div>
+        <span>Sentinel KQL — Sign-ins Where CA Was Not Applied</span>
+      </div>
+      <pre><span class="c"># Find sign-ins where Conditional Access was not applied</span>
+<span class="c"># These may have been bypassing your policies via OIDC scope gap</span>
+<span class="f">SigninLogs</span>
+| <span class="k">where</span> ConditionalAccessStatus == <span class="s">"notApplied"</span>
+| <span class="k">where</span> AuthenticationRequirement == <span class="s">"singleFactorAuthentication"</span>
+| <span class="k">where</span> TimeGenerated > <span class="f">ago</span>(<span class="s">30d</span>)
+| <span class="k">summarize</span> Count=<span class="f">count</span>(), LastSeen=<span class="f">max</span>(TimeGenerated)
+    <span class="k">by</span> UserPrincipalName, AppDisplayName, ClientAppUsed
+| <span class="k">order by</span> Count <span class="k">desc</span>
+
+<span class="c"># High count + singleFactor + notApplied = was bypassing your policy</span>
+<span class="c"># These applications will now be prompted for MFA after rollout</span></pre>
+    </div>
+
+    <div class="section-tag tag-fix">✅ What To Do Right Now</div>
+    <ul class="checklist">
+      <li>Run the detection query above — identify apps with high sign-in volume that were bypassing CA</li>
+      <li>Test those apps now in your environment — some will break when MFA is suddenly required</li>
+      <li>For apps that legitimately need OIDC-only flows, <strong>explicitly exclude them</strong> from the policy (not silently)</li>
+      <li>Review and minimize resource exclusions — every exclusion you remove closes a scope bypass surface</li>
+      <li>Monitor sign-in logs for authentication failures after March 27 — these indicate apps broken by the enforcement change</li>
+    </ul>
+
+    <div class="alert alert-blue">
+      <div class="alert-icon">💡</div>
+      <p><strong>Silver lining:</strong> This enforcement change means your existing "All resources" CA policies now actually enforce what you intended. But the transition may break apps. Treat March–June 2026 as a mandatory CA policy audit window.</p>
+    </div>
+  </section>
+
+  <div class="section-sep"><hr/><span>✦</span><hr/></div>
+
+  <!-- GAP 04 -->
+  <section class="gap" id="gap4">
+    <div class="gap-header">
+      <div class="gap-number">04</div>
+      <div class="gap-title-group">
+        <div class="gap-category">Device Compliance</div>
+        <h2 class="gap-title">Device Compliance Spoofing</h2>
+      </div>
+    </div>
+    <div class="gap-divider"></div>
+
+    <div class="section-tag tag-what">🔍 What It Is</div>
+    <p>CA policies requiring "compliant device" rely on Intune reporting device health to Entra ID. The problem: Intune's evaluation logic has historically treated missing health attestation responses as <strong>"not applicable"</strong> rather than non-compliant. In hybrid environments, this creates a window where a device can claim domain-join status without being verified against on-premises Active Directory.</p>
+
+    <div class="section-tag tag-attack">💀 How Attackers Exploit It</div>
+    <p>A recent red team engagement (May 2026) documented a phantom device registration attack: attackers enrolled a fresh device by claiming hybrid domain-join status. Intune trusted the self-declared claim without verifying it against on-premises AD. The device achieved "compliant" status despite lacking BitLocker, Secure Boot, or antivirus — because missing health attestation was marked "not applicable," not "non-compliant."</p>
+
+    <div class="alert alert-red">
+      <div class="alert-icon">🚨</div>
+      <p><strong>Key insight:</strong> "Compliant device" in Intune means "Intune says this device meets your policies" — not "this device is actually secure." Device compliance is only as strong as your compliance policy configuration and your health attestation requirements.</p>
+    </div>
+
+    <div class="section-tag tag-fix">✅ Harden Device Compliance Policies</div>
+    <ul class="checklist">
+      <li>In Intune compliance policies, set <strong>"Mark device noncompliant"</strong> for missing health attestation — not "Not configured"</li>
+      <li>Require <strong>BitLocker</strong>, <strong>Secure Boot</strong>, and <strong>Code Integrity</strong> as compliance requirements — not just OS version</li>
+      <li>Enable <strong>Microsoft Defender for Endpoint integration</strong> with Intune — device risk score becomes a compliance dimension</li>
+      <li>For hybrid environments: require <strong>Microsoft Entra hybrid join</strong> AND Intune compliance — not either/or</li>
+      <li>Set compliance policy grace period to <strong>0 days</strong> for high-risk device categories</li>
+      <li>Restrict <strong>device registration</strong> in Entra ID — only IT-managed devices should be able to register</li>
+    </ul>
+
+    <div class="section-tag tag-detect">🔎 Detection — Devices That Became Compliant Too Fast</div>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><i class="dot-red"></i><i class="dot-yellow"></i><i class="dot-green"></i></div>
+        <span>Entra ID · Audit — Suspicious Device Registrations</span>
+      </div>
+      <pre><span class="c"># Entra ID → Monitoring → Audit logs</span>
+<span class="c"># Filter: Activity = "Register device", "Add device"</span>
+<span class="c"># Look for devices registered outside business hours or from unusual locations</span>
+
+<span class="f">AuditLogs</span>
+| <span class="k">where</span> OperationName == <span class="s">"Register device"</span>
+| <span class="k">where</span> TimeGenerated > <span class="f">ago</span>(<span class="s">7d</span>)
+| <span class="f">extend</span> DeviceName = tostring(TargetResources[<span class="s">0</span>].DisplayName)
+| <span class="f">extend</span> RegisteredBy = tostring(InitiatedBy.user.userPrincipalName)
+| <span class="f">project</span> TimeGenerated, RegisteredBy, DeviceName, Result
+| <span class="k">order by</span> TimeGenerated <span class="k">desc</span>
+
+<span class="c"># Cross-reference: device registered + became compliant within same hour</span>
+<span class="c"># = suspicious enrollment flow — investigate manually</span></pre>
+    </div>
+  </section>
+
+  <div class="section-sep"><hr/><span>✦</span><hr/></div>
+
+  <!-- GAP 05 -->
+  <section class="gap" id="gap5">
+    <div class="gap-header">
+      <div class="gap-number">05</div>
+      <div class="gap-title-group">
+        <div class="gap-category">Session Security</div>
+        <h2 class="gap-title">Token Lifetime & Session Control Gaps</h2>
+      </div>
+    </div>
+    <div class="gap-divider"></div>
+
+    <div class="section-tag tag-what">🔍 What It Is</div>
+    <p>Conditional Access protects the moment of authentication — not the lifetime of the session. A valid access token obtained before a CA policy was enforced, or before a risk event was detected, continues to work until it expires. This is why the February 2026 change from "Revoke MFA sessions" to <strong>"Revoke sessions"</strong> is significant — the old action only reset per-user MFA state. Existing tokens remained valid. Attackers with stolen tokens continued operating even after admins believed they had revoked access.</p>
+
+    <div class="alert alert-orange">
+      <div class="alert-icon">⚠️</div>
+      <p><strong>February 2026 change:</strong> The new "Revoke sessions" action in Entra ID now invalidates <strong>all user sessions including MFA</strong>, regardless of whether MFA is enforced via CA or per-user policy. This is the correct incident response action — make sure your IR playbooks reference the new control name.</p>
+    </div>
+
+    <div class="section-tag tag-attack">💀 Token Theft Attack Flow</div>
+    <div class="attack-path">
+      <div class="attack-path-title">⚔️ Attack Path — AiTM (Adversary-in-the-Middle) Token Theft</div>
+      <div class="attack-steps">
+        <div class="attack-step"><span class="attack-step-num">01</span><div class="attack-step-text">Attacker sends phishing email with link to an <strong>AiTM proxy</strong> (e.g., Evilginx) that relays the real Microsoft sign-in page</div></div>
+        <div class="attack-step"><span class="attack-step-num">02</span><div class="attack-step-text">Victim completes legitimate MFA through the proxy — attacker captures the session cookie and access token</div></div>
+        <div class="attack-step"><span class="attack-step-num">03</span><div class="attack-step-text">Attacker replays the token — <strong>MFA is already satisfied</strong>, CA policies are bypassed</div></div>
+        <div class="attack-step"><span class="attack-step-num">04</span><div class="attack-step-text">Attacker has full access until the token expires — typically 1 hour for access tokens, up to 90 days for refresh tokens</div></div>
+      </div>
+    </div>
+
+    <div class="section-tag tag-fix">✅ Fix — Token & Session Hardening</div>
+    <ul class="checklist">
+      <li>Enable <strong>Sign-in frequency</strong> in CA policy — set to 1 hour for privileged roles, 4–8 hours for standard users</li>
+      <li>Enable <strong>Continuous Access Evaluation (CAE)</strong> — forces near-real-time policy re-evaluation instead of waiting for token expiry</li>
+      <li>Require <strong>phishing-resistant MFA</strong> (FIDO2 / Windows Hello) for all admins — these cannot be replayed by AiTM proxies</li>
+      <li>Enable <strong>Token Protection</strong> (preview) in CA — binds tokens to the specific device, preventing replay from another machine</li>
+      <li>In IR scenarios, use <strong>Revoke sessions</strong> (not just password reset) — the new control invalidates all tokens immediately</li>
+    </ul>
+
+    <div class="section-tag tag-detect">🔎 Detect Suspicious Token Usage</div>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><i class="dot-red"></i><i class="dot-yellow"></i><i class="dot-green"></i></div>
+        <span>Sentinel KQL — Token Replay Detection</span>
+      </div>
+      <pre><span class="c"># Same user, multiple IPs in short window — possible token replay</span>
+<span class="f">SigninLogs</span>
+| <span class="k">where</span> TimeGenerated > <span class="f">ago</span>(<span class="s">1h</span>)
+| <span class="k">summarize</span> IPCount=<span class="f">dcount</span>(IPAddress), IPs=<span class="f">make_set</span>(IPAddress)
+    <span class="k">by</span> UserPrincipalName, CorrelationId
+| <span class="k">where</span> IPCount > <span class="n">1</span>
+| <span class="k">order by</span> IPCount <span class="k">desc</span>
+
+<span class="c"># Also monitor for: sign-in from IP with no prior history</span>
+<span class="c"># immediately followed by bulk mailbox access or file downloads</span></pre>
+    </div>
+  </section>
+
+  <div class="section-sep"><hr/><span>✦</span><hr/></div>
+
+  <!-- GAP 06 -->
+  <section class="gap" id="gap6">
+    <div class="gap-header">
+      <div class="gap-number">06</div>
+      <div class="gap-title-group">
+        <div class="gap-category">Policy State</div>
+        <h2 class="gap-title">Report-Only Policies That Never Got Enforced</h2>
+      </div>
+    </div>
+    <div class="gap-divider"></div>
+
+    <div class="section-tag tag-what">🔍 What It Is</div>
+    <p>Every good CA deployment starts in Report-only mode — you monitor before you enforce. The problem is that in many tenants, policies stay in Report-only indefinitely. The "we'll enforce it after we review" becomes "we never reviewed." I've seen tenants with 12–15 CA policies in Report-only mode that have been sitting there for over a year, providing zero actual protection.</p>
+
+    <div class="section-tag tag-attack">💀 Why This Matters</div>
+    <p>From an attacker's perspective, Report-only policies are invisible. They generate log entries, but they block nothing. An attacker who enumerates your CA policies via Graph API will immediately identify which policies are enforced vs report-only — and plan their access accordingly.</p>
+
+    <div class="section-tag tag-detect">🔎 Detection — Audit Your Policy States</div>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><i class="dot-red"></i><i class="dot-yellow"></i><i class="dot-green"></i></div>
+        <span>PowerShell · Graph — Enumerate Policy States</span>
+      </div>
+      <pre><span class="c"># Get all CA policies and their current state</span>
+<span class="f">Connect-MgGraph</span> <span class="v">-Scopes</span> <span class="s">"Policy.Read.All"</span>
+<span class="f">Get-MgIdentityConditionalAccessPolicy</span> |
+  <span class="f">Select-Object</span> DisplayName, State, CreatedDateTime, ModifiedDateTime |
+  <span class="f">Sort-Object</span> State |
+  <span class="f">Format-Table</span>
+
+<span class="c"># States: "enabled" | "disabled" | "enabledForReportingButNotEnforcing"</span>
+<span class="c"># Any policy in "enabledForReportingButNotEnforcing" = report-only = not blocking</span>
+<span class="c"># Review CreatedDateTime — policies older than 30 days in report-only need review</span></pre>
+    </div>
+
+    <div class="section-tag tag-fix">✅ Fix — Report-Only Governance</div>
+    <ul class="checklist">
+      <li>Set a <strong>30-day hard deadline</strong> for every new CA policy to move from Report-only to Enforced — put it in your change management process</li>
+      <li>Review all current Report-only policies — any older than 90 days should either be enforced or deleted</li>
+      <li>Use the <strong>CA What If tool</strong> to simulate sign-ins before enforcement — this is the correct way to validate, not indefinite report-only</li>
+      <li>Create a <strong>Workbook in Entra ID</strong> showing policy states across your tenant — review monthly</li>
+      <li>Never disable a CA policy — instead, document why it was removed and delete it. Disabled policies create confusion about your actual security posture</li>
+    </ul>
+  </section>
+
+  <div class="section-sep"><hr/><span>✦</span><hr/></div>
+
+  <!-- DETECTION -->
+  <section class="gap" id="detection">
+    <div class="gap-header">
+      <div class="gap-number">07</div>
+      <div class="gap-title-group">
+        <div class="gap-category">Tooling</div>
+        <h2 class="gap-title">Detection & The What If Tool</h2>
+      </div>
+    </div>
+    <div class="gap-divider"></div>
+
+    <p>Before you can fix gaps, you need to see them. Microsoft's built-in What If tool is underused. It lets you simulate any sign-in scenario and shows exactly which CA policies would apply — and which wouldn't.</p>
+
+    <div class="section-tag tag-detect">🔎 Using the What If Tool</div>
+    <ul class="checklist">
+      <li>Entra ID → Security → Conditional Access → <strong>What If</strong></li>
+      <li>Test these scenarios at minimum: user + legacy auth client, user + unknown IP, user + non-compliant device, service account + any app</li>
+      <li>Any scenario that returns "0 policies applied" or only report-only policies = gap in your coverage</li>
+    </ul>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><i class="dot-red"></i><i class="dot-yellow"></i><i class="dot-green"></i></div>
+        <span>PowerShell · Graph — Enumerate All Policies for Audit</span>
+      </div>
+      <pre><span class="c"># Full CA policy audit — export for review</span>
+<span class="f">Connect-MgGraph</span> <span class="v">-Scopes</span> <span class="s">"Policy.Read.All"</span>
+<span class="f">Get-MgIdentityConditionalAccessPolicy</span> |
+  <span class="f">Select-Object</span> DisplayName, State, Conditions, GrantControls |
+  <span class="f">Format-List</span>
+
+<span class="c"># Review output for:</span>
+<span class="c"># 1. Policies in "Report-only" → not enforced</span>
+<span class="c"># 2. Policies with broad exclusions → potential bypass</span>
+<span class="c"># 3. Cloud apps with zero CA coverage → unprotected resources</span>
+<span class="c"># 4. No policy targeting legacy auth client apps → legacy auth open</span></pre>
+    </div>
+  </section>
+
+  <div class="section-sep"><hr/><span>✦</span><hr/></div>
+
+  <!-- BASELINE -->
+  <section class="gap" id="baseline">
+    <div class="gap-header">
+      <div class="gap-number">08</div>
+      <div class="gap-title-group">
+        <div class="gap-category">Enterprise Baseline</div>
+        <h2 class="gap-title">CA Baseline That Actually Holds</h2>
+      </div>
+    </div>
+    <div class="gap-divider"></div>
+
+    <p>Here is the minimum viable CA policy set for an enterprise tenant in 2026. Every policy should be tested in Report-only first, then enforced within 30 days.</p>
+
+    <div class="section-tag tag-fix">✅ The 6-Policy Baseline</div>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><i class="dot-red"></i><i class="dot-yellow"></i><i class="dot-green"></i></div>
+        <span>Enterprise CA Policy Baseline · 2026</span>
+      </div>
+      <pre><span class="w">POLICY 1:</span> <span class="n">BLOCK — Legacy Authentication</span>
+  Users: All · Exclude: Break-glass only
+  Conditions: Other clients + Exchange ActiveSync
+  Grant: Block
+
+<span class="w">POLICY 2:</span> <span class="n">REQUIRE — MFA for All Users</span>
+  Users: All · Exclude: Break-glass, service accounts (monitored)
+  Apps: All resources
+  Grant: Require MFA (minimum: Microsoft Authenticator)
+
+<span class="w">POLICY 3:</span> <span class="n">REQUIRE — Phishing-Resistant MFA for Admins</span>
+  Users: All privileged roles (GA, PA, CA Admin, Exchange Admin...)
+  Apps: All resources
+  Grant: Require Authentication Strength → Phishing-resistant MFA
+  Session: Sign-in frequency 1 hour
+
+<span class="w">POLICY 4:</span> <span class="n">REQUIRE — Compliant Device for Corporate Apps</span>
+  Users: All · Exclude: Break-glass
+  Apps: Exchange Online, SharePoint, Teams
+  Grant: Require compliant device OR Hybrid Azure AD join
+
+<span class="w">POLICY 5:</span> <span class="n">BLOCK — High-Risk Sign-ins (Identity Protection)</span>
+  Users: All · Exclude: Break-glass
+  Apps: All resources
+  Conditions: Sign-in risk = High
+  Grant: Block  <span class="c">← requires Entra ID P2</span>
+
+<span class="w">POLICY 6:</span> <span class="n">REQUIRE — MFA Registration from Trusted Location</span>
+  Users: All
+  Apps: Microsoft Azure AD → User Actions: Register security info
+  Conditions: Location = not named location
+  Grant: Require MFA  <span class="c">← prevents attacker registering their own MFA method</span></pre>
+    </div>
+
+    <div class="alert alert-green">
+      <div class="alert-icon">✅</div>
+      <p><strong>Deployment rule:</strong> Never deploy a new CA policy in "On" mode directly. Always start in Report-only, review sign-in logs for 2 weeks, identify impacted service accounts and apps, add necessary exclusions — then enforce. One wrong click can lock out your entire organization including the C-Suite.</p>
+    </div>
+  </section>
+
+  <div class="closing">
+    <h2>CA Is a Framework, Not a Finish Line</h2>
+    <p>The gap between "Conditional Access enabled" and "identity secured" is enormous. Every policy has conditions, exclusions, and edge cases. Attackers don't need to break your encryption — they need to find the single sign-in flow you didn't account for.</p>
+    <p>The March 2026 OIDC enforcement change is a reminder that even Microsoft's own platform had silent bypass conditions that persisted for years. Your job isn't to configure CA once and move on — it's to treat it as a living architecture that requires continuous review, monitoring, and testing.</p>
+    <p>Run the What If tool. Audit your exclusion groups. Check your Report-only policies. Then do it again next quarter. The attackers are checking.</p>
+  </div>
+
+</article>
+
+
+<section class="rn-wrap" aria-label="More write-ups">
+  <style>
+  .rn-wrap{max-width:760px;margin:8px auto 0;padding:38px 24px 10px;border-top:1px solid rgba(128,128,128,.25);font-family:inherit}
+  .rn-lbl{font-size:11px;letter-spacing:.16em;text-transform:uppercase;opacity:.55;margin-bottom:16px}
+  .rn-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .rn-card{display:block;border:1px solid rgba(128,128,128,.22);border-radius:12px;padding:15px 17px;color:inherit;text-decoration:none;transition:border-color .2s,transform .2s}
+  .rn-card:hover{border-color:rgba(128,128,128,.55);transform:translateY(-2px)}
+  .rn-t{font-weight:600;font-size:15px;line-height:1.35;margin-bottom:5px}
+  .rn-s{font-size:12.5px;line-height:1.55;opacity:.72;margin-bottom:8px}
+  .rn-m{font-size:11px;opacity:.5;letter-spacing:.04em;font-family:'JetBrains Mono',monospace}
+  .rn-all{display:inline-block;margin-top:18px;font-size:12px;letter-spacing:.05em;color:inherit;text-decoration:none;opacity:.7;border-bottom:1px solid currentColor;padding-bottom:1px}
+  .rn-all:hover{opacity:1}
+  @media(max-width:640px){.rn-grid{grid-template-columns:1fr}.rn-wrap{padding:28px 18px 10px}}
+  </style>
+  <div class="rn-lbl">Read next · More write-ups</div>
+  <div class="rn-grid">
+    <a class="rn-card" href="top-5-m365-misconfig.html"><div class="rn-t">Top 5 M365 Misconfigurations</div><div class="rn-s">Legacy auth, guest sprawl, missing DLP, over-privileged admins and email-auth gaps — each with detection and remediation.</div><div class="rn-m">12 min read</div></a>
+    <a class="rn-card" href="CLLMSP.html"><div class="rn-t">How I Passed the CLLMSP</div><div class="rn-s">A practitioner’s tour of the nine LLM-security domains, mapped to real enterprise AI and Copilot Studio deployments.</div><div class="rn-m">18 min read</div></a>
+    <a class="rn-card" href="copilot-studio-from-scratch.html"><div class="rn-t">Copilot Studio HR Agent from Scratch</div><div class="rn-s">End-to-end build: knowledge sources, topics, authentication, and Power Automate integration in a production agent.</div><div class="rn-m">15 min read</div></a></div>
+  <a class="rn-all" href="https://tjames-env.github.io/projects.html#writeups">View all write-ups ↗</a>
+</section>
+
+<footer class="footer">
+  <p>Written by <a href="https://medium.com/@timothy_jameseusebio">Timothy James Eusebio</a> · <a href="https://medium.com/@timothy_jameseusebio">Also on Medium</a> · May 2026</p>
+</footer>
+
+<script>
+  window.addEventListener('scroll', () => {
+    const doc = document.documentElement;
+    const progress = ((doc.scrollTop || document.body.scrollTop) / (doc.scrollHeight - doc.clientHeight)) * 100;
+    document.getElementById('progressBar').style.width = progress + '%';
+  });
+</script>
+</body>
+</html>

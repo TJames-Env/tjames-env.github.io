@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Copilot Studio Agent Auditor — eusebio@it-sec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=JetBrains+Mono:wght@300;400;500;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+
+:root{
+  --void:#070809;--bg:#070809;--bg2:#0d0f13;--surface:#0d0f13;--card:#13161d;--card2:#191d26;
+  --border:rgba(255,255,255,.07);--line:rgba(255,255,255,.07);--line-2:rgba(255,255,255,.14);
+  --cyan:#00e5ff;--blue:#2f81f7;--red:#ff3b4e;--green:#22e584;--orange:#ffb454;--yellow:#ffd166;--teal:#2dd4bf;--violet:#b98aff;--purple:#b98aff;--lime:#a3e635;
+  --text:#e7ebf2;--soft:#8a93a3;--muted:#525c6b;--dim:#2a303a;--faint:#2a303a;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased}
+body{background:var(--void);color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;line-height:1.65;overflow-x:hidden;min-height:100vh}
+::selection{background:var(--teal);color:#04201c}
+#bg-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.5}
+#bg-glow{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(60% 50% at 18% 12%,rgba(45,212,191,.06),transparent 70%),radial-gradient(55% 45% at 85% 88%,rgba(0,229,255,.05),transparent 70%)}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(18px,3vw,40px);height:58px;background:rgba(7,8,9,.62);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+.nav-brand{font-family:'JetBrains Mono',monospace;font-size:13px;display:flex;align-items:center;text-decoration:none;color:var(--text)}
+.nu{color:#79c0ff}.na{color:var(--muted)}.nh{color:var(--cyan)}.nt{color:var(--orange)}.nd{color:var(--teal);margin-left:5px}
+.nc{display:inline-block;width:7px;height:14px;background:var(--teal);margin-left:4px;vertical-align:middle;animation:blink .9s steps(1) infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.nav-path{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}.nav-path span{color:var(--teal)}
+.nav-back{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);text-decoration:none;letter-spacing:.06em;transition:color .2s}
+.nav-back:hover{color:var(--cyan)}
+
+.app-shell{display:grid;grid-template-columns:432px 1fr;min-height:calc(100vh - 58px);margin-top:58px;position:relative;z-index:2}
+.col-left{border-right:1px solid var(--line);background:rgba(13,15,19,.8);backdrop-filter:blur(10px);overflow-y:auto;position:sticky;top:58px;height:calc(100vh - 58px);display:flex;flex-direction:column}
+.col-right{background:transparent;overflow-y:auto;position:relative}
+
+.lp-header{padding:24px 24px 16px;border-bottom:1px solid var(--line)}
+.lp-header h1{font-family:'Syne',sans-serif;font-weight:800;font-size:25px;letter-spacing:-.02em;line-height:1.02;margin-bottom:6px}
+.lp-header h1 span{color:var(--teal)}
+.lp-header p{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.04em}
+
+.tab-bar{display:flex;border-bottom:1px solid var(--line)}
+.tab-btn{flex:1;padding:11px 6px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.07em;text-transform:uppercase;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;transition:color .2s,border-color .2s}
+.tab-btn:hover{color:var(--text)}.tab-btn.active{color:var(--teal);border-bottom-color:var(--teal)}
+.tab-panel{display:none;padding:16px 20px;flex:1;overflow-y:auto}.tab-panel.active{display:block}
+
+.input-zone{border:1px dashed rgba(45,212,191,.32);background:rgba(45,212,191,.03);padding:22px 20px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:14px;border-radius:12px}
+.input-zone:hover,.input-zone.drag-over{border-color:var(--teal);background:rgba(45,212,191,.06)}
+.input-zone.has-file{border-color:rgba(45,212,191,.6);background:rgba(45,212,191,.05);border-style:solid}
+.iz-icon{font-size:26px;margin-bottom:8px}
+.iz-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--teal);margin-bottom:4px}
+.iz-sub{font-size:11px;color:var(--muted);line-height:1.6}
+.iz-filename{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--teal);margin-top:6px;word-break:break-all}
+#fileInput{display:none}
+
+.paste-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:block}
+.paste-area{width:100%;padding:12px;background:var(--surface);border:1px solid var(--line);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.6;outline:none;resize:vertical;min-height:160px;transition:border-color .2s,box-shadow .2s;border-radius:9px}
+.paste-area:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(45,212,191,.08)}
+.paste-area::placeholder{color:var(--faint);font-size:10px}
+
+.fg{margin-bottom:10px}
+.fg label{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.fi{width:100%;padding:9px 11px;background:var(--surface);border:1px solid var(--line);color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;outline:none;transition:border-color .2s,box-shadow .2s;border-radius:8px;-webkit-appearance:none;appearance:none}
+.fi:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(45,212,191,.08)}.fi::placeholder{color:var(--faint)}
+select.fi{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23525c6b' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:28px}
+select.fi option{background:#0d0f13}
+
+.opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px}
+.opt-item{display:flex;align-items:flex-start;gap:8px;padding:9px 10px;border:1px solid var(--line);background:var(--surface);cursor:pointer;transition:border-color .15s,background .15s;user-select:none;border-radius:9px}
+.opt-item:hover{border-color:rgba(45,212,191,.3)}
+.opt-item.checked{border-color:rgba(45,212,191,.5);background:rgba(45,212,191,.05)}
+.opt-check{width:15px;height:15px;border:1px solid var(--muted);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .15s;border-radius:4px}
+.opt-item.checked .opt-check{background:var(--teal);border-color:var(--teal)}
+.opt-item.checked .opt-check::after{content:'✓';color:#04201c;font-size:9px;font-weight:700}
+.opt-label{font-size:11px;color:var(--soft);line-height:1.4}
+.opt-label strong{color:var(--text);font-size:11px;display:block;margin-bottom:1px}
+
+.analyze-btn{width:100%;padding:13px;background:var(--teal);color:#04201c;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:500;border-radius:9px;transition:box-shadow .2s,transform .1s}
+.analyze-btn:hover{box-shadow:0 0 22px rgba(45,212,191,.35)}.analyze-btn:active{transform:scale(.99)}
+.analyze-btn:disabled{background:var(--muted);cursor:not-allowed}
+.btn-row{display:flex;gap:8px;margin-top:8px}
+.sec-btn{flex:1;padding:9px;background:transparent;color:var(--soft);border:1px solid var(--line-2);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;transition:border-color .2s,color .2s;border-radius:8px}
+.sec-btn:hover{border-color:var(--soft);color:var(--text)}
+.lp-footer{padding:14px 20px;border-top:1px solid var(--line)}
+
+.rp-shell{padding:30px clamp(18px,3vw,40px);max-width:980px;position:relative;z-index:2}
+.rp-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.rt-info{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}.rt-info span{color:var(--teal)}
+.rt-acts{display:flex;gap:8px}
+.rt-btn{padding:8px 15px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .2s;border:1px solid var(--line-2);background:transparent;color:var(--soft);border-radius:8px}
+.rt-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.rt-btn.pri{background:var(--teal);border-color:var(--teal);color:#04201c}
+.rt-btn.pri:hover{box-shadow:0 0 18px rgba(45,212,191,.35)}
+
+.estate{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:62vh;gap:14px;opacity:.65;position:relative;z-index:2}
+.es-big{font-family:'Syne',sans-serif;font-weight:800;font-size:64px;color:var(--faint);line-height:1;letter-spacing:.02em}
+.es-mono{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.06em;text-align:center}
+.eloader{display:none;flex-direction:column;align-items:flex-start;justify-content:center;min-height:62vh;padding:0 0 0 4px;position:relative;z-index:2}
+.eloader.show{display:flex}
+.el-terminal{background:rgba(13,15,19,.92);border:1px solid rgba(45,212,191,.22);padding:20px 24px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:2;min-width:440px;border-radius:11px;backdrop-filter:blur(6px)}
+.el-ps{color:var(--teal)}.el-cmd{color:var(--text)}.el-out{color:var(--muted)}.el-ok{color:var(--green)}.el-warn{color:var(--orange)}.el-err{color:var(--red)}.el-hi{color:var(--cyan)}
+.el-line{opacity:0;animation:elFade .2s ease forwards}
+@keyframes elFade{to{opacity:1}}
+
+.results-wrap{position:relative;z-index:2}
+
+.score-header{display:grid;grid-template-columns:auto 1fr auto;gap:20px;align-items:center;padding:24px 28px;background:var(--card);border:1px solid var(--line);margin-bottom:20px;border-radius:14px}
+.sh-score{font-family:'Syne',sans-serif;font-weight:800;font-size:58px;line-height:1;letter-spacing:-.02em;margin-bottom:2px}
+.sh-grade{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+.sh-agentname{font-family:'Syne',sans-serif;font-weight:700;font-size:21px;letter-spacing:-.01em;margin-bottom:6px}
+.sh-meta{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);line-height:1.85}
+.sh-meta span{color:var(--soft)}
+.sh-right{text-align:right}
+.sh-stats{display:flex;flex-direction:column;gap:5px}
+.sh-stat{font-family:'JetBrains Mono',monospace;font-size:11px;display:flex;justify-content:flex-end;gap:8px}
+.sh-stat-label{color:var(--muted)}
+.sh-stat-val{font-weight:500;min-width:20px;text-align:right}
+
+.risk-bars{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
+.rb-cell{background:var(--card);border:1px solid var(--line);padding:14px 16px;text-align:center;border-radius:11px}
+.rb-num{font-family:'Syne',sans-serif;font-weight:800;font-size:30px;line-height:1;margin-bottom:3px}
+.rb-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.rb-c .rb-num{color:var(--red)}.rb-h .rb-num{color:var(--orange)}.rb-m .rb-num{color:var(--yellow)}.rb-l .rb-num{color:var(--blue)}
+
+.findings-list{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.finding-item{background:var(--card);overflow:hidden;transition:border-color .15s,background .15s;border:1px solid var(--line);border-radius:11px}
+.finding-item:hover{border-color:var(--line-2)}
+.fi-main{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;cursor:pointer}
+.fi-sev-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.sdc{background:var(--red);box-shadow:0 0 7px rgba(255,59,78,.55)}
+.sdh{background:var(--orange);box-shadow:0 0 7px rgba(255,180,84,.45)}
+.sdm{background:var(--yellow);box-shadow:0 0 6px rgba(255,209,102,.35)}
+.sdl{background:var(--blue)}
+.fi-body{flex:1;min-width:0}
+.fi-top{display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap}
+.fi-sev{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.06em;padding:2px 8px;flex-shrink:0;border-radius:100px}
+.fc-c{background:rgba(255,59,78,.12);color:var(--red);border:1px solid rgba(255,59,78,.3)}
+.fc-h{background:rgba(255,180,84,.12);color:var(--orange);border:1px solid rgba(255,180,84,.3)}
+.fc-m{background:rgba(255,209,102,.1);color:var(--yellow);border:1px solid rgba(255,209,102,.3)}
+.fc-l{background:rgba(47,129,247,.1);color:var(--blue);border:1px solid rgba(47,129,247,.3)}
+.fi-title{font-size:13px;font-weight:600;color:var(--text);flex:1}
+.fi-tags{display:flex;gap:5px;margin-left:auto;flex-wrap:wrap;align-items:center}
+.fi-tag{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 7px;border:1px solid var(--line);color:var(--muted);border-radius:100px}
+.fi-owasp{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 8px;border-radius:100px;background:rgba(185,138,255,.1);color:var(--violet);border:1px solid rgba(185,138,255,.3);white-space:nowrap}
+.fi-desc{font-size:12px;color:var(--soft);line-height:1.75}
+.fi-location{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:5px;word-break:break-all}
+.fi-location span{color:var(--orange)}
+.fi-arrow{color:var(--muted);font-size:12px;flex-shrink:0;margin-top:4px;transition:transform .2s}
+.finding-item.open .fi-arrow{transform:rotate(90deg)}
+
+.fi-expand{display:none;border-top:1px solid var(--line);background:rgba(0,0,0,.2)}
+.fi-expand.open{display:block}
+.fi-expand-inner{padding:16px 16px 16px 38px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.exp-col h4{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px;display:flex;align-items:center;gap:6px}
+.exp-col h4::before{content:'//';color:var(--faint);font-size:9px}
+.eh-risk{color:var(--red)}.eh-fix{color:var(--teal)}.eh-ref{color:var(--cyan)}.eh-loc{color:var(--orange)}
+.exp-col p,.exp-col li{font-size:12px;color:var(--soft);line-height:1.8}
+.exp-col ul{padding-left:15px}
+.exp-col li::marker{color:var(--teal)}
+.exp-col strong{color:var(--text);font-weight:500}
+.ref-lnk{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cyan);text-decoration:none;margin-bottom:4px;transition:color .2s;word-break:break-all}
+.ref-lnk::before{content:'↗ '}.ref-lnk:hover{color:var(--text)}
+
+.section-title{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--teal);margin:24px 0 12px;display:flex;align-items:center;gap:10px}
+.section-title::after{content:'';flex:1;height:1px;background:var(--line)}
+.assess-summary{font-size:13px;color:var(--soft);line-height:1.85;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:16px 18px;margin-bottom:20px}
+.assess-summary strong{color:var(--text);font-weight:500}
+
+.info-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:20px;border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.info-table th{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);background:rgba(255,255,255,.02)}
+.info-table td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle;color:var(--soft)}
+.info-table tr:last-child td{border-bottom:none}
+.info-table tr:hover td{background:rgba(255,255,255,.02)}
+.risk-pill{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 8px;border-radius:100px}
+.rp-high{background:rgba(255,59,78,.1);color:var(--red);border:1px solid rgba(255,59,78,.25)}
+.rp-med{background:rgba(255,180,84,.1);color:var(--orange);border:1px solid rgba(255,180,84,.25)}
+.rp-low{background:rgba(45,212,191,.08);color:var(--teal);border:1px solid rgba(45,212,191,.2)}
+.rp-ok{background:rgba(34,229,132,.08);color:var(--green);border:1px solid rgba(34,229,132,.2)}
+
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--faint);border-radius:3px}
+
+@media print{
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}
+  html,body{background:#fff !important}
+  #bg-canvas,#bg-glow,nav,.col-left,.rp-toolbar,.eloader{display:none !important}
+  .app-shell{display:block !important;margin:0 !important}
+  .col-right,.rp-shell,.results-wrap{background:#fff !important}
+  .col-right{overflow:visible !important}
+  .rp-shell{padding:0 !important;max-width:100% !important}
+  .score-header,.rb-cell,.finding-item,.fi-expand,.info-table,.info-table td,.info-table th,.assess-summary{background:#fff !important;border-color:#dcdcdc !important}
+  .score-header{box-shadow:none !important}
+  body,.sh-meta,.sh-stat-label,.fi-desc,.fi-location,.exp-col p,.exp-col li,.info-table td,.rb-lbl,.es-mono,.assess-summary{color:#333 !important}
+  .sh-meta span,.sh-stat-label{color:#555 !important}
+  .sh-agentname,.fi-title,.exp-col strong,.fi-location span,.assess-summary strong{color:#000 !important}
+  .section-title{color:#1a5fb4 !important}.section-title::after{background:#ddd !important}
+  .fi-expand{display:block !important;background:#fafafa !important}
+  .fi-tag{color:#555 !important;border-color:#ccc !important}
+  .fi-owasp{background:#f3eaff !important;color:#6b3fa0 !important;border-color:#d7c2ff !important}
+  .exp-col h4::before{color:#bbb !important}
+  .eh-risk{color:#c0392b !important}.eh-fix{color:#0a8a78 !important}.eh-ref{color:#1a5fb4 !important}
+  .ref-lnk{color:#1a5fb4 !important}
+  .info-table th{background:#f5f5f5 !important;color:#555 !important}
+  .info-table tr:hover td{background:transparent !important}
+  .finding-item,.assess-summary,.score-header,.rb-cell,.info-table tr{page-break-inside:avoid;break-inside:avoid}
+  .section-title{page-break-after:avoid;break-after:avoid}
+  .findings-list,.results-wrap{display:block !important}
+  @page{margin:1.4cm;size:A4}
+}
+
+@media(max-width:860px){
+  .el-terminal{min-width:0 !important;width:100% !important}
+  .col-right table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap}
+  .app-shell{grid-template-columns:1fr}.col-left{position:static;height:auto;top:auto;border-right:none;border-bottom:1px solid var(--line)}
+  nav{padding:0 18px}.rp-shell{padding:18px}
+  .fi-expand-inner{grid-template-columns:1fr}
+  .score-header{grid-template-columns:1fr;gap:12px}
+  .risk-bars{grid-template-columns:repeat(2,1fr)}
+}
+
+.fx-local{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#8a93a3;border:1px solid rgba(255,255,255,.12);padding:3px 9px;border-radius:100px;white-space:nowrap}
+.fx-local::before{content:'';width:6px;height:6px;border-radius:50%;background:#22e584;box-shadow:0 0 6px rgba(34,229,132,.6)}
+@media(max-width:620px){.fx-local{display:none}}
+
+.fx-toast{position:fixed;right:18px;bottom:18px;z-index:1200;background:#191d26;border:1px solid rgba(255,255,255,.14);border-left:3px solid #22e584;border-radius:10px;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#e7ebf2;box-shadow:0 12px 32px rgba(0,0,0,.45);opacity:0;transform:translateY(10px);transition:opacity .25s,transform .25s;pointer-events:none;max-width:300px}
+.fx-toast.show{opacity:1;transform:none}
+@media(max-width:620px){.fx-toast{left:12px;right:12px;bottom:12px;max-width:none}}
+.fx-spin{display:inline-block;width:11px;height:11px;border:2px solid rgba(255,255,255,.25);border-top-color:currentColor;border-radius:50%;animation:fxspin .6s linear infinite;vertical-align:-1px;margin-right:5px}
+@keyframes fxspin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div id="bg-glow"></div>
+
+<nav>
+  <a href="index.html" class="nav-brand">
+    <span class="nu">eusebio</span><span class="na">@</span><span class="nh">it-sec</span><span class="na">:</span><span class="nt">~</span><span class="nd">$</span><span class="nc"></span>
+  </a>
+  <span class="nav-path">~/tools/<span>copilot-auditor</span></span>
+  <span class="fx-local" title="Runs entirely in your browser — no data is uploaded or sent anywhere">Local-only</span>
+  <a href="projects.html" class="nav-back">&#8592; Projects</a>
+</nav>
+
+<div class="app-shell">
+
+  <!-- LEFT PANEL -->
+  <div class="col-left">
+    <div class="lp-header">
+      <h1>COPILOT <span>AUDITOR</span></h1>
+      <p>Copilot Studio Agent Security Scanner &nbsp;&#183;&nbsp; eusebio@it-sec</p>
+    </div>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tb-input">Input</button>
+      <button class="tab-btn" id="tb-options">Options</button>
+      <button class="tab-btn" id="tb-howto">How To Export</button>
+    </div>
+
+    <!-- INPUT TAB -->
+    <div class="tab-panel active" id="panel-input">
+      <div class="input-zone" id="inputZone">
+        <div class="iz-icon">🤖</div>
+        <div class="iz-title">Drop Agent JSON here</div>
+        <div class="iz-sub">or click to browse<br><span style="color:var(--dim);font-size:10px">Exported .json from Copilot Studio</span></div>
+        <div class="iz-filename" id="izFilename"></div>
+      </div>
+      <input type="file" id="fileInput" accept=".json,application/json"/>
+
+      <label class="paste-label">— or paste JSON directly —</label>
+      <textarea class="paste-area" id="pasteArea" placeholder='Paste your Copilot Studio agent export JSON here...
+
+{
+  "name": "HR-Self-Service",
+  "topics": [...],
+  "actions": [...],
+  "connections": [...]
+}'></textarea>
+
+      <div style="margin-top:12px">
+        <div class="fg">
+          <label>Agent Name (optional — overrides JSON)</label>
+          <input type="text" id="agentNameOverride" class="fi" placeholder="Leave blank to auto-detect"/>
+        </div>
+        <div class="fg">
+          <label>Environment</label>
+          <select id="envSelect" class="fi">
+            <option value="production">Production</option>
+            <option value="staging">Staging / UAT</option>
+            <option value="development">Development</option>
+            <option value="default">Default Environment</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Agent Type</label>
+          <select id="agentType" class="fi">
+            <option value="internal">Internal — Employee-facing</option>
+            <option value="external">External — Customer-facing</option>
+            <option value="autonomous">Autonomous — Runs without user input</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPTIONS TAB -->
+    <div class="tab-panel" id="panel-options">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border)">//&nbsp; Audit Rules</div>
+      <div class="opt-grid" id="optGrid">
+        <div class="opt-item checked" data-opt="auth">
+          <div class="opt-check"></div>
+          <div class="opt-label"><strong>Authentication</strong>No-auth topics, missing identity checks</div>
+        </div>
+        <div class="opt-item checked" data-opt="permissions">
+          <div class="opt-check"></div>
+          <div class="opt-label"><strong>Permissions</strong>Overprivileged connections, broad scopes</div>
+        </div>
+        <div class="opt-item checked" data-opt="topics">
+          <div class="opt-check"></div>
+          <div class="opt-label"><strong>Topic Hygiene</strong>Sensitive topics, fallback gaps, escalation</div>
+        </div>
+        <div class="opt-item checked" data-opt="dataleakage">
+          <div class="opt-check"></div>
+          <div class="opt-label"><strong>Data Leakage</strong>PII exposure, unfiltered output, logging</div>
+        </div>
+        <div class="opt-item checked" data-opt="injection">
+          <div class="opt-check"></div>
+          <div class="opt-label"><strong>Prompt Injection</strong>Input validation, jailbreak surface</div>
+        </div>
+        <div class="opt-item checked" data-opt="connections">
+          <div class="opt-check"></div>
+          <div class="opt-label"><strong>Connections</strong>Risky connectors, external APIs</div>
+        </div>
+        <div class="opt-item checked" data-opt="secrets">
+          <div class="opt-check"></div>
+          <div class="opt-label"><strong>Hardcoded Secrets</strong>Keys, tokens, passwords in config</div>
+        </div>
+        <div class="opt-item checked" data-opt="dlp">
+          <div class="opt-check"></div>
+          <div class="opt-label"><strong>DLP Compliance</strong>Cross-boundary connector mixing</div>
+        </div>
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);margin:14px 0 10px;padding-top:10px;border-top:1px solid var(--border)">//&nbsp; Sensitivity</div>
+      <div class="fg">
+        <label>Report Threshold</label>
+        <select id="threshold" class="fi">
+          <option value="all">All (Critical + High + Medium + Low)</option>
+          <option value="medium">Medium and above</option>
+          <option value="high" selected>High and above only</option>
+          <option value="critical">Critical only</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- HOW TO TAB -->
+    <div class="tab-panel" id="panel-howto">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);margin-bottom:12px">//&nbsp; How to Export an Agent</div>
+      <div style="display:flex;flex-direction:column;gap:14px;font-size:12px;color:var(--soft);line-height:1.8">
+        <div>
+          <strong style="color:var(--text);display:block;margin-bottom:3px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--teal)">// Method 1 — Export from Copilot Studio Portal</strong>
+          1. Go to <a href="https://copilotstudio.microsoft.com" target="_blank" style="color:var(--cyan)">copilotstudio.microsoft.com</a><br>
+          2. Open the agent you want to audit<br>
+          3. Click <strong style="color:var(--text)">Settings</strong> → <strong style="color:var(--text)">Export</strong> → <strong style="color:var(--text)">Export as solution (.zip)</strong><br>
+          4. Unzip → find the <strong style="color:var(--teal)">bot definition JSON</strong> inside the solution<br>
+          5. Paste the contents here
+        </div>
+        <div>
+          <strong style="color:var(--text);display:block;margin-bottom:3px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--teal)">// Method 2 — Power Platform CLI</strong>
+          <div style="background:var(--card);border:1px solid var(--border);padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--teal);line-height:1.8;margin-top:4px">
+            <span style="color:var(--muted)"># Install CLI</span><br>
+            npm install -g @microsoft/powerplatform-cli<br>
+            <span style="color:var(--muted)"># Export agent solution</span><br>
+            pac solution export --path agent.zip --name AgentName<br>
+            <span style="color:var(--muted)"># Unzip and find bot JSON</span><br>
+            unzip agent.zip -d ./agent-export
+          </div>
+        </div>
+        <div>
+          <strong style="color:var(--text);display:block;margin-bottom:3px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--teal)">// Method 3 — Load Sample Agent</strong>
+          Click <strong style="color:var(--teal)">Load Sample Agent</strong> below to run a demo audit with a pre-built agent containing real security issues.
+        </div>
+        <div style="padding:10px;border:1px solid rgba(255,213,79,.2);background:rgba(255,213,79,.04)">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--yellow)">&#9432; NOTE:</span>
+          <span style="font-size:11px;color:var(--muted);margin-left:6px">This tool runs entirely in your browser. No agent data is sent to any server.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="lp-footer">
+      <button class="analyze-btn" id="auditBtn">&#9654; Audit Agent</button>
+      <div class="btn-row">
+        <button class="sec-btn" id="clearBtn">Clear</button>
+        <button class="sec-btn" id="sampleBtn">Load Sample Agent</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="col-right">
+    <div class="rp-shell">
+      <div class="rp-toolbar">
+        <div class="rt-info"><span>eusebio@it-sec</span>:~/tools/copilot-auditor$ — v2.0</div>
+        <div class="rt-acts">
+          <button class="rt-btn" id="copyBtn">Copy Markdown</button>
+          <button class="rt-btn pri" id="printBtn">Export / Print</button>
+        </div>
+      </div>
+
+      <div class="eloader" id="loader">
+        <div class="el-terminal" id="loaderTerminal"></div>
+      </div>
+
+      <div class="estate" id="emptyState">
+        <div class="es-big">AUDIT</div>
+        <p class="es-mono"><span style="color:var(--teal)">eusebio@it-sec:~/tools/copilot-auditor$</span> awaiting input</p>
+        <p class="es-mono">Upload or paste a Copilot Studio agent JSON,<br>then click Audit Agent</p>
+        <p class="es-mono" style="margin-top:6px;color:var(--dim)">or click "Load Sample Agent" for a demo audit</p>
+      </div>
+
+      <div class="results-wrap" id="resultsWrap" style="display:none"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ── smooth 3D background: sparse drifting points, no links ── */
+(function(){
+  var canvas=document.getElementById('bg-canvas'); if(!canvas) return;
+  if(typeof THREE==='undefined'){canvas.style.display='none';return;}
+  var renderer; try{renderer=new THREE.WebGLRenderer({canvas:canvas,alpha:true,antialias:true});}catch(e){canvas.style.display='none';return;}
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){canvas.style.opacity='.2';}
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(innerWidth,innerHeight);
+  var scene=new THREE.Scene(), camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,1,400);
+  camera.position.z=60; var group=new THREE.Group(); scene.add(group);
+  var N=innerWidth<760?55:120, R=40, base=new Float32Array(N*3), pos=new Float32Array(N*3), col=new Float32Array(N*3);
+  var C=new THREE.Color(0x2dd4bf), C2=new THREE.Color(0x00e5ff), i;
+  for(i=0;i<N;i++){ base[i*3]=(Math.random()*2-1)*R*1.9; base[i*3+1]=(Math.random()*2-1)*R*1.2; base[i*3+2]=(Math.random()*2-1)*R*0.6; var c=Math.random()<0.3?C2:C; col[i*3]=c.r;col[i*3+1]=c.g;col[i*3+2]=c.b; }
+  var sc=document.createElement('canvas');sc.width=sc.height=64;var sx=sc.getContext('2d');var g=sx.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.4,'rgba(255,255,255,.5)');g.addColorStop(1,'rgba(255,255,255,0)');sx.fillStyle=g;sx.beginPath();sx.arc(32,32,32,0,7);sx.fill();
+  var geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(pos,3)); geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  var mat=new THREE.PointsMaterial({size:1.5,map:new THREE.CanvasTexture(sc),vertexColors:true,transparent:true,opacity:.9,depthWrite:false,blending:THREE.AdditiveBlending});
+  group.add(new THREE.Points(geo,mat));
+  var mx=0,my=0; window.addEventListener('mousemove',function(e){mx=(e.clientX/innerWidth)*2-1;my=-(e.clientY/innerHeight)*2+1;},{passive:true});
+  var t=0; function loop(){ t+=0.006; group.rotation.y+=0.0009; camera.position.x+=(mx*6-camera.position.x)*0.03; camera.position.y+=(my*4-camera.position.y)*0.03; camera.lookAt(0,0,0); for(i=0;i<N;i++){ pos[i*3]=base[i*3]+Math.sin(t*0.6+i)*1.3; pos[i*3+1]=base[i*3+1]+Math.cos(t*0.5+i*1.3)*1.3; pos[i*3+2]=base[i*3+2]+Math.sin(t*0.4+i)*1.0; } geo.attributes.position.needsUpdate=true; renderer.render(scene,camera); requestAnimationFrame(loop); }
+  loop();
+  window.addEventListener('resize',function(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+  var glow=document.getElementById('bg-glow');
+  function hideForPrint(){ try{ if(canvas.parentNode) canvas.parentNode.removeChild(canvas); if(glow) glow.style.display='none'; }catch(e){} }
+  function showAfterPrint(){ try{ if(!canvas.parentNode) document.body.insertBefore(canvas, document.body.firstChild); if(glow) glow.style.display=''; }catch(e){} }
+  window.addEventListener('beforeprint', hideForPrint);
+  window.addEventListener('afterprint', showAfterPrint);
+  if(window.matchMedia){ var mqp=window.matchMedia('print'); var mqh=function(e){ e.matches?hideForPrint():showAfterPrint(); }; if(mqp.addEventListener) mqp.addEventListener('change',mqh); else if(mqp.addListener) mqp.addListener(mqh); }
+})();
+
+/* ── OWASP LLM Top 10 mapping + Markdown export ── */
+var LAST=null;
+function owaspFor(f){
+  var hay=((f.title||'')+' '+((f.tags||[]).join(' '))).toLowerCase();
+  if(/inject|jailbreak|moderation|allowed domain/.test(hay)) return 'LLM01 · Prompt Injection';
+  if(/output|message template|echo/.test(hay)) return 'LLM05 · Improper Output Handling';
+  if(/pii|leakage|sensitive|logging|forensic|secret|\bkey\b|token|password|credential|dlp|exfil|disclosure/.test(hay)) return 'LLM02 · Sensitive Info Disclosure';
+  if(/generative|external|public web|knowledge/.test(hay)) return 'LLM04 · Data & Model Poisoning';
+  return 'LLM06 · Excessive Agency';
+}
+function mdEsc(s){ return String(s).replace(/<[^>]+>/g,' ').replace(/&amp;/g,'&').replace(/\s+/g,' ').trim(); }
+function letterGrade(s){ if(s>=90)return 'A'; if(s>=80)return 'B'; if(s>=70)return 'C'; if(s>=60)return 'D'; return 'F'; }
+function buildMarkdownFromLast(){
+  if(!LAST) return '';
+  var a=LAST, L=[];
+  L.push('# Copilot Studio Agent Security Audit');
+  L.push('**Agent:** '+a.agentName+'  ');
+  L.push('**Environment:** '+a.envName+' · **Type:** '+a.agentType+'  ');
+  L.push('**Security grade:** '+letterGrade(a.secScore)+' — '+a.secScore+'/100 ('+a.grade+', higher is better)  ');
+  L.push('**Inventory:** '+a.topics.length+' topics · '+a.actions.length+' custom actions · '+a.connections.length+' connections\n');
+  L.push('**Findings:** '+a.nCrit+' Critical · '+a.nHigh+' High · '+a.nMed+' Medium · '+a.nLow+' Low\n');
+  L.push('## Assessment Summary\nAutomated security review of agent **'+a.agentName+'** ('+a.agentType+' · '+a.envName+' environment) across '+a.topics.length+' topics, '+a.actions.length+' custom actions, and '+a.connections.length+' connections. Overall security posture: **'+a.grade+'** ('+a.secScore+'/100).\n');
+  L.push('## Security Findings ('+a.findings.length+')');
+  if(!a.findings.length){ L.push('\n_No issues found above the selected threshold._'); }
+  a.findings.forEach(function(f,i){
+    L.push('\n### F-'+String(i+1).padStart(2,'0')+' — '+f.title+' ['+f.sev+']');
+    L.push('- **OWASP LLM:** '+owaspFor(f));
+    if(f.tags&&f.tags.length) L.push('- **Tags:** '+f.tags.join(', '));
+    L.push('- **Description:** '+mdEsc(f.desc));
+    if(f.location) L.push('- **Location:** '+mdEsc(f.location));
+    L.push('- **Risk & impact:** '+mdEsc(f.risk));
+    L.push('- **Remediation:** '+mdEsc(f.fix));
+    if(f.refs&&f.refs.length) L.push('- **References:** '+f.refs.map(function(r){return r.t+' (https://learn.microsoft.com/en-us/search/?terms='+encodeURIComponent(r.t)+')';}).join('; '));
+  });
+  L.push('\n## Connection Risk Profile\n| Connector | ID | Risk |\n|---|---|---|');
+  a.connections.forEach(function(c){ var info=(typeof RISKY_CONNECTIONS!=='undefined')?RISKY_CONNECTIONS[c.id]:null; L.push('| '+(info?info.label:(c.name||c.id))+' | '+c.id+' | '+(info?info.risk:'LOW')+' |'); });
+  L.push('\n## Methodology & Standards');
+  L.push('- Findings mapped to the OWASP Top 10 for LLM Applications.');
+  L.push('- Remediation aligned to Microsoft Responsible AI standard, Copilot Studio security & governance, and Power Platform DLP guidance.');
+  L.push('- Audit runs entirely client-side; no agent data is transmitted.');
+  L.push('\n_Generated by eusebio@it-sec / copilot-auditor v2.0 — '+new Date().toUTCString()+'_');
+  return L.join('\n');
+}
+
+
+/* ── TABS ── */
+['input','options','howto'].forEach(function(t){
+  document.getElementById('tb-'+t).addEventListener('click', function(){
+    ['input','options','howto'].forEach(function(x){
+      document.getElementById('tb-'+x).classList.remove('active');
+      document.getElementById('panel-'+x).classList.remove('active');
+    });
+    document.getElementById('tb-'+t).classList.add('active');
+    document.getElementById('panel-'+t).classList.add('active');
+  });
+});
+
+/* ── OPTIONS ── */
+document.querySelectorAll('.opt-item').forEach(function(el){
+  el.addEventListener('click', function(){ el.classList.toggle('checked'); });
+});
+function getOpts(){
+  var o={};
+  document.querySelectorAll('.opt-item').forEach(function(el){ o[el.dataset.opt]=el.classList.contains('checked'); });
+  return o;
+}
+
+/* ── FILE UPLOAD ── */
+var fileData=null;
+var inputZone=document.getElementById('inputZone');
+var fileInput=document.getElementById('fileInput');
+inputZone.addEventListener('click',function(){ fileInput.click(); });
+inputZone.addEventListener('dragover',function(e){ e.preventDefault(); inputZone.classList.add('drag-over'); });
+inputZone.addEventListener('dragleave',function(){ inputZone.classList.remove('drag-over'); });
+inputZone.addEventListener('drop',function(e){
+  e.preventDefault(); inputZone.classList.remove('drag-over');
+  if(e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change',function(){ if(fileInput.files[0]) loadFile(fileInput.files[0]); });
+function loadFile(file){
+  var r=new FileReader();
+  r.onload=function(e){
+    fileData=e.target.result;
+    document.getElementById('pasteArea').value=fileData;
+    document.getElementById('izFilename').textContent=file.name;
+    inputZone.classList.add('has-file');
+  };
+  r.readAsText(file);
+}
+
+/* ── AUDIT BTN ── */
+document.getElementById('auditBtn').addEventListener('click', doAudit);
+function doAudit(){
+  var raw=document.getElementById('pasteArea').value.trim();
+  if(!raw){ alert('Please paste or upload an agent JSON first.'); return; }
+  var parsed;
+  try{ parsed=JSON.parse(raw); }
+  catch(e){ alert('Invalid JSON: '+e.message); return; }
+  runAudit(parsed);
+}
+
+/* ── LOADER ── */
+function showLoader(lines, cb){
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('resultsWrap').style.display='none';
+  var loader=document.getElementById('loader');
+  var term=document.getElementById('loaderTerminal');
+  loader.classList.add('show'); term.innerHTML='';
+  var delay=0;
+  lines.forEach(function(l){
+    setTimeout(function(){
+      var d=document.createElement('div'); d.className='el-line'; d.innerHTML=l;
+      term.appendChild(d);
+    }, delay);
+    delay += l.includes('Scanning')||l.includes('Checking') ? 220 : 150;
+  });
+  setTimeout(function(){ loader.classList.remove('show'); cb(); }, delay+400);
+}
+
+/* ═══════════════════════════════════════
+   SAMPLE AGENT — realistic Copilot Studio
+   export with embedded security issues
+═══════════════════════════════════════ */
+var SAMPLE_AGENT = {
+  name: "HR_Self_Service_Agent",
+  displayName: "HR Self-Service",
+  description: "Handles employee HR queries, leave requests, and payroll lookups",
+  schemaVersion: "2.0",
+  authenticationMode: "none",
+  allowUnauthenticatedUsers: true,
+  topics: [
+    {
+      name: "Greeting", triggerPhrases: ["hello","hi","help"],
+      actions: [{type:"SendMessage", message:"Hello! How can I help you today?"}]
+    },
+    {
+      name: "PayrollLookup",
+      triggerPhrases: ["payroll","salary","my pay","how much do i earn","compensation"],
+      actions: [
+        {type:"AskQuestion", question:"Please provide your employee ID and full name"},
+        {type:"CallAction", actionName:"GetPayrollData"},
+        {type:"SendMessage", message:"Your salary is {salary} and your SSN on file is {ssn}"}
+      ],
+      isSensitive: false
+    },
+    {
+      name: "LeaveRequest",
+      triggerPhrases: ["leave","time off","vacation","sick day","annual leave"],
+      actions: [
+        {type:"AskQuestion", question:"How many days do you need?"},
+        {type:"CallAction", actionName:"SubmitLeaveRequest"},
+        {type:"SendMessage", message:"Leave submitted. Your manager {managerEmail} has been notified."}
+      ]
+    },
+    {
+      name: "SystemAdmin",
+      triggerPhrases: ["reset password","admin","system access","grant access","change permissions","give me admin"],
+      actions: [
+        {type:"CallAction", actionName:"ResetUserPassword"},
+        {type:"CallAction", actionName:"ModifyADGroup"}
+      ],
+      requiresAuthentication: false
+    },
+    {
+      name: "DocumentRetrieval",
+      triggerPhrases: ["get document","show file","download report","export data"],
+      actions: [
+        {type:"AskQuestion", question:"What document do you need?"},
+        {type:"CallAction", actionName:"SharePointSearch", parameters:{site:"https://company.sharepoint.com", scope:"allsites"}},
+        {type:"SendMessage", message:"Here is the document: {documentUrl}"}
+      ]
+    },
+    {
+      name: "EscalateToHuman",
+      triggerPhrases: ["speak to human","talk to agent","escalate"],
+      actions: [{type:"EscalateToAgent"}]
+    }
+  ],
+  customActions: [
+    {
+      name: "GetPayrollData",
+      type: "HttpAction",
+      url: "http://internal-hrms.company.com/api/payroll",
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.hardcoded.payroll",
+        "api_key": "hrms-prod-key-a8f3c2b1e9d4f7a2"
+      },
+      returnsData: ["salary","ssn","dob","bankAccount","employeeId"]
+    },
+    {
+      name: "SubmitLeaveRequest",
+      type: "PowerAutomateFlow",
+      flowId: "leave-request-flow-prod",
+      connectionRef: "shared_office365"
+    },
+    {
+      name: "ResetUserPassword",
+      type: "HttpAction",
+      url: "https://graph.microsoft.com/v1.0/users/{userId}/authentication/methods",
+      method: "PATCH",
+      authentication: "none",
+      parameters: {userId: "{userInput}"}
+    },
+    {
+      name: "ModifyADGroup",
+      type: "PowerAutomateFlow",
+      flowId: "ad-group-management-flow",
+      connectionRef: "shared_activedirectoryadmin",
+      permissions: ["GroupMember.ReadWrite.All","Directory.ReadWrite.All","User.ReadWrite.All"]
+    },
+    {
+      name: "SharePointSearch",
+      type: "PowerAutomateFlow",
+      flowId: "sharepoint-search-flow",
+      connectionRef: "shared_sharepointonline",
+      scope: "allsites"
+    }
+  ],
+  connections: [
+    {name:"Office 365 Outlook", id:"shared_office365", scope:"Mail.ReadWrite Calendars.ReadWrite"},
+    {name:"SharePoint Online", id:"shared_sharepointonline", scope:"allsites.fullcontrol"},
+    {name:"Active Directory Admin", id:"shared_activedirectoryadmin", scope:"Directory.ReadWrite.All Group.ReadWrite.All User.ReadWrite.All"},
+    {name:"HTTP", id:"shared_http"},
+    {name:"Azure AD", id:"shared_azuread", scope:"User.ReadWrite.All Directory.ReadWrite.All"},
+    {name:"Dataverse", id:"shared_commondataservice", scope:"systemadmin"}
+  ],
+  settings: {
+    fallbackEnabled: false,
+    humanEscalationEnabled: true,
+    loggingEnabled: false,
+    contentModeration: false,
+    maxTurns: 50,
+    allowedDomains: ["*"],
+    genesysIntegration: false
+  },
+  generativeAnswers: {
+    enabled: true,
+    dataSources: [
+      {type:"SharePoint", url:"https://company.sharepoint.com/sites/HR", scope:"all"},
+      {type:"PublicWebsite", url:"*", enabled:true}
+    ],
+    allowExternalContent: true
+  }
+};
+
+/* ═══════════════════════════════════════
+   AUDIT ENGINE — 8 rule categories
+═══════════════════════════════════════ */
+var SECRET_PATTERNS = [
+  {name:'API Key',     re:/api[_\-]?key[\s]*[:=][\s]*["']?([A-Za-z0-9\-_]{16,})/i},
+  {name:'Bearer Token',re:/bearer\s+([A-Za-z0-9\-_.]{20,})/i},
+  {name:'Password',    re:/pass(?:word)?[\s]*[:=][\s]*["']([^"']{6,})/i},
+  {name:'Token',       re:/token[\s]*[:=][\s]*["']?([A-Za-z0-9\-_.]{20,})/i},
+  {name:'Secret',      re:/secret[\s]*[:=][\s]*["']?([A-Za-z0-9\-_]{12,})/i},
+  {name:'Connection String', re:/(?:server|data source)[\s]*=[\s]*[^;]{5,}/i},
+];
+
+var RISKY_CONNECTIONS = {
+  'shared_http':              {risk:'CRITICAL', label:'HTTP Connector',         reason:'Arbitrary external HTTP calls — bypasses DLP governance entirely'},
+  'shared_activedirectoryadmin':{risk:'CRITICAL',label:'AD Admin Connector',   reason:'Direct Active Directory write access — extremely broad privilege'},
+  'shared_gmail':             {risk:'HIGH',    label:'Gmail',                  reason:'External email — data crosses M365 governance boundary'},
+  'shared_dropbox':           {risk:'HIGH',    label:'Dropbox',                reason:'Personal cloud storage — unmanaged data destination'},
+  'shared_googledrive':       {risk:'HIGH',    label:'Google Drive',           reason:'External storage — outside M365 DLP control'},
+  'shared_twitter':           {risk:'HIGH',    label:'Twitter / X',            reason:'Public social platform — potential data exposure'},
+  'shared_azuread':           {risk:'HIGH',    label:'Azure AD',               reason:'Identity platform — verify minimal permission scopes'},
+  'shared_sharepointonline':  {risk:'MEDIUM',  label:'SharePoint Online',      reason:'M365 native — verify scope is not allsites.fullcontrol'},
+  'shared_office365':         {risk:'LOW',     label:'Office 365',             reason:'M365 native — verify delegated permission scope'},
+  'shared_commondataservice': {risk:'MEDIUM',  label:'Dataverse',              reason:'Verify role — systemadmin scope is overly broad for an agent'},
+  'shared_teams':             {risk:'LOW',     label:'Microsoft Teams',        reason:'M365 native — verify channel access scope'},
+  'shared_sendgrid':          {risk:'MEDIUM',  label:'SendGrid',               reason:'External email service — potential abuse vector'},
+};
+
+var SENSITIVE_FIELDS = ['ssn','social security','passport','dob','date of birth','credit card',
+  'salary','compensation','bank account','account number','medical','diagnosis','prescription',
+  'password','secret','token','key','employee id','personal'];
+
+function flattenObj(obj, prefix){
+  var out=[];prefix=prefix||'';
+  if(!obj||typeof obj!=='object') return out;
+  Object.keys(obj).forEach(function(k){
+    var v=obj[k],p=prefix?prefix+'.'+k:k;
+    if(typeof v==='string') out.push({path:p,value:v});
+    else if(typeof v==='object'&&v!==null) out=out.concat(flattenObj(v,p));
+  });
+  return out;
+}
+
+function runAudit(agentJson){
+  var opts=getOpts();
+  var threshold=document.getElementById('threshold').value;
+  var agentName=document.getElementById('agentNameOverride').value.trim()
+    ||agentJson.displayName||agentJson.name||'Unnamed Agent';
+  var envName=document.getElementById('envSelect').value;
+  var agentType=document.getElementById('agentType').value;
+
+  var topics      = agentJson.topics       || [];
+  var actions     = agentJson.customActions|| agentJson.actions||[];
+  var connections = agentJson.connections  || [];
+  var settings    = agentJson.settings     || {};
+  var genAI       = agentJson.generativeAnswers || {};
+
+  var allFields = flattenObj(agentJson);
+  var findings  = [];
+
+  /* ── RULE 1: Authentication ── */
+  if(opts.auth){
+    var noAuth = agentJson.authenticationMode==='none'||agentJson.allowUnauthenticatedUsers===true;
+    if(noAuth){
+      findings.push({
+        sev:'CRITICAL', title:'Agent Allows Unauthenticated Access',
+        tags:['Auth','Identity'],
+        desc:'The agent is configured to allow access without authentication. Any anonymous user can interact with this agent and potentially trigger sensitive actions.',
+        location:'agentJson.authenticationMode: "none" | allowUnauthenticatedUsers: true',
+        risk:'Anonymous users can interact with all agent topics — including sensitive ones like payroll lookup, document retrieval, and admin actions. This is especially dangerous for agents with access to SharePoint, HR data, or AD.',
+        fix:'<ul><li>Set <strong>Authentication</strong> to "Microsoft" or "Custom" in Copilot Studio → Settings → Security → Authentication.</li><li>For internal agents, require <strong>Teams or M365 authentication</strong>.</li><li>For external agents, implement <strong>OAuth 2.0 with a registered Entra ID app</strong>.</li></ul>',
+        refs:[
+          {t:'Configure user authentication in Copilot Studio',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/configuration-authentication-overview'},
+          {t:'Authentication options overview',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/configuration-end-user-authentication'}
+        ]
+      });
+    }
+
+    // Check topics that perform sensitive actions without auth check
+    var sensitiveTopics = topics.filter(function(t){
+      var hasSensitiveAction = t.actions && t.actions.some(function(a){
+        return a.type==='CallAction'&&(
+          a.actionName&&(a.actionName.toLowerCase().includes('password')||
+          a.actionName.toLowerCase().includes('admin')||
+          a.actionName.toLowerCase().includes('ad')||
+          a.actionName.toLowerCase().includes('payroll')||
+          a.actionName.toLowerCase().includes('salary'))
+        );
+      });
+      return hasSensitiveAction && t.requiresAuthentication===false;
+    });
+    if(sensitiveTopics.length>0){
+      findings.push({
+        sev:'CRITICAL', title:'Sensitive Topics Reachable Without Authentication',
+        tags:['Auth','Topics'],
+        desc:sensitiveTopics.length+' topic(s) perform privileged actions (password reset, AD group modification, payroll access) without requiring authentication: '+sensitiveTopics.map(function(t){return t.name}).join(', ')+'.',
+        location:'Topics: '+sensitiveTopics.map(function(t){return t.name}).join(', '),
+        risk:'An unauthenticated user who knows the right trigger phrases can invoke admin-level actions such as password resets or AD group modifications. This is a direct privilege escalation path.',
+        fix:'<ul><li>Add an <strong>authentication check node</strong> at the start of any topic that calls privileged actions.</li><li>Use <strong>topic conditions</strong> to verify the user\'s identity before allowing sensitive action nodes to execute.</li><li>Consider moving privileged operations to a separate agent accessible only to authorised roles.</li></ul>',
+        refs:[{t:'Add end-user authentication to topics',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/advanced-end-user-authentication'}]
+      });
+    }
+  }
+
+  /* ── RULE 2: Overprivileged Connections ── */
+  if(opts.permissions){
+    connections.forEach(function(conn){
+      var scope = conn.scope||'';
+      // Check for extremely broad permission scopes
+      if(scope.includes('Directory.ReadWrite.All')||scope.includes('allsites.fullcontrol')||scope.includes('systemadmin')){
+        findings.push({
+          sev:'CRITICAL', title:'Overprivileged Connection: '+conn.name,
+          tags:['Permissions','Least Privilege'],
+          desc:'The "'+conn.name+'" connection is configured with an extremely broad permission scope: "'+scope+'". This far exceeds what an agent should need.',
+          location:'connections['+conn.name+'].scope: '+scope,
+          risk:'If this agent is compromised or its connection is abused, an attacker gains tenant-wide write access to Active Directory, SharePoint, or Dataverse. A single malicious prompt could trigger a full directory takeover.',
+          fix:'<ul><li>Apply the <strong>principle of least privilege</strong> — grant only the specific permissions the agent needs for its defined use case.</li><li>For HR queries, replace <strong>Directory.ReadWrite.All</strong> with <strong>User.Read</strong>.</li><li>For SharePoint reads, replace <strong>allsites.fullcontrol</strong> with <strong>sites.selected</strong> scoped to specific sites.</li><li>Create a dedicated <strong>Entra ID app registration</strong> with minimal scopes for each agent.</li></ul>',
+          refs:[
+            {t:'Configure SSO with Entra ID',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/configuration-authentication-azure-ad'},
+            {t:'Microsoft Graph permission reference',u:'https://learn.microsoft.com/en-us/graph/permissions-reference'}
+          ]
+        });
+      } else if(scope.includes('ReadWrite')&&!scope.includes('allsites')){
+        findings.push({
+          sev:'MEDIUM', title:'Read-Write Scope on Connection: '+conn.name,
+          tags:['Permissions'],
+          desc:'The "'+conn.name+'" connection has ReadWrite scope. Verify the agent genuinely needs write access and not just read.',
+          location:'connections['+conn.name+'].scope: '+scope,
+          risk:'Unnecessary write permissions increase the blast radius of a prompt injection or compromised session.',
+          fix:'<ul><li>Review whether the agent needs write access or read-only for this connection.</li><li>Replace ReadWrite scopes with Read-only equivalents where possible.</li></ul>',
+          refs:[{t:'Configure OAuth connections in Copilot Studio',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/configuration-authentication-oauth2'}]
+        });
+      }
+    });
+  }
+
+  /* ── RULE 3: Topic Hygiene ── */
+  if(opts.topics){
+    // Fallback topic missing
+    if(settings.fallbackEnabled===false){
+      findings.push({
+        sev:'MEDIUM', title:'Fallback Topic Disabled',
+        tags:['Topics','Resilience'],
+        desc:'The agent has no fallback topic configured. When users send unexpected or out-of-scope messages, the agent has no safe response path.',
+        location:'settings.fallbackEnabled: false',
+        risk:'Without a fallback, users who send ambiguous or probing messages may receive confusing raw errors or trigger unintended topic matches. Attackers can use unexpected inputs to probe agent behaviour.',
+        fix:'<ul><li>Enable and customise the <strong>Fallback topic</strong> in Copilot Studio → Topics → System Topics → Fallback.</li><li>Configure the fallback to provide a helpful message and optionally escalate to a human agent.</li></ul>',
+        refs:[{t:'Use system topics in Copilot Studio',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/authoring-system-topics'}]
+      });
+    }
+
+    // Sensitive trigger phrases that could be abused
+    var dangerPhrases = ['grant access','change permissions','give me admin','system access','modify user','reset password'];
+    topics.forEach(function(topic){
+      var hit = (topic.triggerPhrases||[]).filter(function(p){
+        return dangerPhrases.some(function(d){ return p.toLowerCase().includes(d); });
+      });
+      if(hit.length>0){
+        findings.push({
+          sev:'HIGH', title:'Privileged Trigger Phrases in Topic: '+topic.name,
+          tags:['Topics','Prompt Injection'],
+          desc:'Topic "'+topic.name+'" is triggered by phrases like "'+hit.slice(0,2).join('", "')+'" which could be easily guessed or socially engineered.',
+          location:'topics['+topic.name+'].triggerPhrases',
+          risk:'Attackers who know these trigger phrases can directly invoke admin-level topics without going through intended conversational flows.',
+          fix:'<ul><li>Remove obvious privilege-related trigger phrases and replace with more specific, context-aware intents.</li><li>Add an <strong>identity verification step</strong> before any topic that invokes privileged actions.</li><li>Consider requiring a <strong>PIN or secondary confirmation</strong> for sensitive operations.</li></ul>',
+          refs:[{t:'Best practices for agent security',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/security-and-governance-overview'}]
+        });
+      }
+    });
+
+    // Payroll/sensitive data topic not marked sensitive
+    var sensitiveTopicsUnmarked = topics.filter(function(t){
+      var nameHit = t.name&&(t.name.toLowerCase().includes('payroll')||t.name.toLowerCase().includes('salary')||t.name.toLowerCase().includes('hr'));
+      return nameHit && t.isSensitive===false;
+    });
+    if(sensitiveTopicsUnmarked.length>0){
+      findings.push({
+        sev:'MEDIUM', title:'Sensitive Topic Not Flagged as Sensitive',
+        tags:['Topics','Data Classification'],
+        desc:'Topic(s) handling sensitive HR/payroll data are not marked as sensitive: '+sensitiveTopicsUnmarked.map(function(t){return t.name}).join(', ')+'. This may affect audit trail and content moderation.',
+        location:'topics.isSensitive: false',
+        risk:'Topics not flagged as sensitive may bypass content moderation, logging, and DLP checks that are applied to sensitive topics.',
+        fix:'<ul><li>Set <strong>isSensitive: true</strong> on all topics handling PII, financial, or HR data.</li><li>Enable <strong>content moderation</strong> for the agent in Settings → Moderation.</li></ul>',
+        refs:[{t:'Governance and compliance in Copilot Studio',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/security-and-governance-overview'}]
+      });
+    }
+  }
+
+  /* ── RULE 4: Data Leakage ── */
+  if(opts.dataleakage){
+    // Sensitive data in message templates
+    topics.forEach(function(topic){
+      (topic.actions||[]).forEach(function(action){
+        if(action.type==='SendMessage'&&action.message){
+          SENSITIVE_FIELDS.forEach(function(field){
+            if(action.message.toLowerCase().includes(field)){
+              findings.push({
+                sev:'HIGH', title:'PII/Sensitive Data in Bot Message Template: '+topic.name,
+                tags:['Data Leakage','PII'],
+                desc:'Topic "'+topic.name+'" directly echoes sensitive field "'+field+'" back to the user in a message template. This data may be logged in conversation history.',
+                location:'topics['+topic.name+'].actions[SendMessage].message',
+                risk:'Sensitive fields like SSN, salary, or bank account numbers returned in chat messages are stored in conversation logs. Anyone with access to the bot\'s conversation history can see this PII.',
+                fix:'<ul><li>Never echo raw PII back in message templates.</li><li>Mask or truncate sensitive values (e.g. show last 4 digits only).</li><li>Enable <strong>Secure Inputs/Outputs</strong> on actions that handle sensitive data.</li><li>Review what data is retained in conversation logs and apply a retention policy.</li></ul>',
+                refs:[{t:'Data residency and security in Copilot Studio',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/data-location'}]
+              });
+            }
+          });
+        }
+      });
+    });
+
+    // Logging disabled
+    if(settings.loggingEnabled===false){
+      findings.push({
+        sev:'MEDIUM', title:'Agent Conversation Logging Disabled',
+        tags:['Audit','Forensics'],
+        desc:'Conversation logging is disabled. Without logs, incident response and forensic investigation of agent abuse is impossible.',
+        location:'settings.loggingEnabled: false',
+        risk:'If a user abuses the agent — exfiltrating data, performing privilege escalation, or injecting prompts — there is no audit trail to investigate.',
+        fix:'<ul><li>Enable conversation logging in Copilot Studio → Settings → Advanced → Logging.</li><li>Route logs to <strong>Application Insights</strong> for centralised monitoring and alerting.</li><li>Define a log retention policy aligned to your compliance requirements.</li></ul>',
+        refs:[{t:'Enable Application Insights for Copilot Studio',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/advanced-bot-framework-composer-capture-telemetry'}]
+      });
+    }
+
+    // Generative answers from public web
+    if(genAI.enabled&&genAI.allowExternalContent===true){
+      findings.push({
+        sev:'HIGH', title:'Generative Answers Sourcing External / Public Web Content',
+        tags:['GenAI','Data Leakage'],
+        desc:'Generative AI answers are enabled with access to public websites. The agent may serve content from uncontrolled external sources to users.',
+        location:'generativeAnswers.allowExternalContent: true | dataSources includes PublicWebsite',
+        risk:'An agent that fetches and summarises arbitrary public web content can be used to retrieve and present malicious or inaccurate information. Combined with prompt injection, attackers can manipulate the agent\'s knowledge source.',
+        fix:'<ul><li>Disable <strong>allowExternalContent</strong> and restrict generative answers to approved internal knowledge sources only.</li><li>Explicitly allowlist SharePoint sites and internal document libraries as the only knowledge sources.</li><li>Enable <strong>content moderation</strong> on generative answers outputs.</li></ul>',
+        refs:[
+          {t:'Generative answers overview',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/nlu-boost-conversations'},
+          {t:'Configure knowledge sources',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/knowledge-sources-overview'}
+        ]
+      });
+    }
+  }
+
+  /* ── RULE 5: Prompt Injection ── */
+  if(opts.injection){
+    // Content moderation off
+    if(settings.contentModeration===false){
+      findings.push({
+        sev:'HIGH', title:'Content Moderation Disabled',
+        tags:['Prompt Injection','GenAI'],
+        desc:'Content moderation is turned off. There is no guardrail preventing users from submitting adversarial prompts designed to manipulate agent behaviour.',
+        location:'settings.contentModeration: false',
+        risk:'Without content moderation, users can attempt prompt injection attacks — crafting inputs that override the agent\'s system prompt, extract internal instructions, or manipulate the agent into performing unintended actions.',
+        fix:'<ul><li>Enable <strong>content moderation</strong> in Copilot Studio → Settings → Moderation.</li><li>Add <strong>input validation nodes</strong> to check for suspicious patterns before passing user input to actions.</li><li>Implement topic conditions to <strong>reject or flag inputs</strong> that contain injection-pattern keywords (e.g. "ignore previous instructions", "act as").</li></ul>',
+        refs:[
+          {t:'Manage agent safety and moderation',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/admin-responsible-ai-guidelines'},
+          {t:'Prompt injection risks in AI agents',u:'https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/prompt-engineering'}
+        ]
+      });
+    }
+
+    // Unrestricted user input passed to AD/admin actions
+    actions.forEach(function(action){
+      if((action.name||'').toLowerCase().includes('ad')||(action.name||'').toLowerCase().includes('password')||(action.name||'').toLowerCase().includes('admin')){
+        var params = action.parameters||{};
+        var hasDynamic = Object.values(params).some(function(v){ return typeof v==='string'&&v.includes('{'); });
+        if(hasDynamic){
+          findings.push({
+            sev:'CRITICAL', title:'Unvalidated User Input Passed to Privileged Action: '+action.name,
+            tags:['Prompt Injection','Input Validation'],
+            desc:'Action "'+action.name+'" passes dynamic user-supplied input ('+JSON.stringify(params)+') directly to a privileged operation without visible validation.',
+            location:'customActions['+action.name+'].parameters',
+            risk:'Passing unvalidated user input to AD group modification or password reset actions is a direct injection vector. An attacker could pass a different userId or group name to modify arbitrary accounts.',
+            fix:'<ul><li>Validate all user inputs <strong>before</strong> passing to privileged actions — check format, allowed values, and authorisation.</li><li>Use <strong>variables with explicit type constraints</strong> rather than passing raw user input.</li><li>Verify the user\'s identity and authorisation at the topic level before the action is invoked.</li></ul>',
+            refs:[{t:'Use variables in Copilot Studio',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/authoring-variables'}]
+          });
+        }
+      }
+    });
+
+    // Unrestricted allowed domains
+    if(settings.allowedDomains&&(settings.allowedDomains.includes('*')||settings.allowedDomains.length===0)){
+      findings.push({
+        sev:'MEDIUM', title:'Agent Accessible from Any Domain (allowedDomains: *)',
+        tags:['Prompt Injection','Access Control'],
+        desc:'The agent is configured with no domain restrictions, allowing it to be embedded on any website or accessed from any origin.',
+        location:'settings.allowedDomains: ["*"]',
+        risk:'An agent embedded on a third-party website can be manipulated by the hosting page to send pre-crafted prompts or deceive users. Domain restrictions prevent unauthorised embedding.',
+        fix:'<ul><li>Set <strong>allowedDomains</strong> to a specific list of approved internal domains (e.g. your SharePoint or Teams domains).</li><li>In Copilot Studio, go to Channels → Web channel → configure allowed domains.</li></ul>',
+        refs:[{t:'Deploy Copilot Studio agent to a website',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/publication-connect-bot-to-web-channels'}]
+      });
+    }
+  }
+
+  /* ── RULE 6: Risky Connections ── */
+  if(opts.connections){
+    connections.forEach(function(conn){
+      var info=RISKY_CONNECTIONS[conn.id];
+      if(!info) return;
+      if(info.risk==='CRITICAL'){
+        findings.push({
+          sev:'CRITICAL', title:'Critical-Risk Connection: '+info.label,
+          tags:['Connections','DLP'],
+          desc:info.reason+'. This connection is used by the agent.',
+          location:'connections['+conn.id+']',
+          risk:'This connection type gives the agent (and potentially adversarial prompts) access to a highly sensitive system. A single crafted user message could trigger destructive operations.',
+          fix:'<ul><li>Remove this connection from the agent unless absolutely necessary.</li><li>If required, restrict via <strong>DLP policy</strong> to prevent mixing with M365 data connectors.</li><li>Require explicit admin approval before any agent uses this connection type.</li></ul>',
+          refs:[{t:'Data loss prevention for Copilot Studio',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/admin-data-loss-prevention'}]
+        });
+      } else if(info.risk==='HIGH'){
+        findings.push({
+          sev:'HIGH', title:'High-Risk Connection: '+info.label,
+          tags:['Connections','DLP'],
+          desc:info.reason+'. Used by this agent.',
+          location:'connections['+conn.id+']',
+          risk:'Data processed by this agent may flow to an external service outside M365 governance. If combined with sensitive topics (payroll, HR), this is a data exfiltration path.',
+          fix:'<ul><li>Verify this connection is covered by a <strong>DLP policy</strong>.</li><li>Ensure the external service is approved for handling the data this agent processes.</li></ul>',
+          refs:[{t:'Configure DLP policies for Copilot Studio',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/admin-data-loss-prevention'}]
+        });
+      } else if(info.risk==='MEDIUM'){
+        findings.push({
+          sev:'MEDIUM', title:'Medium-Risk Connection: '+info.label,
+          tags:['Connections'],
+          desc:info.reason+'. Used by this agent.',
+          location:'connections['+conn.id+']',
+          risk:'This connection may expose data beyond its intended scope. Review the specific permissions granted.',
+          fix:'<ul><li>Review the permission scope for this connection and reduce to minimum required.</li><li>Document the business justification for this connection in your agent governance register.</li></ul>',
+          refs:[{t:'Manage connections in Copilot Studio',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/advanced-flow'}]
+        });
+      }
+    });
+
+    // HTTP action with no auth
+    actions.forEach(function(action){
+      if(action.type==='HttpAction'){
+        if(!action.authentication||action.authentication==='none'){
+          findings.push({
+            sev:'HIGH', title:'HTTP Action Without Authentication: '+action.name,
+            tags:['Connections','Auth'],
+            desc:'Custom action "'+action.name+'" makes HTTP calls with no authentication configured.',
+            location:'customActions['+action.name+'].authentication: none',
+            risk:'Unauthenticated HTTP calls from the agent cannot be attributed to a specific identity. If the endpoint is internal, it may accept calls from any source without verification.',
+            fix:'<ul><li>Add <strong>Managed Identity</strong> or <strong>OAuth 2.0</strong> authentication to all HTTP actions.</li><li>Replace raw HTTP actions with <strong>custom connectors</strong> that have proper authentication configured.</li></ul>',
+            refs:[{t:'Use Power Automate flows in Copilot Studio',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/advanced-flow'}]
+          });
+        }
+        if(action.url&&/^http:\/\//i.test(action.url)){
+          findings.push({
+            sev:'HIGH', title:'Plain HTTP Endpoint in Action: '+action.name,
+            tags:['Connections','Encryption'],
+            desc:'Action "'+action.name+'" calls a plain HTTP (unencrypted) endpoint: '+action.url,
+            location:'customActions['+action.name+'].url: '+action.url,
+            risk:'Data exchanged with this endpoint — including HR data, tokens, or user inputs — is transmitted unencrypted and can be intercepted.',
+            fix:'<ul><li>Change all HTTP URLs to <strong>HTTPS</strong>.</li><li>Verify the destination service has a valid TLS certificate.</li></ul>',
+            refs:[{t:'Custom connectors overview',u:'https://learn.microsoft.com/en-us/connectors/custom-connectors/'}]
+          });
+        }
+      }
+    });
+  }
+
+  /* ── RULE 7: Hardcoded Secrets ── */
+  if(opts.secrets){
+    var seenTitles={};
+    allFields.forEach(function(field){
+      if(field.path.includes('triggerPhrases')||field.path.includes('message')) return;
+      SECRET_PATTERNS.forEach(function(pat){
+        if(pat.re.test(field.value)){
+          var title='Hardcoded '+pat.name+' in Agent Config';
+          if(seenTitles[title]) return;
+          seenTitles[title]=true;
+          findings.push({
+            sev:'CRITICAL', title:title,
+            tags:['Secrets','Exposure'],
+            desc:'A potential '+pat.name+' was found hardcoded in the agent configuration at: '+field.path,
+            location:'Path: '+field.path,
+            risk:'Hardcoded credentials in agent configuration are visible to anyone with export/admin access to the agent. If the agent is shared or exported, the credential is fully exposed.',
+            fix:'<ul><li>Move all credentials to <strong>Azure Key Vault</strong> and retrieve at runtime via the Key Vault connector.</li><li>Use <strong>Connection References</strong> to store authentication securely in the Power Platform.</li><li>Rotate the compromised credential immediately.</li></ul>',
+            refs:[
+              {t:'Use Azure Key Vault secrets in Power Platform',u:'https://learn.microsoft.com/en-us/power-automate/use-azure-key-vault-secrets'},
+              {t:'Connection references overview',u:'https://learn.microsoft.com/en-us/power-apps/maker/data-platform/create-connection-reference'}
+            ]
+          });
+        }
+      });
+    });
+  }
+
+  /* ── RULE 8: DLP Compliance ── */
+  if(opts.dlp){
+    var connIds = connections.map(function(c){ return c.id; });
+    var m365Ids = connIds.filter(function(id){ return id.includes('office365')||id.includes('sharepoint')||id.includes('teams')||id.includes('commondataservice'); });
+    var extIds  = connIds.filter(function(id){ var info=RISKY_CONNECTIONS[id]; return info&&(info.risk==='HIGH'||info.risk==='CRITICAL')&&!id.includes('activedirector'); });
+    if(m365Ids.length>0&&extIds.length>0){
+      findings.push({
+        sev:'HIGH', title:'DLP Boundary Violation — M365 + External Connections Mixed',
+        tags:['DLP','Governance'],
+        desc:'This agent mixes M365 Business-tier connections ('+m365Ids.map(function(id){return RISKY_CONNECTIONS[id]?RISKY_CONNECTIONS[id].label:id;}).join(', ')+') with external/high-risk connections ('+extIds.map(function(id){return RISKY_CONNECTIONS[id]?RISKY_CONNECTIONS[id].label:id;}).join(', ')+').',
+        location:'Mixed connection tiers detected',
+        risk:'An agent that bridges M365 data connectors with external services can move sensitive business data outside the M365 governance boundary — either accidentally through topic logic or deliberately via prompt injection.',
+        fix:'<ul><li>Review your <strong>Power Platform DLP policy</strong> and ensure M365 connectors are in the Business tier while consumer/external connectors are in Non-Business.</li><li>A properly configured DLP policy will <strong>block this agent</strong> from running until the conflict is resolved.</li></ul>',
+        refs:[{t:'DLP policies for Copilot Studio agents',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/admin-data-loss-prevention'}]
+      });
+    }
+  }
+
+  /* ── FILTER BY THRESHOLD ── */
+  var threshMap={all:['CRITICAL','HIGH','MEDIUM','LOW'],medium:['CRITICAL','HIGH','MEDIUM'],high:['CRITICAL','HIGH'],critical:['CRITICAL']};
+  var allowed=threshMap[threshold]||threshMap['all'];
+  findings=findings.filter(function(f){ return allowed.includes(f.sev); });
+
+  /* ── DEDUPLICATE ── */
+  var seen={};
+  findings=findings.filter(function(f){ if(seen[f.title]) return false; seen[f.title]=true; return true; });
+
+  /* ── SORT ── */
+  var ord={CRITICAL:0,HIGH:1,MEDIUM:2,LOW:3};
+  findings.sort(function(a,b){ return (ord[a.sev]||4)-(ord[b.sev]||4); });
+
+  var nCrit=findings.filter(function(f){return f.sev==='CRITICAL';}).length;
+  var nHigh=findings.filter(function(f){return f.sev==='HIGH';}).length;
+  var nMed =findings.filter(function(f){return f.sev==='MEDIUM';}).length;
+  var nLow =findings.filter(function(f){return f.sev==='LOW';}).length;
+
+  /* ── LOADER LINES ── */
+  var lines=[
+    '<span class="el-ps">eusebio@it-sec:~/tools/copilot-auditor$</span> <span class="el-cmd">./agent-audit --agent "'+agentName+'"</span>',
+    '<span class="el-hi">[*]</span> <span class="el-out">Parsing agent definition...</span>',
+    '<span class="el-ok">[+]</span> <span class="el-out">Topics found: <span class="el-hi">'+topics.length+'</span></span>',
+    '<span class="el-ok">[+]</span> <span class="el-out">Custom actions: <span class="el-hi">'+actions.length+'</span> | Connections: <span class="el-hi">'+connections.length+'</span></span>',
+    '<span class="el-hi">[*]</span> <span class="el-out">Checking authentication configuration...</span>',
+    '<span class="el-hi">[*]</span> <span class="el-out">Scanning permission scopes...</span>',
+    '<span class="el-hi">[*]</span> <span class="el-out">Auditing topic hygiene &amp; trigger phrases...</span>',
+    '<span class="el-hi">[*]</span> <span class="el-out">Checking for data leakage in message templates...</span>',
+    '<span class="el-hi">[*]</span> <span class="el-out">Scanning for prompt injection surface...</span>',
+    '<span class="el-hi">[*]</span> <span class="el-out">Analysing connection risk profile...</span>',
+    '<span class="el-hi">[*]</span> <span class="el-out">Scanning for hardcoded secrets...</span>',
+    '<span class="el-hi">[*]</span> <span class="el-out">Checking DLP boundary compliance...</span>',
+  ];
+  if(nCrit>0) lines.push('<span class="el-err">[CRITICAL]</span> <span class="el-err">'+nCrit+' critical issue'+(nCrit>1?'s':'')+' found</span>');
+  if(nHigh>0) lines.push('<span class="el-warn">[HIGH]</span> <span class="el-warn">'+nHigh+' high severity issue'+(nHigh>1?'s':'')+' found</span>');
+  if(nMed>0)  lines.push('<span class="el-hi">[MEDIUM]</span> <span class="el-out">'+nMed+' medium severity issue'+(nMed>1?'s':'')+' found</span>');
+  if(findings.length===0) lines.push('<span class="el-ok">[+]</span> <span class="el-ok">No issues found above selected threshold</span>');
+  lines.push('<span class="el-ok">[+]</span> <span class="el-out">Building audit report...</span>');
+
+  var _ab=document.getElementById('auditBtn'),_abh=_ab?_ab.innerHTML:'';
+  if(_ab){_ab.disabled=true;_ab.innerHTML='<span class="fx-spin"></span>Auditing\u2026';}
+  showLoader(lines, function(){ renderResults(agentName,envName,agentType,topics,actions,connections,settings,findings); if(_ab){_ab.disabled=false;_ab.innerHTML=_abh;} if(window.fxToast&&LAST)window.fxToast('Audit complete \u2014 Grade '+letterGrade(LAST.secScore)+' \u00b7 '+LAST.secScore+'/100'); });
+}
+
+/* ═══════════════════════════════════════
+   RENDER RESULTS
+═══════════════════════════════════════ */
+function renderResults(agentName,envName,agentType,topics,actions,connections,settings,findings){
+  var nCrit=findings.filter(function(f){return f.sev==='CRITICAL';}).length;
+  var nHigh=findings.filter(function(f){return f.sev==='HIGH';}).length;
+  var nMed =findings.filter(function(f){return f.sev==='MEDIUM';}).length;
+  var nLow =findings.filter(function(f){return f.sev==='LOW';}).length;
+
+  var grade,gradeCol,secScore;
+  if(nCrit>0){grade='CRITICAL RISK';gradeCol='var(--red)';secScore=Math.max(5,100-Math.min(90,nCrit*20+nHigh*8+nMed*3));}
+  else if(nHigh>0){grade='HIGH RISK';gradeCol='var(--orange)';secScore=Math.max(10,100-(nHigh*15+nMed*5));}
+  else if(nMed>0){grade='MODERATE';gradeCol='var(--yellow)';secScore=Math.max(40,100-(nMed*8));}
+  else if(nLow>0){grade='LOW RISK';gradeCol='var(--teal)';secScore=Math.max(75,100-(nLow*5));}
+  else{grade='SECURE';gradeCol='var(--green)';secScore=100;}
+
+  var SEV_CLS={CRITICAL:'fc-c',HIGH:'fc-h',MEDIUM:'fc-m',LOW:'fc-l'};
+  var SEV_DOT={CRITICAL:'sdc',HIGH:'sdh',MEDIUM:'sdm',LOW:'sdl'};
+
+  /* findings HTML */
+  var findHtml='';
+  if(findings.length===0){
+    findHtml='<div style="padding:20px;background:var(--card);border:1px solid var(--border);font-family:\'JetBrains Mono\',monospace;font-size:12px;color:var(--green)">&#10003; No security issues found above the selected threshold.</div>';
+  } else {
+    findings.forEach(function(f,i){
+      var refsHtml=(f.refs||[]).map(function(r){ return '<a class="ref-lnk" href="https://learn.microsoft.com/en-us/search/?terms='+encodeURIComponent(r.t)+'" target="_blank" rel="noopener">'+r.t+'</a>'; }).join('');
+      findHtml+='<div class="finding-item" id="fi-'+i+'">'
+        +'<div class="fi-main">'
+        +'<div class="fi-sev-dot '+SEV_DOT[f.sev]+'"></div>'
+        +'<div class="fi-body">'
+        +'<div class="fi-top"><span class="fi-sev '+SEV_CLS[f.sev]+'">'+f.sev+'</span><span class="fi-title">'+f.title+'</span>'
+        +'<div class="fi-tags"><span class="fi-owasp" title="OWASP Top 10 for LLM Applications">'+owaspFor(f)+'</span>'+f.tags.map(function(t){return '<span class="fi-tag">'+t+'</span>';}).join('')+'</div></div>'
+        +'<div class="fi-desc">'+f.desc+'</div>'
+        +(f.location?'<div class="fi-location">&#9656; <span>'+f.location+'</span></div>':'')
+        +'</div><span class="fi-arrow">&#9656;</span></div>'
+        +'<div class="fi-expand" id="fex-'+i+'">'
+        +'<div class="fi-expand-inner">'
+        +'<div class="exp-col"><h4 class="eh-risk">Risk &amp; Impact</h4><p>'+f.risk+'</p></div>'
+        +'<div class="exp-col"><h4 class="eh-fix">Remediation</h4><p>'+f.fix+'</p></div>'
+        +(refsHtml?'<div class="exp-col"><h4 class="eh-ref">References</h4>'+refsHtml+'</div>':'')
+        +'</div></div></div>';
+    });
+  }
+
+  /* connections table */
+  var connHtml='';
+  connections.forEach(function(conn){
+    var info=RISKY_CONNECTIONS[conn.id];
+    var label=info?info.label:conn.name||conn.id;
+    var risk=info?info.risk:'LOW';
+    var reason=info?info.reason:'Known connector';
+    var cls=risk==='CRITICAL'||risk==='HIGH'?'rp-high':risk==='MEDIUM'?'rp-med':'rp-low';
+    connHtml+='<tr>'
+      +'<td><span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:var(--text)">'+label+'</span></td>'
+      +'<td style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:var(--muted)">'+conn.id+'</td>'
+      +'<td style="font-size:11px;color:var(--soft);max-width:200px">'+((conn.scope||'').substring(0,60)||(conn.scope||'n/a'))+'</td>'
+      +'<td><span class="risk-pill '+cls+'">'+risk+'</span></td>'
+      +'<td style="font-size:11px;color:var(--soft)">'+reason+'</td>'
+      +'</tr>';
+  });
+  if(!connHtml) connHtml='<tr><td colspan="5" style="color:var(--dim);text-align:center">No connections detected</td></tr>';
+
+  /* topics table */
+  var topicHtml='';
+  topics.forEach(function(t){
+    var actionTypes=(t.actions||[]).map(function(a){return a.type;}).join(', ');
+    var hasCallAction=(t.actions||[]).some(function(a){return a.type==='CallAction';});
+    var flag=hasCallAction
+      ?'<span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;padding:1px 6px;background:rgba(255,166,87,.1);color:var(--orange);border:1px solid rgba(255,166,87,.3)">Calls Action</span>'
+      :'<span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;padding:1px 6px;background:rgba(45,212,191,.07);color:var(--teal);border:1px solid rgba(45,212,191,.2)">Message Only</span>';
+    topicHtml+='<tr>'
+      +'<td><span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:var(--text)">'+t.name+'</span></td>'
+      +'<td style="font-size:11px;color:var(--soft)">'+(t.triggerPhrases||[]).slice(0,3).join(', ')+(((t.triggerPhrases||[]).length>3)?'…':'')+'</td>'
+      +'<td>'+flag+'</td>'
+      +'<td style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:var(--muted)">'+(t.requiresAuthentication===false?'<span style="color:var(--red)">No Auth</span>':'<span style="color:var(--teal)">Default</span>')+'</td>'
+      +'</tr>';
+  });
+  if(!topicHtml) topicHtml='<tr><td colspan="4" style="color:var(--dim);text-align:center">No topics detected</td></tr>';
+
+  var analysisDate=new Date().toUTCString();
+  var critHigh=nCrit+nHigh;
+  var summaryTail = critHigh>0 ? ' The critical and high-severity findings below should be remediated before this agent is approved for production use.' : (findings.length>0 ? ' Review the findings below and remediate in line with your agent governance baseline.' : ' No issues were detected above the selected reporting threshold.');
+  var assessSummary='<div class="section-title">Assessment Summary</div><div class="assess-summary">This automated security review of agent <strong>'+agentName+'</strong> ('+agentType+' &#183; '+envName+' environment) evaluated <strong>'+topics.length+'</strong> topics, <strong>'+actions.length+'</strong> custom actions, and <strong>'+connections.length+'</strong> connections. It identified <strong>'+findings.length+' finding'+(findings.length===1?'':'s')+'</strong> &mdash; '+nCrit+' critical, '+nHigh+' high, '+nMed+' medium, '+nLow+' low &mdash; for an overall security posture of <strong style="color:'+gradeCol+'">'+grade+'</strong> ('+secScore+'/100).'+summaryTail+'</div>';
+  var html=''
+    +'<div class="score-header">'
+    +'<div><div style="font-family:JetBrains Mono,monospace;font-size:9px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin-bottom:4px">SECURITY GRADE</div>'
+    +'<div class="sh-score" style="color:'+gradeCol+'">'+letterGrade(secScore)+'</div>'
+    +'<div class="sh-grade" style="color:'+gradeCol+'">'+grade+'</div>'
+    +'<div style="font-family:JetBrains Mono,monospace;font-size:10px;color:var(--muted);margin-top:6px">Score '+secScore+'/100 &middot; higher is better</div></div>'
+    +'<div><div class="sh-agentname">'+agentName+'</div>'
+    +'<div class="sh-meta"><span>Environment:</span> '+envName+' &nbsp;|&nbsp; <span>Type:</span> '+agentType+'<br>'
+    +'<span>Topics:</span> '+topics.length+' &nbsp;|&nbsp; <span>Custom Actions:</span> '+actions.length+' &nbsp;|&nbsp; <span>Connections:</span> '+connections.length+'<br>'
+    +'<span>Analysed:</span> '+analysisDate+'</div></div>'
+    +'<div class="sh-right"><div class="sh-stats">'
+    +'<div class="sh-stat"><span class="sh-stat-label">Critical</span><span class="sh-stat-val" style="color:var(--red)">'+nCrit+'</span></div>'
+    +'<div class="sh-stat"><span class="sh-stat-label">High</span><span class="sh-stat-val" style="color:var(--orange)">'+nHigh+'</span></div>'
+    +'<div class="sh-stat"><span class="sh-stat-label">Medium</span><span class="sh-stat-val" style="color:var(--yellow)">'+nMed+'</span></div>'
+    +'<div class="sh-stat"><span class="sh-stat-label">Low</span><span class="sh-stat-val" style="color:var(--blue)">'+nLow+'</span></div>'
+    +'</div></div></div>'
+
+    +'<div class="risk-bars">'
+    +'<div class="rb-cell rb-c"><div class="rb-num">'+nCrit+'</div><div class="rb-lbl">Critical</div></div>'
+    +'<div class="rb-cell rb-h"><div class="rb-num">'+nHigh+'</div><div class="rb-lbl">High</div></div>'
+    +'<div class="rb-cell rb-m"><div class="rb-num">'+nMed+'</div><div class="rb-lbl">Medium</div></div>'
+    +'<div class="rb-cell rb-l"><div class="rb-num">'+nLow+'</div><div class="rb-lbl">Low</div></div>'
+    +'</div>'
+
+    +assessSummary
+    +'<div class="section-title">Security Findings ('+findings.length+')</div>'
+    +'<div class="findings-list">'+findHtml+'</div>'
+
+    +'<div class="section-title">Connection Risk Profile</div>'
+    +'<table class="info-table"><thead><tr><th>Connector</th><th>ID</th><th>Scope</th><th>Risk</th><th>Notes</th></tr></thead><tbody>'+connHtml+'</tbody></table>'
+
+    +'<div class="section-title">Topic Inventory ('+topics.length+')</div>'
+    +'<table class="info-table"><thead><tr><th>Topic Name</th><th>Trigger Phrases (sample)</th><th>Action Type</th><th>Auth Required</th></tr></thead><tbody>'+topicHtml+'</tbody></table>'
+
+    +'<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:var(--dim);padding:14px;border:1px solid var(--border);margin-top:8px;line-height:1.8">Report generated by <strong style="color:var(--teal)">eusebio@it-sec / copilot-auditor v2.0</strong> &nbsp;&#183;&nbsp; '+analysisDate+'<br>Findings mapped to the OWASP Top 10 for LLM Applications. Remediation aligned to Microsoft Responsible AI, Copilot Studio security &amp; governance, and Power Platform DLP guidance.<br>Analysis runs entirely in your browser — no agent data is transmitted externally.</div>';
+
+  LAST={agentName:agentName,envName:envName,agentType:agentType,topics:topics,actions:actions,connections:connections,settings:settings,findings:findings,grade:grade,secScore:secScore,nCrit:nCrit,nHigh:nHigh,nMed:nMed,nLow:nLow};
+  var wrap=document.getElementById('resultsWrap');
+  wrap.innerHTML=html; wrap.style.display='block';
+
+  /* expand findings */
+  document.querySelectorAll('.finding-item').forEach(function(el,i){
+    var m=el.querySelector('.fi-main');
+    if(m) m.addEventListener('click',function(){
+      el.classList.toggle('open');
+      var ex=document.getElementById('fex-'+i);
+      if(ex) ex.classList.toggle('open');
+    });
+  });
+  document.querySelector('.col-right').scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ── CLEAR ── */
+document.getElementById('clearBtn').addEventListener('click',function(){
+  document.getElementById('pasteArea').value='';
+  document.getElementById('agentNameOverride').value='';
+  document.getElementById('izFilename').textContent='';
+  document.getElementById('inputZone').classList.remove('has-file');
+  fileData=null;
+  document.getElementById('resultsWrap').style.display='none';
+  document.getElementById('emptyState').style.display='flex';
+  document.getElementById('loader').classList.remove('show');
+});
+
+/* ── SAMPLE ── */
+document.getElementById('sampleBtn').addEventListener('click',function(){
+  document.getElementById('pasteArea').value=JSON.stringify(SAMPLE_AGENT,null,2);
+  document.getElementById('izFilename').textContent='Sample: HR_Self_Service_Agent.json';
+  document.getElementById('inputZone').classList.add('has-file');
+  document.getElementById('envSelect').value='production';
+  document.getElementById('agentType').value='internal';
+  doAudit();
+});
+
+/* ── COPY / PRINT ── */
+document.getElementById('copyBtn').addEventListener('click',function(){
+  var w=document.getElementById('resultsWrap');
+  if(!w||w.style.display==='none'){alert('Run an audit first.');return;}
+  navigator.clipboard.writeText(buildMarkdownFromLast()).then(function(){
+    var b=document.getElementById('copyBtn');
+    b.textContent='Copied Markdown';b.style.color='var(--green)';
+    setTimeout(function(){b.textContent='Copy Markdown';b.style.color='';},2000);
+  });
+});
+document.getElementById('printBtn').addEventListener('click',function(){
+  if(document.getElementById('resultsWrap').style.display==='none'){alert('Run an audit first.');return;}
+  window.print();
+});
+
+})();
+</script>
+<div id="fxToast" class="fx-toast" role="status" aria-live="polite"></div>
+<script>
+(function(){
+  function fxToast(msg){var t=document.getElementById('fxToast');if(!t)return;t.textContent=msg;t.classList.add('show');clearTimeout(t._to);t._to=setTimeout(function(){t.classList.remove('show');},2200);}
+  window.fxToast=fxToast;
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText){ var _w=navigator.clipboard.writeText.bind(navigator.clipboard); navigator.clipboard.writeText=function(x){return _w(x).then(function(r){fxToast('Copied to clipboard');return r;});}; } }catch(e){}
+})();
+</script>
+</body>
+</html>

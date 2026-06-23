@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AD Attack Path Visualiser — eusebio@it-sec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=JetBrains+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --void:#070809;--bg2:#0d0f13;--card:#13161d;--card2:#191d26;
+  --border:rgba(255,255,255,.07);--line-2:rgba(255,255,255,.14);
+  --text:#e7ebf2;--soft:#8a93a3;--muted:#525c6b;--dim:#2a303a;
+  /* Accent: red (AD attack tool identity) */
+  --accent:#ff3d3d;--accent-dim:rgba(255,61,61,.12);--accent-glow:rgba(255,61,61,.28);
+  --accent-hi:#ff6060;
+  /* Semantic / node colours — untouched */
+  --blue:#1a8cff;--cyan:#00d4ff;--red:#ff3d3d;--green:#00e676;
+  --orange:#ffa657;--yellow:#ffd54f;--purple:#c084fc;--lime:#a3e635;
+  /* Legacy shims */
+  --bg:var(--void);--bg-card:var(--card);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--void);color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;line-height:1.65;overflow-x:hidden;min-height:100vh}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:300;display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:56px;background:rgba(7,8,9,.65);backdrop-filter:blur(18px);border-bottom:1px solid var(--border)}
+.nav-brand{font-family:'JetBrains Mono',monospace;font-size:13px;display:flex;align-items:center;gap:2px;text-decoration:none;color:var(--text)}
+.nu{color:#79c0ff}.na{color:var(--muted)}.nh{color:var(--accent)}.nt{color:var(--orange)}.nd{color:var(--accent);margin-left:4px}
+.nc{display:inline-block;width:7px;height:13px;background:var(--accent);margin-left:3px;vertical-align:middle;animation:blink .9s steps(1) infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.nav-center{display:flex;align-items:center;gap:16px}
+.nav-path{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}.nav-path span{color:var(--accent)}
+.nav-local{display:inline-flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);border:1px solid var(--border);border-radius:4px;padding:2px 8px;cursor:default;position:relative}
+.nav-local::before{content:'●';color:var(--green);font-size:8px}
+.nav-local:hover .nav-tooltip,.nav-local:focus .nav-tooltip{opacity:1;pointer-events:auto}
+.nav-tooltip{position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:7px 11px;font-size:11px;color:var(--soft);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s;z-index:400}
+.nav-right{display:flex;align-items:center;gap:16px}
+.nav-back{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);text-decoration:none;letter-spacing:0.1em;text-transform:uppercase;transition:color .2s}
+.nav-back:hover{color:var(--accent)}
+.nav-back:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px}
+
+/* ── LAYOUT ── */
+.app-shell{display:grid;grid-template-columns:400px 1fr;min-height:calc(100vh - 56px);margin-top:56px}
+.col-left{border-right:1px solid var(--border);background:rgba(13,15,19,.82);backdrop-filter:blur(10px);overflow-y:auto;position:sticky;top:56px;height:calc(100vh - 56px);display:flex;flex-direction:column}
+.col-right{background:transparent;overflow-y:auto;position:relative;z-index:2}
+
+/* ── LEFT PANEL HEADER ── */
+.lp-header{padding:20px 22px 14px;border-bottom:1px solid var(--border)}
+.lp-header h1{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;letter-spacing:.02em;line-height:1.1;margin-bottom:3px}
+.lp-header h1 span{color:var(--accent)}
+.lp-header p{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.06em}
+
+/* ── TABS ── */
+.tab-bar{display:flex;border-bottom:1px solid var(--border);background:var(--bg2);overflow-x:auto}
+.tab-btn{flex:1;padding:10px 4px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;transition:all .2s;white-space:nowrap}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-btn:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.tab-panel{display:none;padding:14px 18px;flex:1;overflow-y:auto}
+.tab-panel.active{display:block}
+
+/* ── UPLOAD ZONE ── */
+.upload-zone{border:1px dashed rgba(255,61,61,.3);background:rgba(255,61,61,.03);padding:20px 16px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:12px;border-radius:8px}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--accent);background:rgba(255,61,61,.07)}
+.upload-zone.has-file{border-color:rgba(255,61,61,.55);border-style:solid;background:rgba(255,61,61,.05)}
+.uz-icon{font-size:22px;margin-bottom:5px}
+.uz-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:2px}
+.uz-sub{font-size:11px;color:var(--muted);line-height:1.5}
+.uz-fname{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);margin-top:5px;word-break:break-all}
+#fileInput{display:none}
+
+/* ── PASTE / FORM ── */
+.paste-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;display:block}
+.paste-area{width:100%;padding:10px 11px;background:var(--card);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.6;outline:none;resize:vertical;min-height:120px;transition:border-color .2s;border-radius:6px}
+.paste-area:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,61,61,.1)}
+.paste-area::placeholder{color:var(--dim);font-size:10px}
+.fg{margin-bottom:9px}
+.fg label{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.fi{width:100%;padding:8px 11px;background:var(--card);border:1px solid var(--border);color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;outline:none;transition:border-color .2s;border-radius:6px;-webkit-appearance:none;appearance:none}
+.fi:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,61,61,.1)}
+.fi::placeholder{color:var(--dim)}
+select.fi{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23525c6b' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+select.fi option{background:#13161d}
+
+/* ── OPTIONS GRID ── */
+.fsec{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;padding-bottom:5px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px}
+.fsec::before{content:'//';color:var(--dim)}
+.opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:10px}
+.opt-item{display:flex;align-items:flex-start;gap:7px;padding:8px 9px;border:1px solid var(--border);background:var(--card);cursor:pointer;transition:all .15s;user-select:none;border-radius:7px}
+.opt-item:hover{border-color:rgba(255,61,61,.3)}
+.opt-item.checked{border-color:rgba(255,61,61,.35);background:rgba(255,61,61,.05)}
+.opt-item:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.opt-check{width:13px;height:13px;border:1px solid var(--dim);flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;transition:all .15s;border-radius:2px}
+.opt-item.checked .opt-check{background:var(--accent);border-color:var(--accent)}
+.opt-item.checked .opt-check::after{content:'✓';color:#fff;font-size:9px;font-weight:700}
+.opt-label{font-size:11px;color:var(--soft);line-height:1.4}
+.opt-label strong{color:var(--text);font-size:11px;display:block}
+
+/* ── HOWTO ── */
+.howto-method{margin-bottom:14px}
+.howto-method-hd{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:5px;display:flex;align-items:center;gap:6px}
+.howto-method-hd::before{content:'//';color:var(--dim)}
+.howto-method p,.howto-method li{font-size:12px;color:var(--soft);line-height:1.8}
+.howto-method ul{padding-left:14px}
+.howto-method li::marker{color:var(--accent)}
+.code-block{background:var(--card);border:1px solid var(--border);padding:9px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);line-height:1.8;margin-top:4px;border-radius:6px}
+.code-block .cm{color:var(--muted)}
+.howto-note{padding:9px 12px;border:1px solid rgba(255,213,79,.2);background:rgba(255,213,79,.03);font-size:11px;color:var(--muted);margin-top:8px;border-radius:6px;display:flex;gap:7px}
+.howto-note::before{content:'ℹ';color:var(--yellow);flex-shrink:0}
+
+/* ── BUTTONS ── */
+.analyze-btn{width:100%;padding:12px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;border-radius:8px;transition:all .2s;margin-bottom:0}
+.analyze-btn:hover{background:var(--accent-hi);box-shadow:0 0 22px var(--accent-glow)}
+.analyze-btn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.analyze-btn:disabled{background:var(--dim);cursor:not-allowed;box-shadow:none}
+.analyze-btn.working{opacity:.7;pointer-events:none}
+.btn-row{display:flex;gap:6px;margin-top:6px}
+.sec-btn{flex:1;padding:8px;background:transparent;color:var(--muted);border:1px solid var(--border);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.09em;text-transform:uppercase;transition:all .2s;border-radius:6px}
+.sec-btn:hover{border-color:var(--soft);color:var(--text)}
+.sec-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.lp-footer{padding:12px 18px;border-top:1px solid var(--border)}
+
+/* ── RIGHT PANEL ── */
+.rp-shell{padding:24px 32px;max-width:1100px;position:relative;z-index:2}
+.rp-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px}
+.rt-info{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}.rt-info span{color:var(--accent)}
+.rt-acts{display:flex;gap:6px;flex-wrap:wrap}
+.rt-btn{padding:6px 14px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .2s;border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:6px}
+.rt-btn:hover{border-color:var(--accent);color:var(--accent)}
+.rt-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.rt-btn.pri{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.rt-btn.pri:hover{background:var(--accent-hi);box-shadow:0 0 14px var(--accent-glow)}
+
+/* ── TOAST ── */
+.toast-wrap{position:fixed;bottom:24px;right:24px;z-index:9000;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{display:flex;align-items:center;gap:9px;padding:11px 16px;background:var(--card2);border:1px solid var(--line-2);border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);box-shadow:0 8px 32px rgba(0,0,0,.5);pointer-events:auto;animation:tSlide .25s ease;max-width:320px}
+.toast.toast-ok{border-left:3px solid var(--green)}
+.toast.toast-err{border-left:3px solid var(--red);color:var(--red)}
+.toast.toast-info{border-left:3px solid var(--accent);color:var(--accent)}
+@keyframes tSlide{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── EMPTY / LOADER ── */
+.estate{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:65vh;gap:14px;opacity:.55;position:relative;z-index:2}
+.es-big{font-family:'Syne',sans-serif;font-size:68px;font-weight:800;color:var(--dim);line-height:1}
+.es-mono{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.1em;text-align:center}
+.eloader{display:none;flex-direction:column;align-items:flex-start;justify-content:center;min-height:55vh;padding:0 4px;position:relative;z-index:2;min-width:0;width:100%}
+.eloader.show{display:flex}
+.el-terminal{background:var(--card);border:1px solid rgba(255,61,61,.18);padding:20px 24px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:2;min-width:0;width:100%;max-width:620px;border-radius:8px}
+.el-ps{color:var(--accent)}.el-cmd{color:var(--text)}.el-out{color:var(--muted)}.el-ok{color:var(--green)}.el-warn{color:var(--orange)}.el-err{color:var(--red)}.el-hi{color:var(--cyan)}
+.el-line{opacity:0;animation:elFade .2s ease forwards}
+@keyframes elFade{to{opacity:1}}
+
+/* ── RESULTS ── */
+.results-wrap{position:relative;z-index:2}
+
+/* ── SECTION TITLE ── */
+.section-title{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin:22px 0 12px;display:flex;align-items:center;gap:10px}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.section-title span{font-size:9px;color:var(--muted)}
+
+/* ── SCORE HEADER ── */
+.score-header{display:grid;grid-template-columns:auto 1fr auto;gap:20px;align-items:center;padding:22px 26px;background:var(--card);border:1px solid var(--border);margin-bottom:18px;border-radius:11px}
+.sh-score{font-family:'Syne',sans-serif;font-size:58px;line-height:1;font-weight:800;margin-bottom:2px}
+.sh-grade{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-top:2px}
+.sh-name{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;letter-spacing:.02em;margin-bottom:5px}
+.sh-meta{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);line-height:1.8}
+.sh-meta span{color:var(--soft)}
+.sh-right{text-align:right}
+.sh-stats{display:flex;flex-direction:column;gap:5px}
+.sh-stat{font-family:'JetBrains Mono',monospace;font-size:11px;display:flex;justify-content:flex-end;gap:8px}
+.sh-stat-label{color:var(--muted)}.sh-stat-val{font-weight:500;min-width:20px;text-align:right}
+
+/* ── RISK BARS ── */
+.risk-bars{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:18px;border-radius:8px;overflow:hidden}
+.rb-cell{background:var(--card);padding:14px;text-align:center}
+.rb-num{font-family:'Syne',sans-serif;font-size:28px;line-height:1;margin-bottom:2px;font-weight:800}
+.rb-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.rb-c .rb-num{color:var(--red)}.rb-h .rb-num{color:var(--orange)}.rb-m .rb-num{color:var(--yellow)}.rb-l .rb-num{color:var(--blue)}
+
+/* ── GRAPH ── */
+.graph-wrap{background:var(--card);border:1px solid var(--border);position:relative;margin-bottom:18px;overflow:hidden;border-radius:9px}
+.graph-toolbar{display:flex;align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid var(--border);background:rgba(0,0,0,.2);flex-wrap:wrap}
+.graph-toolbar span{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.06em}
+.gt-btn{padding:3px 10px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all .15s;border-radius:4px}
+.gt-btn:hover{border-color:var(--accent);color:var(--accent)}
+.gt-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.gt-legend{display:flex;gap:12px;margin-left:auto;flex-wrap:wrap}
+.gt-leg-item{display:flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.05em}
+.gt-leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+#graphCanvas{display:block;width:100%;cursor:grab}
+#graphCanvas:active{cursor:grabbing}
+.node-tooltip{position:absolute;background:var(--card2);border:1px solid var(--line-2);padding:9px 13px;font-family:'JetBrains Mono',monospace;font-size:11px;pointer-events:none;z-index:10;display:none;max-width:260px;line-height:1.7;border-radius:7px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.nt-name{color:var(--text);font-weight:500;margin-bottom:2px}
+.nt-type{color:var(--muted);font-size:10px}
+.nt-risk{font-size:10px;margin-top:4px}
+
+/* ── AI PANEL ── */
+
+/* ── ATTACK CHAINS ── */
+.chain-list{display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:18px;border-radius:9px;overflow:hidden}
+.chain-item{background:var(--card);transition:background .15s;overflow:hidden}
+.chain-item:hover{background:var(--card2)}
+.chain-main{display:flex;align-items:flex-start;gap:10px;padding:13px 14px;cursor:pointer}
+.chain-main:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.chain-sev{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.csev-c{background:var(--red);box-shadow:0 0 7px rgba(255,61,61,.5)}
+.csev-h{background:var(--orange);box-shadow:0 0 5px rgba(255,166,87,.4)}
+.csev-m{background:var(--yellow)}
+.chain-body{flex:1;min-width:0}
+.chain-top{display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap}
+.chain-badge{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 7px;flex-shrink:0;border-radius:3px}
+.cb-c{background:rgba(255,61,61,.1);color:var(--red);border:1px solid rgba(255,61,61,.3)}
+.cb-h{background:rgba(255,166,87,.1);color:var(--orange);border:1px solid rgba(255,166,87,.3)}
+.cb-m{background:rgba(255,213,79,.08);color:var(--yellow);border:1px solid rgba(255,213,79,.3)}
+.chain-title{font-size:13px;font-weight:600;color:var(--text);flex:1;min-width:0}
+.chain-hops{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-left:auto;flex-shrink:0}
+.chain-path{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--soft);line-height:1.6;display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-top:4px}
+.cp-node{padding:1px 7px;border:1px solid var(--border);color:var(--text);font-size:10px;border-radius:3px}
+.cp-node.start{border-color:rgba(26,140,255,.4);color:var(--blue);background:rgba(26,140,255,.06)}
+.cp-node.end{border-color:rgba(255,61,61,.4);color:var(--red);background:rgba(255,61,61,.06)}
+.cp-node.mid{border-color:var(--border);color:var(--soft)}
+.cp-arr{color:var(--dim);font-size:11px}
+.cp-rel{font-size:9px;color:var(--muted);padding:1px 5px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:2px}
+.chain-expand{display:none;border-top:1px solid var(--border);background:rgba(0,0,0,.2)}
+.chain-item.open .chain-expand{display:block}
+.chain-arrow{color:var(--dim);font-size:11px;flex-shrink:0;margin-top:4px;transition:transform .2s}
+.chain-item.open .chain-arrow{transform:rotate(90deg)}
+.chain-detail{padding:14px 14px 14px 33px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.cd-col h4{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:7px;display:flex;align-items:center;gap:6px}
+.cd-col h4::before{content:'//';color:var(--dim);font-size:9px}
+.cd-risk{color:var(--red)}.cd-fix{color:var(--lime)}.cd-tools{color:var(--cyan)}
+.cd-col p,.cd-col li{font-size:12px;color:var(--soft);line-height:1.8}
+.cd-col ul{padding-left:14px}.cd-col li::marker{color:var(--red)}
+.cd-col strong{color:var(--text);font-weight:500}
+.tool-chip{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;padding:1px 7px;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--cyan);margin:2px;border-radius:3px}
+
+/* ── NODE TABLE ── */
+.info-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:18px}
+.info-table th{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);background:rgba(255,255,255,.02)}
+.info-table td{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;color:var(--soft)}
+.info-table tr:last-child td{border-bottom:none}
+.info-table tr:hover td{background:rgba(255,255,255,.02)}
+.risk-pill{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 7px;border-radius:3px}
+.rp-c{background:rgba(255,61,61,.1);color:var(--red);border:1px solid rgba(255,61,61,.25)}
+.rp-h{background:rgba(255,166,87,.1);color:var(--orange);border:1px solid rgba(255,166,87,.25)}
+.rp-m{background:rgba(255,213,79,.08);color:var(--yellow);border:1px solid rgba(255,213,79,.25)}
+.rp-l{background:rgba(163,230,53,.07);color:var(--lime);border:1px solid rgba(163,230,53,.2)}
+.flag-tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9px;padding:1px 6px;border-radius:3px}
+
+/* ── REPORT FOOTER ── */
+.report-foot{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);padding:12px 14px;border:1px solid var(--border);margin-top:8px;line-height:1.8;border-radius:8px}
+.report-foot strong{color:var(--accent)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--dim);border-radius:2px}
+
+/* ── PRINT ── */
+@media print{
+  html,body{background:#fff !important}
+  #bg-canvas,#bg-glow,nav,.col-left,.rp-toolbar,.eloader,.toast-wrap{display:none !important}
+  .app-shell{display:block !important}
+  .col-right{overflow:visible !important}
+  .rp-shell{padding:0 !important;max-width:100% !important}
+  .chain-expand{display:block !important}
+  .score-header,.risk-bars,.graph-wrap,.chain-list,.info-table,  .rdoc,.score-header,.chain-item,.graph-wrap{background:#fff !important;color:#111 !important;border-color:#ddd !important;border-radius:0 !important}
+  .section-title{color:#c00 !important}
+  .section-title::after{background:#ddd !important}
+  .sh-meta,.rt-info,.cd-col p,.cd-col li,.info-table td{color:#444 !important}
+  .chain-title,.sh-name,.cd-col strong{color:#000 !important}
+  .report-foot{border-color:#ddd !important;color:#888 !important}
+  .chain-detail{grid-template-columns:1fr !important}
+  @page{margin:1.5cm;size:A4}
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .app-shell{grid-template-columns:1fr}
+  .col-left{position:static;top:auto;height:auto}
+  nav{padding:0 16px}
+  .rp-shell{padding:16px}
+  .score-header{grid-template-columns:1fr;gap:10px}
+  .chain-detail{grid-template-columns:1fr}
+  .col-right table{display:block;overflow-x:auto;white-space:nowrap}
+  .eloader{min-width:0;width:100%}
+  .el-terminal{min-width:0;width:100%}
+  .nav-center{display:none}
+}
+@media(max-width:600px){
+  .risk-bars{grid-template-columns:repeat(2,1fr)}
+  .opt-grid{grid-template-columns:1fr}
+  .gt-legend{display:none}
+  .rp-shell{padding:10px}
+}
+</style>
+</head>
+<body>
+
+<!-- THREE.JS BACKGROUND -->
+<canvas id="bg-canvas" style="position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5"></canvas>
+<div id="bg-glow" style="position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 70% 50% at 50% 35%,rgba(255,61,61,.04) 0%,transparent 70%)"></div>
+
+<!-- TOAST -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-brand">
+    <span class="nu">eusebio</span><span class="na">@</span><span class="nh">it-sec</span><span class="na">:</span><span class="nt">~</span><span class="nd">$</span><span class="nc"></span>
+  </a>
+  <div class="nav-center">
+    <span class="nav-path">~/tools/<span>ad-visualiser</span></span>
+    <span class="nav-local" tabindex="0" aria-label="Runs entirely in your browser — no data is uploaded or sent anywhere">Local-only
+      <span class="nav-tooltip">Runs entirely in your browser — no data is uploaded or sent anywhere.<br>AI analysis prompt is sent via Anthropic API only.</span>
+    </span>
+  </div>
+  <div class="nav-right">
+    <a href="projects.html" class="nav-back">&#8592; Projects</a>
+  </div>
+</nav>
+
+<div class="app-shell">
+
+  <!-- LEFT -->
+  <div class="col-left">
+    <div class="lp-header">
+      <h1>AD ATTACK PATH <span>VISUALISER</span></h1>
+      <p>BloodHound JSON Parser &nbsp;·&nbsp; eusebio@it-sec</p>
+    </div>
+
+    <div class="tab-bar" role="tablist">
+      <button class="tab-btn active" id="tb-upload" role="tab" aria-selected="true" aria-controls="panel-upload">Upload</button>
+      <button class="tab-btn" id="tb-options" role="tab" aria-selected="false" aria-controls="panel-options">Options</button>
+      <button class="tab-btn" id="tb-howto" role="tab" aria-selected="false" aria-controls="panel-howto">How To Export</button>
+    </div>
+
+    <!-- UPLOAD TAB -->
+    <div class="tab-panel active" id="panel-upload" role="tabpanel" aria-labelledby="tb-upload">
+      <div class="upload-zone" id="uploadZone" role="button" tabindex="0" aria-label="Upload BloodHound JSON file — click or drag and drop">
+        <div class="uz-icon">💀</div>
+        <div class="uz-title">Drop BloodHound JSON here</div>
+        <div class="uz-sub">or click to browse<br><span style="color:var(--dim);font-size:10px">.json export from BloodHound CE or Legacy</span></div>
+        <div class="uz-fname" id="uzFname"></div>
+      </div>
+      <input type="file" id="fileInput" accept=".json,application/json"/>
+
+      <label class="paste-label" for="pasteArea">— or paste JSON directly —</label>
+      <textarea class="paste-area" id="pasteArea" placeholder='Paste BloodHound export JSON here...
+
+{
+  "meta": { "type": "users" },
+  "data": [...]
+}'></textarea>
+
+      <div style="margin-top:10px">
+        <div class="fg">
+          <label for="domainInput">Domain Name (optional)</label>
+          <input type="text" id="domainInput" class="fi" placeholder="e.g. VESPER.LOCAL"/>
+        </div>
+        <div class="fg">
+          <label for="startNode">Start Node (low-priv user)</label>
+          <input type="text" id="startNode" class="fi" placeholder="e.g. jsmith@vesper.local"/>
+        </div>
+        <div class="fg">
+          <label for="targetNode">Target Node</label>
+          <select id="targetNode" class="fi">
+            <option value="domain_admin">Domain Admins</option>
+            <option value="enterprise_admin">Enterprise Admins</option>
+            <option value="dc">Domain Controller</option>
+            <option value="custom">Custom target...</option>
+          </select>
+        </div>
+        <div class="fg" id="customTargetWrap" style="display:none">
+          <label for="customTarget">Custom Target</label>
+          <input type="text" id="customTarget" class="fi" placeholder="e.g. DC01.vesper.local"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPTIONS TAB -->
+    <div class="tab-panel" id="panel-options" role="tabpanel" aria-labelledby="tb-options">
+      <div class="fsec">Analysis Options</div>
+      <div class="opt-grid" id="optGrid">
+        <div class="opt-item checked" data-opt="kerberoast" tabindex="0" role="checkbox" aria-checked="true">
+          <div class="opt-check"></div>
+          <div class="opt-label"><strong>Kerberoastable</strong>SPN accounts, weak encryption</div>
+        </div>
+        <div class="opt-item checked" data-opt="asreproast" tabindex="0" role="checkbox" aria-checked="true">
+          <div class="opt-check"></div>
+          <div class="opt-label"><strong>AS-REP Roastable</strong>No pre-auth required</div>
+        </div>
+        <div class="opt-item checked" data-opt="dcsync" tabindex="0" role="checkbox" aria-checked="true">
+          <div class="opt-check"></div>
+          <div class="opt-label"><strong>DCSync Rights</strong>Replication permissions</div>
+        </div>
+        <div class="opt-item checked" data-opt="acl" tabindex="0" role="checkbox" aria-checked="true">
+          <div class="opt-check"></div>
+          <div class="opt-label"><strong>ACL Abuse</strong>GenericAll, WriteDACL, etc.</div>
+        </div>
+        <div class="opt-item checked" data-opt="lateral" tabindex="0" role="checkbox" aria-checked="true">
+          <div class="opt-check"></div>
+          <div class="opt-label"><strong>Lateral Movement</strong>AdminTo, CanRDP, PSRemote</div>
+        </div>
+        <div class="opt-item checked" data-opt="delegation" tabindex="0" role="checkbox" aria-checked="true">
+          <div class="opt-check"></div>
+          <div class="opt-label"><strong>Delegation</strong>Unconstrained, constrained</div>
+        </div>
+        <div class="opt-item checked" data-opt="shortestpath" tabindex="0" role="checkbox" aria-checked="true">
+          <div class="opt-check"></div>
+          <div class="opt-label"><strong>Shortest Path</strong>Fewest hops to DA</div>
+        </div>
+      </div>
+      <div class="fsec" style="margin-top:10px">Graph Display</div>
+      <div class="fg">
+        <label for="layoutMode">Layout</label>
+        <select id="layoutMode" class="fi">
+          <option value="force">Force-directed (default)</option>
+          <option value="tree">Tree / hierarchy</option>
+          <option value="radial">Radial from start node</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label for="nodeFilter">Node Filter</label>
+        <select id="nodeFilter" class="fi">
+          <option value="all">All nodes</option>
+          <option value="path_only">Attack path nodes only</option>
+          <option value="privileged">Privileged nodes only</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- HOW TO TAB -->
+    <div class="tab-panel" id="panel-howto" role="tabpanel" aria-labelledby="tb-howto">
+      <div class="howto-method">
+        <div class="howto-method-hd">Method 1 — BloodHound CE (Recommended)</div>
+        <ol class="howto-method" style="padding-left:16px">
+          <li>Run <strong>SharpHound</strong> or <strong>BloodHound.py</strong> to collect data</li>
+          <li>Import into BloodHound CE</li>
+          <li>Go to <strong>Analysis</strong> → run a path query</li>
+          <li>Export results as JSON from the graph view</li>
+        </ol>
+      </div>
+      <div class="howto-method">
+        <div class="howto-method-hd">Method 2 — SharpHound Direct</div>
+        <div class="code-block">
+          <span class="cm"># Run SharpHound collector</span><br>
+          .\SharpHound.exe -c All --outputdirectory C:\temp<br>
+          <span class="cm"># Or Python for Linux</span><br>
+          bloodhound-python -d DOMAIN -u user -p pass -c All
+        </div>
+      </div>
+      <div class="howto-method">
+        <div class="howto-method-hd">Method 3 — Load Sample Data</div>
+        <p>Click <strong style="color:var(--accent)">Load Sample</strong> below to see a demo analysis of a simulated AD environment (VESPER.LOCAL) with multiple attack paths.</p>
+      </div>
+      <div class="howto-note">All data processed locally in your browser. Nothing is sent to any server except the AI analysis prompt (via Anthropic API).</div>
+    </div>
+
+    <div class="lp-footer">
+      <button class="analyze-btn" id="analyzeBtn">&#9654; Visualise Attack Paths</button>
+      <div class="btn-row">
+        <button class="sec-btn" id="clearBtn">Clear</button>
+        <button class="sec-btn" id="sampleBtn">Load Sample</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="col-right">
+    <div class="rp-shell">
+      <div class="rp-toolbar">
+        <div class="rt-info"><span>eusebio@it-sec</span>:~/tools/ad-visualiser$ — v1.1</div>
+        <div class="rt-acts">
+          <button class="rt-btn" id="copyBtn">Copy Report</button>
+          <button class="rt-btn pri" id="printBtn">Export / Print</button>
+        </div>
+      </div>
+
+      <div class="eloader" id="loader" aria-live="polite">
+        <div class="el-terminal" id="loaderTerminal"></div>
+      </div>
+
+      <div class="estate" id="emptyState">
+        <div class="es-big">PWNED?</div>
+        <p class="es-mono"><span style="color:var(--accent)">eusebio@it-sec:~/tools/ad-visualiser$</span> awaiting input</p>
+        <p class="es-mono">Upload BloodHound JSON or load the sample,<br>then click Visualise Attack Paths</p>
+        <p class="es-mono" style="margin-top:5px;color:var(--dim)">AI analysis powered by Claude · runs in browser</p>
+      </div>
+
+      <div class="results-wrap" id="resultsWrap" style="display:none"></div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+'use strict';
+
+/* ── THREE.JS BACKGROUND ── */
+(function initBg(){
+  var canvas=document.getElementById('bg-canvas');
+  if(!canvas||typeof THREE==='undefined') return;
+  var renderer;
+  try{renderer=new THREE.WebGLRenderer({canvas:canvas,alpha:true,antialias:true});}catch(e){canvas.style.display='none';return;}
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){canvas.style.opacity='.15';}
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setSize(innerWidth,innerHeight);
+  var scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,1,400);
+  camera.position.z=60;
+  var group=new THREE.Group();scene.add(group);
+  var N=innerWidth<760?55:120,R=40,base=new Float32Array(N*3),pos=new Float32Array(N*3),col=new Float32Array(N*3);
+  var C1=new THREE.Color(0xff3d3d),C2=new THREE.Color(0xff6060);
+  for(var i=0;i<N;i++){
+    base[i*3]=(Math.random()*2-1)*R*1.9;
+    base[i*3+1]=(Math.random()*2-1)*R*1.2;
+    base[i*3+2]=(Math.random()*2-1)*R*0.6;
+    var cx=Math.random()<0.3?C2:C1;
+    col[i*3]=cx.r;col[i*3+1]=cx.g;col[i*3+2]=cx.b;
+  }
+  var sc=document.createElement('canvas');sc.width=sc.height=64;
+  var sx=sc.getContext('2d');
+  var g=sx.createRadialGradient(32,32,0,32,32,32);
+  g.addColorStop(0,'rgba(255,255,255,1)');
+  g.addColorStop(.4,'rgba(255,255,255,.5)');
+  g.addColorStop(1,'rgba(255,255,255,0)');
+  sx.fillStyle=g;sx.beginPath();sx.arc(32,32,32,0,Math.PI*2);sx.fill();
+  var geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  var mat=new THREE.PointsMaterial({size:1.5,map:new THREE.CanvasTexture(sc),vertexColors:true,transparent:true,opacity:.9,depthWrite:false,blending:THREE.AdditiveBlending});
+  group.add(new THREE.Points(geo,mat));
+  var mx=0,my=0;
+  window.addEventListener('mousemove',function(e){mx=(e.clientX/innerWidth)*2-1;my=-(e.clientY/innerHeight)*2+1;},{passive:true});
+  var t=0;
+  (function loop(){
+    requestAnimationFrame(loop);
+    t+=0.006;
+    group.rotation.y+=0.0009;
+    camera.position.x+=(mx*6-camera.position.x)*0.03;
+    camera.position.y+=(my*4-camera.position.y)*0.03;
+    camera.lookAt(0,0,0);
+    for(var i=0;i<N;i++){
+      pos[i*3]=base[i*3]+Math.sin(t*0.6+i)*1.3;
+      pos[i*3+1]=base[i*3+1]+Math.cos(t*0.5+i*1.3)*1.3;
+      pos[i*3+2]=base[i*3+2]+Math.sin(t*0.4+i)*1.0;
+    }
+    geo.attributes.position.needsUpdate=true;
+    renderer.render(scene,camera);
+  })();
+  window.addEventListener('resize',function(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+  window.addEventListener('beforeprint',function(){canvas.style.display='none';});
+  window.addEventListener('afterprint',function(){canvas.style.display='';});
+  if(window.matchMedia){var p=window.matchMedia('print');var ph=function(e){canvas.style.display=e.matches?'none':'';};if(p.addEventListener)p.addEventListener('change',ph);else if(p.addListener)p.addListener(ph);}
+})();
+
+/* ── TOAST ── */
+function toast(msg,type){
+  type=type||'ok';
+  var wrap=document.getElementById('toastWrap');
+  var el=document.createElement('div');
+  el.className='toast toast-'+type;
+  el.textContent=msg;
+  wrap.appendChild(el);
+  setTimeout(function(){ el.remove(); },3200);
+}
+
+/* ── TABS ── */
+['upload','options','howto'].forEach(function(t){
+  var btn=document.getElementById('tb-'+t);
+  btn.addEventListener('click',function(){
+    ['upload','options','howto'].forEach(function(x){
+      document.getElementById('tb-'+x).classList.remove('active');
+      document.getElementById('tb-'+x).setAttribute('aria-selected','false');
+      document.getElementById('panel-'+x).classList.remove('active');
+    });
+    btn.classList.add('active');
+    btn.setAttribute('aria-selected','true');
+    document.getElementById('panel-'+t).classList.add('active');
+  });
+  btn.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); btn.click(); } });
+});
+
+/* custom target toggle */
+document.getElementById('targetNode').addEventListener('change',function(){
+  document.getElementById('customTargetWrap').style.display=this.value==='custom'?'block':'none';
+});
+
+/* ── OPTIONS ── */
+document.querySelectorAll('.opt-item').forEach(function(el){
+  function toggle(){ el.classList.toggle('checked'); el.setAttribute('aria-checked', el.classList.contains('checked')+''); }
+  el.addEventListener('click',toggle);
+  el.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle(); } });
+});
+function getOpts(){
+  var o={};
+  document.querySelectorAll('.opt-item').forEach(function(el){ o[el.dataset.opt]=el.classList.contains('checked'); });
+  return o;
+}
+
+/* ── UPLOAD ── */
+var fileData=null;
+var zone=document.getElementById('uploadZone');
+var fi=document.getElementById('fileInput');
+zone.addEventListener('click',function(){ fi.click(); });
+zone.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); fi.click(); } });
+zone.addEventListener('dragover',function(e){ e.preventDefault(); zone.classList.add('drag-over'); });
+zone.addEventListener('dragleave',function(){ zone.classList.remove('drag-over'); });
+zone.addEventListener('drop',function(e){ e.preventDefault(); zone.classList.remove('drag-over'); if(e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); });
+fi.addEventListener('change',function(){ if(fi.files[0]) loadFile(fi.files[0]); });
+function loadFile(f){
+  var r=new FileReader();
+  r.onload=function(e){ fileData=e.target.result; document.getElementById('pasteArea').value=fileData; document.getElementById('uzFname').textContent=f.name; zone.classList.add('has-file'); toast('File loaded: '+f.name,'info'); };
+  r.readAsText(f);
+}
+
+/* ── ANALYZE BTN ── */
+document.getElementById('analyzeBtn').addEventListener('click',doAnalyze);
+
+function doAnalyze(){
+  var raw=document.getElementById('pasteArea').value.trim();
+  if(!raw){ toast('Please upload or paste BloodHound JSON first.','err'); return; }
+  var parsed;
+  try{ parsed=JSON.parse(raw); }
+  catch(e){ toast('Invalid JSON: '+e.message,'err'); return; }
+  runAnalysis(parsed);
+}
+
+/* ── LOADER ── */
+function showLoader(lines,cb){
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('resultsWrap').style.display='none';
+  var loader=document.getElementById('loader');
+  var term=document.getElementById('loaderTerminal');
+  loader.classList.add('show'); term.innerHTML='';
+  var delay=0;
+  lines.forEach(function(l){
+    setTimeout(function(){
+      var d=document.createElement('div'); d.className='el-line'; d.innerHTML=l;
+      term.appendChild(d);
+    },delay);
+    delay+=180;
+  });
+  setTimeout(function(){ loader.classList.remove('show'); cb(); },delay+400);
+}
+
+/* ══════════════════════════════════════════════
+   SAMPLE DATA — VESPER.LOCAL lab environment
+══════════════════════════════════════════════ */
+var SAMPLE={
+  meta:{type:"ad_environment",domain:"VESPER.LOCAL",collected:"2026-04-01T02:14:00Z"},
+  nodes:[
+    {id:"u1",name:"jsmith@vesper.local",type:"User",owned:true,enabled:true,adminCount:false,kerberoastable:false,asreproastable:false,description:"Standard helpdesk user"},
+    {id:"u2",name:"svc_sql@vesper.local",type:"User",owned:false,enabled:true,adminCount:false,kerberoastable:true,asreproastable:false,spn:"MSSQLSVC/db01.vesper.local:1433",description:"SQL service account"},
+    {id:"u3",name:"svc_backup@vesper.local",type:"User",owned:false,enabled:true,adminCount:false,kerberoastable:false,asreproastable:true,description:"Backup service — no pre-auth"},
+    {id:"u4",name:"helpdesk.admin@vesper.local",type:"User",owned:false,enabled:true,adminCount:true,kerberoastable:false,asreproastable:false,description:"Tier-1 help desk admin"},
+    {id:"u5",name:"da_admin@vesper.local",type:"User",owned:false,enabled:true,adminCount:true,kerberoastable:false,asreproastable:false,description:"Domain Admin"},
+    {id:"g1",name:"IT Support@vesper.local",type:"Group",owned:false,enabled:null,adminCount:false,description:"IT support group"},
+    {id:"g2",name:"Server Admins@vesper.local",type:"Group",owned:false,enabled:null,adminCount:true,description:"Server administrators"},
+    {id:"g3",name:"Domain Admins@vesper.local",type:"Group",owned:false,enabled:null,adminCount:true,description:"Domain Admins group"},
+    {id:"c1",name:"WKSTN-042.vesper.local",type:"Computer",owned:false,enabled:true,adminCount:false,os:"Windows 10 21H2",description:"Workstation"},
+    {id:"c2",name:"DB01.vesper.local",type:"Computer",owned:false,enabled:true,adminCount:false,os:"Windows Server 2019",description:"Database server"},
+    {id:"c3",name:"DC01.vesper.local",type:"Computer",owned:false,enabled:true,adminCount:true,os:"Windows Server 2019",description:"Primary domain controller"},
+    {id:"d1",name:"VESPER.LOCAL",type:"Domain",owned:false,enabled:null,adminCount:false,description:"Root domain"}
+  ],
+  edges:[
+    {from:"u1",to:"g1",rel:"MemberOf",description:"jsmith is member of IT Support"},
+    {from:"g1",to:"c1",rel:"AdminTo",description:"IT Support has local admin on WKSTN-042"},
+    {from:"c1",to:"u4",rel:"HasSession",description:"helpdesk.admin has active session on WKSTN-042"},
+    {from:"u4",to:"g2",rel:"MemberOf",description:"helpdesk.admin is member of Server Admins"},
+    {from:"g2",to:"c2",rel:"AdminTo",description:"Server Admins has local admin on DB01"},
+    {from:"g2",to:"c3",rel:"AdminTo",description:"Server Admins has local admin on DC01"},
+    {from:"u2",to:"d1",rel:"GetChangesAll",description:"svc_sql has DCSync rights via GetChangesAll"},
+    {from:"u3",to:"g2",rel:"MemberOf",description:"svc_backup is member of Server Admins"},
+    {from:"u4",to:"u2",rel:"GenericAll",description:"helpdesk.admin has GenericAll on svc_sql — can reset password"},
+    {from:"c2",to:"u2",rel:"HasSession",description:"svc_sql has session on DB01"},
+    {from:"g3",to:"d1",rel:"AdminTo",description:"Domain Admins full control of domain"},
+    {from:"u5",to:"g3",rel:"MemberOf",description:"da_admin is Domain Admin"},
+    {from:"c3",to:"d1",rel:"DCFor",description:"DC01 is domain controller for VESPER.LOCAL"},
+    {from:"u4",to:"c3",rel:"CanRDP",description:"helpdesk.admin can RDP to DC01"},
+    {from:"u3",to:"c3",rel:"CanPSRemote",description:"svc_backup can PSRemote to DC01"}
+  ]
+};
+
+/* ══════════════════════════════════════════════
+   ANALYSIS ENGINE
+══════════════════════════════════════════════ */
+var ACL_RELS  =['GenericAll','GenericWrite','WriteDACL','WriteOwner','AllExtendedRights','ForceChangePassword','AddMember','Owns'];
+var LAT_RELS  =['AdminTo','CanRDP','CanPSRemote','ExecuteDCOM','AllowedToDelegate','AllowedToAct'];
+var DELEG_RELS=['AllowedToDelegate','AllowedToAct','TrustedToAuth'];
+var SYNC_RELS =['GetChangesAll','GetChanges','DCSync'];
+
+function runAnalysis(data){
+  var opts=getOpts();
+  var domain=document.getElementById('domainInput').value.trim()||(data.meta&&data.meta.domain)||'UNKNOWN.LOCAL';
+  var startInput=document.getElementById('startNode').value.trim();
+  var nodes=data.nodes||data.data||[];
+  var edges=data.edges||data.relationships||[];
+  /* normalise BH CE */
+  if(!nodes.length&&data.data){
+    nodes=(data.data||[]).map(function(d){
+      return {id:d.Properties&&d.Properties.objectid||d.ObjectIdentifier||Math.random().toString(36).slice(2),
+              name:d.Properties&&d.Properties.name||d.Name||'Unknown',
+              type:d.Label||d.type||'Unknown',
+              kerberoastable:d.Properties&&d.Properties.hasspn||false,
+              asreproastable:d.Properties&&(d.Properties.dontreqpreauth)||false,
+              adminCount:d.Properties&&d.Properties.admincount||false,
+              enabled:d.Properties&&(d.Properties.enabled!==false)};
+    });
+  }
+  var chains=[];
+  var adj={};
+  edges.forEach(function(e){ if(!adj[e.from]) adj[e.from]=[]; adj[e.from].push(e); });
+  var HVT=nodes.filter(function(n){
+    return n.type==='Group'&&(n.name.toLowerCase().includes('domain admin')||n.name.toLowerCase().includes('enterprise admin'))
+        || n.type==='Domain'
+        || (n.type==='Computer'&&n.name.toLowerCase().startsWith('dc'));
+  });
+  var startNodes=nodes.filter(function(n){
+    if(startInput) return n.name.toLowerCase().includes(startInput.toLowerCase());
+    return n.type==='User'&&!n.adminCount;
+  });
+  function bfs(startId,targetIds){
+    var queue=[{id:startId,path:[startId],edges:[]}];
+    var visited={};visited[startId]=true;
+    var found=[];
+    while(queue.length&&found.length<5){
+      var cur=queue.shift();
+      if(targetIds.indexOf(cur.id)>=0){ found.push({path:cur.path,edges:cur.edges}); continue; }
+      if(cur.path.length>7) continue;
+      var nexts=adj[cur.id]||[];
+      nexts.forEach(function(e){ if(!visited[e.to]){ visited[e.to]=true; queue.push({id:e.to,path:cur.path.concat([e.to]),edges:cur.edges.concat([e])}); } });
+    }
+    return found;
+  }
+  var targetIds=HVT.map(function(n){ return n.id; });
+  var nodeMap={};
+  nodes.forEach(function(n){ nodeMap[n.id]=n; });
+  if(opts.shortestpath){
+    startNodes.slice(0,3).forEach(function(sn){
+      bfs(sn.id,targetIds).forEach(function(p){
+        var sev=p.edges.length<=2?'CRITICAL':p.edges.length<=4?'HIGH':'MEDIUM';
+        var title=sn.name.split('@')[0]+' → '+(nodeMap[p.path[p.path.length-1]]&&nodeMap[p.path[p.path.length-1]].name||'DA');
+        chains.push({type:'path',sev:sev,title:'Attack Path: '+title,hops:p.edges.length,path:p.path,edges:p.edges,
+          risk:'A '+p.edges.length+'-hop path from low-privileged user to Domain Admin/high-value target exists.',
+          fix:'Remediate the weakest link in this path — typically the first ACL abuse or privilege escalation step.',
+          tools:['BloodHound','Mimikatz','Impacket']});
+      });
+    });
+  }
+  if(opts.kerberoast){
+    nodes.filter(function(n){ return n.kerberoastable&&n.enabled; }).forEach(function(n){
+      chains.push({type:'technique',sev:n.adminCount?'CRITICAL':'HIGH',title:'Kerberoastable Account: '+(n.name||n.id),hops:1,path:[n.id],edges:[],
+        risk:'Service account with SPN can be Kerberoasted. If password is weak, it can be cracked offline. adminCount: '+(n.adminCount?'TRUE — high-value target':'false')+'.',
+        fix:'<ul><li>Set a <strong>strong, random 25+ character password</strong> on this service account.</li><li>Migrate to <strong>Group Managed Service Accounts (gMSA)</strong> with auto-rotating 120-char passwords.</li><li>Enable <strong>AES encryption</strong> and remove RC4 from supported Kerberos encryption types.</li></ul>',
+        tools:['Rubeus','Impacket GetUserSPNs','hashcat','john'],spn:n.spn});
+    });
+  }
+  if(opts.asreproast){
+    nodes.filter(function(n){ return n.asreproastable&&n.enabled; }).forEach(function(n){
+      chains.push({type:'technique',sev:'HIGH',title:'AS-REP Roastable: '+(n.name||n.id),hops:1,path:[n.id],edges:[],
+        risk:'This account has Kerberos pre-authentication disabled. An attacker can request a Kerberos AS-REP ticket without any credentials and crack the hash offline.',
+        fix:'<ul><li>Enable <strong>Kerberos pre-authentication</strong> (remove the "Do not require Kerberos preauthentication" flag).</li><li>If pre-auth must stay disabled, set a strong password and monitor for AS-REP requests.</li></ul>',
+        tools:['Rubeus','Impacket GetNPUsers','hashcat']});
+    });
+  }
+  if(opts.dcsync){
+    edges.filter(function(e){ return SYNC_RELS.indexOf(e.rel)>=0; }).forEach(function(e){
+      var srcNode=nodeMap[e.from]; if(!srcNode) return;
+      chains.push({type:'technique',sev:'CRITICAL',title:'DCSync Rights: '+(srcNode.name||e.from),hops:1,path:[e.from,e.to],edges:[e],
+        risk:'This principal has replication rights ('+e.rel+') on the domain. An attacker can perform a DCSync attack to dump all password hashes including KRBTGT (Golden Ticket).',
+        fix:'<ul><li><strong>Remove GetChangesAll/DCSync permissions</strong> immediately unless legitimate replication partner.</li><li>Only Domain Controllers should have replication rights on the domain object.</li><li>Rotate KRBTGT password twice after remediating DCSync rights.</li></ul>',
+        tools:['Impacket secretsdump','Mimikatz lsadump::dcsync','SharpSecDump']});
+    });
+  }
+  if(opts.acl){
+    edges.filter(function(e){ return ACL_RELS.indexOf(e.rel)>=0; }).forEach(function(e){
+      var srcNode=nodeMap[e.from]; var tgtNode=nodeMap[e.to]; if(!srcNode||!tgtNode) return;
+      var sev=tgtNode.adminCount?'CRITICAL':'HIGH';
+      chains.push({type:'technique',sev:sev,title:'ACL Abuse: '+(srcNode.name||e.from)+' → '+(tgtNode.name||e.to)+' ['+e.rel+']',hops:1,path:[e.from,e.to],edges:[e],
+        risk:e.rel+' on '+(tgtNode.name||e.to)+' allows an attacker who controls '+(srcNode.name||e.from)+' to take over the target object.',
+        fix:'<ul><li>Review and <strong>remove the '+e.rel+' ACE</strong> from the target object.</li><li>Run <strong>BloodHound ACL review queries</strong> to identify all non-standard ACEs.</li><li>Implement the <strong>tiered admin model</strong>.</li></ul>',
+        tools:['BloodHound','PowerView','SharpACL','AD ACL Scanner']});
+    });
+  }
+  if(opts.lateral){
+    edges.filter(function(e){ return LAT_RELS.indexOf(e.rel)>=0; }).forEach(function(e){
+      var srcNode=nodeMap[e.from]; var tgtNode=nodeMap[e.to]; if(!srcNode||!tgtNode) return;
+      var sev=tgtNode.adminCount||tgtNode.type==='Domain'?'HIGH':'MEDIUM';
+      chains.push({type:'technique',sev:sev,title:'Lateral Movement: '+(srcNode.name||e.from)+' → '+(tgtNode.name||e.to)+' ['+e.rel+']',hops:1,path:[e.from,e.to],edges:[e],
+        risk:e.rel+' allows an attacker to move from '+(srcNode.name||e.from)+' to '+(tgtNode.name||e.to)+' using Pass-the-Hash, Pass-the-Ticket, or remote execution.',
+        fix:'<ul><li>Remove local admin rights where not required.</li><li>Enable <strong>Credential Guard</strong> to prevent credential theft from LSASS.</li><li>Disable <strong>NTLMv1</strong>. Enable <strong>Protected Users</strong> for privileged accounts.</li></ul>',
+        tools:['Impacket psexec/wmiexec','CrackMapExec','Evil-WinRM','Mimikatz PTH']});
+    });
+  }
+  if(opts.delegation){
+    edges.filter(function(e){ return DELEG_RELS.indexOf(e.rel)>=0; }).forEach(function(e){
+      var srcNode=nodeMap[e.from]; var tgtNode=nodeMap[e.to]; if(!srcNode||!tgtNode) return;
+      chains.push({type:'technique',sev:'HIGH',title:'Delegation Abuse: '+(srcNode.name||e.from)+' ['+e.rel+']',hops:1,path:[e.from,e.to],edges:[e],
+        risk:e.rel+' allows impersonation of any user to the target service. If unconstrained, TGT of any authenticating user can be captured and replayed.',
+        fix:'<ul><li>Replace <strong>unconstrained delegation</strong> with RBCD where possible.</li><li>Add sensitive accounts to <strong>Protected Users</strong> group.</li><li>Audit: Get-ADComputer -Filter {TrustedForDelegation -eq $true}</li></ul>',
+        tools:['Rubeus s4u','Impacket getST','BloodHound delegation queries']});
+    });
+  }
+  var seen={};
+  chains=chains.filter(function(c){ if(seen[c.title]) return false; seen[c.title]=true; return true; });
+  var sOrd={CRITICAL:0,HIGH:1,MEDIUM:2,LOW:3};
+  chains.sort(function(a,b){ return (sOrd[a.sev]||3)-(sOrd[b.sev]||3); });
+  var nC=chains.filter(function(c){return c.sev==='CRITICAL';}).length;
+  var nH=chains.filter(function(c){return c.sev==='HIGH';}).length;
+  var nM=chains.filter(function(c){return c.sev==='MEDIUM';}).length;
+  var loaderLines=[
+    '<span class="el-ps">eusebio@it-sec:~/tools/ad-visualiser$</span> <span class="el-cmd">./adavp --domain '+domain+'</span>',
+    '<span class="el-hi">[*]</span> <span class="el-out">Parsing BloodHound data...</span>',
+    '<span class="el-ok">[+]</span> <span class="el-out">Nodes: <span class="el-hi">'+nodes.length+'</span> | Edges: <span class="el-hi">'+edges.length+'</span></span>',
+    '<span class="el-hi">[*]</span> <span class="el-out">Running BFS shortest path to DA...</span>',
+    '<span class="el-hi">[*]</span> <span class="el-out">Scanning Kerberoastable accounts...</span>',
+    '<span class="el-hi">[*]</span> <span class="el-out">Checking AS-REP Roastable accounts...</span>',
+    '<span class="el-hi">[*]</span> <span class="el-out">Analysing ACL abuse paths...</span>',
+    '<span class="el-hi">[*]</span> <span class="el-out">Mapping lateral movement edges...</span>',
+    '<span class="el-hi">[*]</span> <span class="el-out">Checking delegation misconfigs...</span>',
+    '<span class="el-hi">[*]</span> <span class="el-out">Building attack graph...</span>'
+  ];
+  if(nC>0) loaderLines.push('<span class="el-err">[!]</span> <span class="el-err">'+nC+' CRITICAL path'+(nC>1?'s':'')+' to Domain Admin found</span>');
+  if(nH>0) loaderLines.push('<span class="el-warn">[!]</span> <span class="el-warn">'+nH+' high-severity technique'+(nH>1?'s':'')+' identified</span>');
+  loaderLines.push('<span class="el-ok">[+]</span> <span class="el-out">Rendering attack graph...</span>');
+  showLoader(loaderLines,function(){
+    renderResults(domain,nodes,edges,chains,opts,nodeMap);
+  });
+}
+
+/* ══════════════════════════════════════════════
+   RENDER
+══════════════════════════════════════════════ */
+function renderResults(domain,nodes,edges,chains,opts,nodeMap){
+  var nC=chains.filter(function(c){return c.sev==='CRITICAL';}).length;
+  var nH=chains.filter(function(c){return c.sev==='HIGH';}).length;
+  var nM=chains.filter(function(c){return c.sev==='MEDIUM';}).length;
+  var nL=chains.filter(function(c){return c.sev==='LOW';}).length;
+  var secScore,grade,gradeCol;
+  if(nC>0){grade='OWNED';gradeCol='var(--red)';secScore=Math.max(5,100-Math.min(90,nC*20+nH*8+nM*3));}
+  else if(nH>0){grade='AT RISK';gradeCol='var(--orange)';secScore=Math.max(15,100-(nH*15+nM*5));}
+  else if(nM>0){grade='MODERATE';gradeCol='var(--yellow)';secScore=Math.max(50,100-(nM*8));}
+  else{grade='HARDENED';gradeCol='var(--green)';secScore=95;}
+
+  var SEV_CB={CRITICAL:'cb-c',HIGH:'cb-h',MEDIUM:'cb-m'};
+  var SEV_CS={CRITICAL:'csev-c',HIGH:'csev-h',MEDIUM:'csev-m'};
+
+  /* chain cards */
+  var chainsHtml='';
+  if(!chains.length){
+    chainsHtml='<div style="padding:18px 20px;background:var(--card);border:1px solid var(--border);font-family:\'JetBrains Mono\',monospace;font-size:12px;color:var(--green);border-radius:8px">✓ No attack paths found above threshold. Environment appears hardened.</div>';
+  } else {
+    chains.forEach(function(ch,i){
+      var pathHtml='';
+      if(ch.path&&ch.path.length>1){
+        pathHtml='<div class="chain-path">';
+        ch.path.forEach(function(nid,pi){
+          var nd=nodeMap[nid];
+          var nm=nd?nd.name.split('@')[0].split('.')[0]:nid;
+          var cls=pi===0?'start':(pi===ch.path.length-1?'end':'mid');
+          if(pi>0){
+            var edge=ch.edges&&ch.edges[pi-1];
+            var rel=edge?edge.rel:'→';
+            pathHtml+='<span class="cp-arr">→</span><span class="cp-rel">'+rel+'</span><span class="cp-arr">→</span>';
+          }
+          pathHtml+='<span class="cp-node '+cls+'">'+nm+'</span>';
+        });
+        pathHtml+='</div>';
+      }
+      var toolsHtml=(ch.tools||[]).map(function(t){ return '<span class="tool-chip">'+t+'</span>'; }).join('');
+      chainsHtml+='<div class="chain-item" id="ch-'+i+'">'
+        +'<div class="chain-main" tabindex="0" role="button" aria-expanded="false" aria-label="'+ch.title+', '+ch.sev+', '+ch.hops+' hop'+(ch.hops!==1?'s':'')+'">'
+        +'<div class="chain-sev '+(SEV_CS[ch.sev]||'csev-m')+'"></div>'
+        +'<div class="chain-body">'
+        +'<div class="chain-top">'
+        +'<span class="chain-badge '+(SEV_CB[ch.sev]||'cb-m')+'">'+ch.sev+'</span>'
+        +'<span class="chain-title">'+ch.title+'</span>'
+        +'<span class="chain-hops">'+ch.hops+' hop'+(ch.hops!==1?'s':'')+'</span>'
+        +'</div>'
+        +pathHtml
+        +'</div>'
+        +'<span class="chain-arrow">&#9656;</span>'
+        +'</div>'
+        +'<div class="chain-expand">'
+        +'<div class="chain-detail">'
+        +'<div class="cd-col"><h4 class="cd-risk">Risk &amp; Impact</h4><p>'+ch.risk+'</p>'+(ch.spn?'<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:var(--orange);margin-top:5px">SPN: '+ch.spn+'</div>':'')+'</div>'
+        +'<div class="cd-col"><h4 class="cd-fix">Remediation</h4><div>'+ch.fix+'</div></div>'
+        +(toolsHtml?'<div class="cd-col"><h4 class="cd-tools">Attack Tools</h4><div>'+toolsHtml+'</div></div>':'')
+        +'</div>'
+        +'</div>'
+        +'</div>';
+    });
+  }
+
+  /* nodes table */
+  var nodesHtml='';
+  nodes.slice(0,30).forEach(function(n){
+    var flags=[];
+    if(n.kerberoastable) flags.push('<span class="flag-tag" style="background:rgba(255,166,87,.1);color:var(--orange);border:1px solid rgba(255,166,87,.25)">Kerberoastable</span>');
+    if(n.asreproastable)  flags.push('<span class="flag-tag" style="background:rgba(255,61,61,.1);color:var(--red);border:1px solid rgba(255,61,61,.25)">AS-REP Roast</span>');
+    if(n.adminCount)      flags.push('<span class="flag-tag" style="background:rgba(255,213,79,.08);color:var(--yellow);border:1px solid rgba(255,213,79,.25)">AdminCount</span>');
+    if(n.owned)           flags.push('<span class="flag-tag" style="background:rgba(163,230,53,.08);color:var(--lime);border:1px solid rgba(163,230,53,.2)">OWNED</span>');
+    nodesHtml+='<tr>'
+      +'<td><span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:var(--text)">'+n.name+'</span></td>'
+      +'<td><span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:var(--muted)">'+n.type+'</span></td>'
+      +'<td>'+(n.os||'—')+'</td>'
+      +'<td>'+(flags.join(' ')||'<span style="color:var(--dim)">—</span>')+'</td>'
+      +'</tr>';
+  });
+  if(nodes.length>30) nodesHtml+='<tr><td colspan="4" style="color:var(--muted);font-family:\'JetBrains Mono\',monospace;font-size:10px">... and '+(nodes.length-30)+' more nodes</td></tr>';
+
+  var date=new Date().toUTCString();
+  var html=''
+    +'<div class="score-header">'
+    +'<div>'
+    +'<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Security Posture &nbsp;·&nbsp; Score nn/100 · higher is better</div>'
+    +'<div class="sh-score" style="color:'+gradeCol+'">'+secScore+'</div>'
+    +'<div class="sh-grade" style="color:'+gradeCol+'">'+grade+'</div>'
+    +'</div>'
+    +'<div>'
+    +'<div class="sh-name">'+domain+'</div>'
+    +'<div class="sh-meta">'
+    +'<span>Nodes:</span> '+nodes.length+' &nbsp;|&nbsp; <span>Edges:</span> '+edges.length+'<br>'
+    +'<span>Attack Paths Found:</span> '+chains.length+'<br>'
+    +'<span>Analysed:</span> '+date
+    +'</div>'
+    +'</div>'
+    +'<div class="sh-right"><div class="sh-stats">'
+    +'<div class="sh-stat"><span class="sh-stat-label">Critical</span><span class="sh-stat-val" style="color:var(--red)">'+nC+'</span></div>'
+    +'<div class="sh-stat"><span class="sh-stat-label">High</span><span class="sh-stat-val" style="color:var(--orange)">'+nH+'</span></div>'
+    +'<div class="sh-stat"><span class="sh-stat-label">Medium</span><span class="sh-stat-val" style="color:var(--yellow)">'+nM+'</span></div>'
+    +'<div class="sh-stat"><span class="sh-stat-label">Chains</span><span class="sh-stat-val" style="color:var(--text)">'+chains.length+'</span></div>'
+    +'</div></div>'
+    +'</div>'
+
+    +'<div class="risk-bars">'
+    +'<div class="rb-cell rb-c"><div class="rb-num">'+nC+'</div><div class="rb-lbl">Critical Paths</div></div>'
+    +'<div class="rb-cell rb-h"><div class="rb-num">'+nH+'</div><div class="rb-lbl">High Severity</div></div>'
+    +'<div class="rb-cell rb-m"><div class="rb-num">'+nM+'</div><div class="rb-lbl">Medium</div></div>'
+    +'<div class="rb-cell rb-l"><div class="rb-num">'+edges.length+'</div><div class="rb-lbl">Total Edges</div></div>'
+    +'</div>'
+
+    +'<div class="section-title">Attack Graph <span>'+domain+' · '+nodes.length+' nodes · '+edges.length+' edges</span></div>'
+    +'<div class="graph-wrap">'
+    +'<div class="graph-toolbar">'
+    +'<button class="gt-btn" id="zoomIn" aria-label="Zoom in">+</button>'
+    +'<button class="gt-btn" id="zoomOut" aria-label="Zoom out">–</button>'
+    +'<button class="gt-btn" id="resetView" aria-label="Reset view">Reset</button>'
+    +'<div class="gt-legend">'
+    +'<div class="gt-leg-item"><div class="gt-leg-dot" style="background:#79c0ff"></div>User</div>'
+    +'<div class="gt-leg-item"><div class="gt-leg-dot" style="background:#a3e635"></div>Computer</div>'
+    +'<div class="gt-leg-item"><div class="gt-leg-dot" style="background:#c084fc"></div>Group</div>'
+    +'<div class="gt-leg-item"><div class="gt-leg-dot" style="background:#ff3d3d"></div>Domain/DA</div>'
+    +'<div class="gt-leg-item"><div class="gt-leg-dot" style="background:#ffa657"></div>Kerberoastable</div>'
+    +'</div>'
+    +'</div>'
+    +'<canvas id="graphCanvas" height="460" aria-label="AD attack graph — interactive force-directed visualization"></canvas>'
+    +'<div class="node-tooltip" id="nodeTooltip" role="tooltip"></div>'
+    +'</div>'
+
+
+    +'<div class="section-title">Attack Chains <span>'+chains.length+' found</span></div>'
+    +'<div class="chain-list" role="list">'+chainsHtml+'</div>'
+
+    +'<div class="section-title">Node Inventory <span>'+nodes.length+' nodes</span></div>'
+    +'<table class="info-table"><thead><tr><th>Name</th><th>Type</th><th>OS</th><th>Flags</th></tr></thead><tbody>'+nodesHtml+'</tbody></table>'
+
+    +'<div class="report-foot">Report generated by <strong>eusebio@it-sec / ad-visualiser v1.1</strong> &nbsp;·&nbsp; '+date+'</div>';
+
+  var wrap=document.getElementById('resultsWrap');
+  wrap.innerHTML=html;
+  wrap.style.display='block';
+
+  /* chain expand */
+  document.querySelectorAll('.chain-item').forEach(function(el){
+    var m=el.querySelector('.chain-main');
+    if(m){
+      function toggle(){ el.classList.toggle('open'); m.setAttribute('aria-expanded', el.classList.contains('open')+''); }
+      m.addEventListener('click',toggle);
+      m.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle(); } });
+    }
+  });
+
+  drawGraph(nodes,edges,nodeMap);
+  document.querySelector('.col-right').scrollTo({top:0,behavior:'smooth'});
+  toast('Analysis complete — '+chains.length+' finding'+(chains.length===1?'':'s')+' · '+nC+' critical','ok');
+}
+
+/* ══════════════════════════════════════════════
+   GRAPH RENDERER
+══════════════════════════════════════════════ */
+function drawGraph(nodes,edges,nodeMap){
+  var canvas=document.getElementById('graphCanvas');
+  if(!canvas) return;
+  var ctx=canvas.getContext('2d');
+  canvas.width=canvas.offsetWidth;
+  var W=canvas.width, H=canvas.height;
+  var pan={x:0,y:0}, zoom=1, dragging=false, lastMouse={x:0,y:0}, hoveredNode=null;
+  var gNodes=nodes.map(function(n,i){
+    return {id:n.id,name:n.name,type:n.type,
+      x:W/2+(Math.cos(i/nodes.length*Math.PI*2)*W*0.3),
+      y:H/2+(Math.sin(i/nodes.length*Math.PI*2)*H*0.3),
+      vx:0,vy:0,kerberoastable:n.kerberoastable,asreproastable:n.asreproastable,adminCount:n.adminCount,owned:n.owned,os:n.os};
+  });
+  var gNodeMap={};
+  gNodes.forEach(function(n){ gNodeMap[n.id]=n; });
+  var gEdges=edges.map(function(e){ return {from:gNodeMap[e.from],to:gNodeMap[e.to],rel:e.rel}; }).filter(function(e){return e.from&&e.to;});
+  /* force sim */
+  for(var iter=0;iter<120;iter++){
+    for(var i=0;i<gNodes.length;i++){
+      for(var j=i+1;j<gNodes.length;j++){
+        var a=gNodes[i],b=gNodes[j];
+        var dx=b.x-a.x,dy=b.y-a.y;
+        var dist=Math.sqrt(dx*dx+dy*dy)||1;
+        var force=2000/(dist*dist);
+        var fx=dx/dist*force,fy=dy/dist*force;
+        a.vx-=fx;a.vy-=fy;b.vx+=fx;b.vy+=fy;
+      }
+    }
+    gEdges.forEach(function(e){
+      if(!e.from||!e.to) return;
+      var dx=e.to.x-e.from.x,dy=e.to.y-e.from.y;
+      var dist=Math.sqrt(dx*dx+dy*dy)||1;
+      var force=(dist-120)*0.03;
+      var fx=dx/dist*force,fy=dy/dist*force;
+      e.from.vx+=fx;e.from.vy+=fy;e.to.vx-=fx;e.to.vy-=fy;
+    });
+    gNodes.forEach(function(n){
+      n.vx+=(W/2-n.x)*0.005;n.vy+=(H/2-n.y)*0.005;
+      n.x+=n.vx*0.5;n.y+=n.vy*0.5;
+      n.vx*=0.7;n.vy*=0.7;
+      n.x=Math.max(30,Math.min(W-30,n.x));
+      n.y=Math.max(30,Math.min(H-30,n.y));
+    });
+  }
+  function nodeColor(n){
+    if(n.type==='Domain'||(n.adminCount&&n.type==='Group')) return '#ff3d3d';
+    if(n.type==='Group') return '#c084fc';
+    if(n.type==='Computer') return '#a3e635';
+    if(n.kerberoastable||n.asreproastable) return '#ffa657';
+    if(n.owned) return '#00e676';
+    return '#79c0ff';
+  }
+  function edgeColor(e){
+    if(['GenericAll','GenericWrite','WriteDACL','WriteOwner','AllExtendedRights'].indexOf(e.rel)>=0) return 'rgba(255,61,61,.7)';
+    if(['AdminTo','CanRDP','CanPSRemote'].indexOf(e.rel)>=0) return 'rgba(255,166,87,.65)';
+    if(['GetChangesAll','GetChanges','DCSync'].indexOf(e.rel)>=0) return 'rgba(255,61,61,.9)';
+    if(['MemberOf'].indexOf(e.rel)>=0) return 'rgba(130,155,175,.35)';
+    return 'rgba(130,155,175,.45)';
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.save();
+    ctx.translate(pan.x,pan.y);
+    ctx.scale(zoom,zoom);
+    gEdges.forEach(function(e){
+      if(!e.from||!e.to) return;
+      var sx=e.from.x,sy=e.from.y,tx=e.to.x,ty=e.to.y;
+      var ang=Math.atan2(ty-sy,tx-sx),r=11;
+      ctx.beginPath();
+      ctx.moveTo(sx+Math.cos(ang)*r,sy+Math.sin(ang)*r);
+      ctx.lineTo(tx-Math.cos(ang)*r,ty-Math.sin(ang)*r);
+      ctx.strokeStyle=edgeColor(e);ctx.lineWidth=1.5;ctx.stroke();
+      var ax=tx-Math.cos(ang)*r,ay=ty-Math.sin(ang)*r;
+      ctx.beginPath();
+      ctx.moveTo(ax,ay);
+      ctx.lineTo(ax-Math.cos(ang-0.4)*8,ay-Math.sin(ang-0.4)*8);
+      ctx.lineTo(ax-Math.cos(ang+0.4)*8,ay-Math.sin(ang+0.4)*8);
+      ctx.closePath();ctx.fillStyle=edgeColor(e);ctx.fill();
+      var mx=(sx+tx)/2,my=(sy+ty)/2;
+      ctx.font='8px "JetBrains Mono",monospace';
+      ctx.fillStyle='rgba(82,92,107,.8)';ctx.textAlign='center';
+      ctx.fillText(e.rel,mx,my-4);
+    });
+    gNodes.forEach(function(n){
+      var r=n.adminCount||n.type==='Domain'?13:10;
+      var col=nodeColor(n);
+      var isHovered=hoveredNode&&hoveredNode.id===n.id;
+      if(n.adminCount||n.type==='Domain'||n.kerberoastable||n.asreproastable){
+        var grd=ctx.createRadialGradient(n.x,n.y,r,n.x,n.y,r+6);
+        grd.addColorStop(0,col==='#ff3d3d'?'rgba(255,61,61,0.25)':col==='#ffa657'?'rgba(255,166,87,0.2)':'rgba(0,0,0,0)');
+        grd.addColorStop(1,'transparent');
+        ctx.beginPath();ctx.arc(n.x,n.y,r+6,0,Math.PI*2);ctx.fillStyle=grd;ctx.fill();
+      }
+      ctx.beginPath();ctx.arc(n.x,n.y,isHovered?r+2:r,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
+      if(n.owned){ ctx.beginPath();ctx.arc(n.x,n.y,r+3,0,Math.PI*2);ctx.strokeStyle='#00e676';ctx.lineWidth=1.5;ctx.stroke(); }
+      var label=n.name.split('@')[0].split('.')[0];
+      if(label.length>12) label=label.substring(0,11)+'…';
+      ctx.font=(isHovered?'bold ':'')+' 9px "JetBrains Mono",monospace';
+      ctx.fillStyle=isHovered?'#fff':'rgba(231,235,242,.7)';
+      ctx.textAlign='center';
+      ctx.fillText(label,n.x,n.y+r+11);
+    });
+    ctx.restore();
+  }
+  draw();
+  canvas.addEventListener('mousedown',function(e){ dragging=true;lastMouse={x:e.clientX,y:e.clientY};canvas.style.cursor='grabbing'; });
+  window.addEventListener('mouseup',function(){ dragging=false;canvas.style.cursor='grab'; });
+  canvas.addEventListener('mousemove',function(e){
+    if(dragging){ pan.x+=e.clientX-lastMouse.x;pan.y+=e.clientY-lastMouse.y;lastMouse={x:e.clientX,y:e.clientY};draw();return; }
+    var rect=canvas.getBoundingClientRect();
+    var mx=(e.clientX-rect.left-pan.x)/zoom,my=(e.clientY-rect.top-pan.y)/zoom;
+    var hit=null;
+    gNodes.forEach(function(n){ var dx=n.x-mx,dy=n.y-my;if(Math.sqrt(dx*dx+dy*dy)<16) hit=n; });
+    hoveredNode=hit;draw();
+    var tip=document.getElementById('nodeTooltip');
+    if(hit){
+      tip.style.display='block';
+      tip.style.left=(e.clientX-rect.left+14)+'px';
+      tip.style.top=(e.clientY-rect.top-10)+'px';
+      tip.innerHTML='<div class="nt-name">'+hit.name+'</div>'
+        +'<div class="nt-type">'+hit.type+(hit.os?' · '+hit.os:'')+'</div>'
+        +(hit.kerberoastable?'<div class="nt-risk" style="color:var(--orange)">⚠ Kerberoastable</div>':'')
+        +(hit.asreproastable?'<div class="nt-risk" style="color:var(--red)">⚠ AS-REP Roastable</div>':'')
+        +(hit.adminCount?'<div class="nt-risk" style="color:var(--yellow)">★ AdminCount</div>':'')
+        +(hit.owned?'<div class="nt-risk" style="color:var(--green)">✓ Owned</div>':'');
+    } else { tip.style.display='none'; }
+  });
+  canvas.addEventListener('wheel',function(e){ e.preventDefault();var f=e.deltaY<0?1.1:0.9;zoom=Math.max(0.3,Math.min(3,zoom*f));draw(); });
+  document.getElementById('zoomIn').addEventListener('click',function(){ zoom=Math.min(3,zoom*1.2);draw(); });
+  document.getElementById('zoomOut').addEventListener('click',function(){ zoom=Math.max(0.3,zoom*0.8);draw(); });
+  document.getElementById('resetView').addEventListener('click',function(){ pan={x:0,y:0};zoom=1;draw(); });
+}
+
+
+
+/* ── CLEAR ── */
+document.getElementById('clearBtn').addEventListener('click',function(){
+  document.getElementById('pasteArea').value='';
+  document.getElementById('uzFname').textContent='';
+  var zone=document.getElementById('uploadZone');
+  zone.classList.remove('has-file');
+  fileData=null;
+  document.getElementById('resultsWrap').style.display='none';
+  document.getElementById('emptyState').style.display='flex';
+  document.getElementById('loader').classList.remove('show');
+  toast('Cleared.','info');
+});
+
+/* ── SAMPLE ── */
+document.getElementById('sampleBtn').addEventListener('click',function(){
+  document.getElementById('pasteArea').value=JSON.stringify(SAMPLE,null,2);
+  document.getElementById('uzFname').textContent='Sample: VESPER.LOCAL_bloodhound.json';
+  document.getElementById('uploadZone').classList.add('has-file');
+  document.getElementById('domainInput').value='VESPER.LOCAL';
+  document.getElementById('startNode').value='jsmith@vesper.local';
+  doAnalyze();
+});
+
+/* ── COPY / PRINT ── */
+document.getElementById('copyBtn').addEventListener('click',function(){
+  var w=document.getElementById('resultsWrap');
+  if(!w||w.style.display==='none'){ toast('Run an analysis first.','err'); return; }
+  navigator.clipboard.writeText(w.innerText).then(function(){
+    toast('Report copied to clipboard.','ok');
+  }).catch(function(){ toast('Copy failed — try selecting text manually.','err'); });
+});
+document.getElementById('printBtn').addEventListener('click',function(){
+  if(document.getElementById('resultsWrap').style.display==='none'){ toast('Run an analysis first.','err'); return; }
+  window.print();
+});
+
+})();
+</script>
+</body>
+</html>

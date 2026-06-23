@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Copilot Studio Builder Guide — eusebio@it-sec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=JetBrains+Mono:wght@300;400;500;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+
+
+:root{
+  --void:#070809;--bg:#070809;--bg2:#0d0f13;--card:#13161d;--card2:#191d26;
+  --border:rgba(255,255,255,.07);--border-h:rgba(255,255,255,.14);
+  --accent:#f472b6;--blue:#2f81f7;--cyan:#00e5ff;--red:#ff3b4e;--green:#22e584;--orange:#ffb454;--yellow:#ffd166;--purple:#b98aff;--lime:#a3e635;--teal:#2dd4bf;--pink:#f472b6;
+  --text:#e7ebf2;--soft:#8a93a3;--muted:#525c6b;--dim:#2a303a;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+body{background:var(--void);color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;line-height:1.65;overflow:hidden;height:100vh}
+::selection{background:var(--accent);color:#2e0a1d}
+#bg-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.45}
+#bg-glow{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(55% 45% at 14% 6%,rgba(244,114,182,.06),transparent 70%),radial-gradient(50% 45% at 90% 94%,rgba(0,229,255,.05),transparent 70%)}
+a:focus-visible,button:focus-visible,input:focus-visible,[tabindex]:focus-visible,.cc:focus-visible,.sbc:focus-visible,.sb-all:focus-visible,.tf:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms !important;transition-duration:.001ms !important}}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 18px;height:44px;background:rgba(7,8,9,.78);backdrop-filter:blur(18px);border-bottom:1px solid var(--border)}
+.nav-brand{font-family:'JetBrains Mono',monospace;font-size:13px;display:flex;align-items:center;text-decoration:none;color:var(--text)}
+.nu{color:#79c0ff}.na{color:var(--muted)}.nh{color:var(--cyan)}.nt{color:var(--orange)}.nd{color:var(--accent);margin-left:4px}
+.nc{display:inline-block;width:7px;height:13px;background:var(--accent);margin-left:3px;vertical-align:middle;animation:blink .9s steps(1) infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.nav-center{display:flex;align-items:center;gap:8px}
+.nav-ver{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim)}
+.nav-badge{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 9px;border-radius:100px;background:rgba(244,114,182,.1);color:var(--accent);border:1px solid rgba(244,114,182,.25)}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-back{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);text-decoration:none;letter-spacing:.08em;text-transform:uppercase;transition:color .2s}
+.nav-back:hover{color:var(--cyan)}
+.nav-btn{padding:5px 12px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border:1px solid var(--border-h);background:transparent;color:var(--soft);transition:border-color .2s,color .2s;border-radius:7px}
+.nav-btn:hover{border-color:var(--accent);color:var(--accent)}
+.nav-btn.clr{color:var(--soft)}
+.nav-btn.clr:hover{border-color:var(--red);color:var(--red)}
+
+.vbar{position:fixed;top:44px;left:0;right:0;z-index:150;background:rgba(13,15,19,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);display:flex;align-items:center;min-height:36px;gap:10px;padding:9px clamp(10px,2vw,16px)}.vbar-chips{display:flex;flex-wrap:wrap;align-items:center;gap:7px;flex:1 1 auto;min-width:0}
+.vbar::-webkit-scrollbar{height:6px}.vbar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.28);border-radius:3px}.vbar::-webkit-scrollbar-track{background:transparent}
+.vi{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:8px;padding:5px 11px;min-height:32px;flex-shrink:0;transition:border-color .2s,background .2s}
+.vl{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);padding:0 7px 0 12px;white-space:nowrap}
+.vinp{background:transparent;border:none;outline:none;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11.5px;padding:0}.vinp::placeholder{color:var(--dim)}
+.vinp::placeholder{color:var(--dim)}.vinp:focus{color:var(--text)}
+.vbar-r{display:inline-flex;align-items:center;gap:7px;min-height:32px;flex:0 0 auto}
+.vbtn{padding:6px 12px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:rgba(255,255,255,.025);border:1px solid var(--border);cursor:pointer;color:var(--muted);transition:color .2s,background .2s,border-color .2s}
+.vbtn:hover{color:var(--text);background:rgba(255,255,255,.03)}
+.vbtn.ld{color:var(--accent);background:rgba(244,114,182,.06)}.vbtn.ld:hover{background:rgba(244,114,182,.12)}
+.vbtn.cl:hover{color:var(--accent)}
+
+.app{display:grid;grid-template-columns:220px 1fr 430px;height:calc(100vh - 80px);margin-top:80px;position:relative;z-index:2}
+.sb{border-right:1px solid var(--border);background:rgba(13,15,19,.7);backdrop-filter:blur(8px);overflow-y:auto;display:flex;flex-direction:column}
+.sb::-webkit-scrollbar{width:4px}.sb::-webkit-scrollbar-thumb{background:var(--dim);border-radius:3px}
+.sb-s{padding:10px 11px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg2);z-index:5}
+.sb-si{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;padding:7px 10px;outline:none;transition:border-color .2s,box-shadow .2s;border-radius:8px;-webkit-appearance:none}
+.sb-si:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(244,114,182,.1)}.sb-si::placeholder{color:var(--dim)}
+.sb-all{display:flex;align-items:center;justify-content:space-between;padding:8px 12px 6px;cursor:pointer;transition:background .15s;border-bottom:1px solid var(--border)}
+.sb-all:hover,.sb-all.act{background:rgba(244,114,182,.07)}.sb-all.act .sb-al{color:var(--accent)}
+.sb-al{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;color:var(--text)}
+.sb-ac{font-family:'JetBrains Mono',monospace;font-size:10px;padding:1px 6px;background:rgba(255,255,255,.05);color:var(--muted);border-radius:100px}
+.sbc{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;cursor:pointer;transition:background .15s;gap:7px}
+.sbc:hover{background:rgba(255,255,255,.03)}.sbc.act{background:rgba(244,114,182,.07)}.sbc.act .sc-l{color:var(--accent)}.sbc.act .sc-d{opacity:1}
+.sc-lf{display:flex;align-items:center;gap:7px;min-width:0}
+.sc-d{width:6px;height:6px;border-radius:50%;flex-shrink:0;opacity:.5;transition:opacity .2s}
+.sc-l{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc-n{font-family:'JetBrains Mono',monospace;font-size:10px;padding:1px 6px;background:rgba(255,255,255,.04);color:var(--muted);flex-shrink:0;border-radius:100px}
+
+.ctr{overflow-y:auto;background:transparent;display:flex;flex-direction:column}
+.ctr::-webkit-scrollbar{width:4px}.ctr::-webkit-scrollbar-thumb{background:var(--dim);border-radius:3px}
+.ch{padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;position:sticky;top:0;background:rgba(7,8,9,.86);backdrop-filter:blur(10px);z-index:5}
+.ch-t{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);letter-spacing:.04em}
+.ch-c{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)}
+.ch-f{display:flex;gap:5px;margin-left:auto;flex-wrap:wrap}
+.tf{font-family:'JetBrains Mono',monospace;font-size:9px;padding:3px 9px;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:border-color .15s,color .15s,background .15s;border-radius:100px}
+.tf:hover{border-color:var(--soft);color:var(--text)}.tf.act{border-color:var(--accent);color:var(--accent);background:rgba(244,114,182,.08)}
+.cw{padding:12px 14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr));gap:8px;align-content:start}
+.cc{background:var(--card);border:1px solid var(--border);padding:12px 13px;cursor:pointer;transition:border-color .15s,background .15s;position:relative;overflow:hidden;border-radius:11px}
+.cc:hover{background:var(--card2);border-color:var(--border-h)}.cc.sel{border-color:var(--accent);background:rgba(244,114,182,.05)}
+.cc.sel::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
+.cc-t{display:flex;align-items:flex-start;gap:8px;margin-bottom:5px}
+.cc-i{font-size:14px;flex-shrink:0;line-height:1.2}
+.cc-n{font-size:13px;font-weight:600;color:var(--text);flex:1;line-height:1.3}
+.cc-d{font-size:11.5px;color:var(--muted);line-height:1.55;margin-bottom:7px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cc-tg{display:flex;gap:4px;flex-wrap:wrap}
+.tg{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 7px;letter-spacing:.03em;border-radius:100px}
+.tg-m{background:rgba(45,212,191,.08);color:var(--teal);border:1px solid rgba(45,212,191,.2)}
+.tg-w{background:rgba(255,209,102,.08);color:var(--yellow);border:1px solid rgba(255,209,102,.2)}
+.tg-e{background:rgba(255,59,78,.08);color:var(--red);border:1px solid rgba(255,59,78,.2)}
+.tg-a{background:rgba(185,138,255,.08);color:var(--purple);border:1px solid rgba(185,138,255,.2)}
+.tg-p{background:rgba(255,180,84,.1);color:var(--orange);border:1px solid rgba(255,180,84,.25)}
+.tg-l{background:rgba(163,230,53,.08);color:var(--lime);border:1px solid rgba(163,230,53,.2)}
+.tg-s{background:rgba(244,114,182,.08);color:var(--pink);border:1px solid rgba(244,114,182,.2)}
+.tg-v{background:rgba(0,229,255,.08);color:var(--cyan);border:1px solid rgba(0,229,255,.2)}
+.tg-x{background:rgba(47,129,247,.08);color:var(--blue);border:1px solid rgba(47,129,247,.2)}
+.tg-y{background:rgba(255,209,102,.08);color:var(--yellow);border:1px solid rgba(255,209,102,.2)}
+.tg-r{background:rgba(138,147,163,.08);color:var(--soft);border:1px solid rgba(138,147,163,.2)}
+
+.rp{border-left:1px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;overflow:hidden}
+.rp-h{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:rgba(13,15,19,.96);flex-shrink:0}
+.rp-h h3{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;letter-spacing:-.01em;flex:1}.rp-h h3 span{color:var(--accent)}
+.rp-x{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:16px;line-height:1;transition:color .2s;border-radius:6px;padding:2px 6px}.rp-x:hover{color:var(--red)}
+.rp-i{padding:13px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
+.ri-t{font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px}
+.ri-d{font-size:12px;color:var(--soft);line-height:1.65}
+.ri-tg{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;align-items:center}
+.ri-rf{margin-top:9px;display:flex;flex-direction:column;gap:4px}
+.rf-a{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cyan);text-decoration:none;transition:color .2s;word-break:break-all}
+.rf-a::before{content:'↗ '}.rf-a:hover{color:var(--text)}
+.vw{flex:1;overflow-y:auto;padding:12px 14px}
+.vw::-webkit-scrollbar{width:4px}.vw::-webkit-scrollbar-thumb{background:var(--dim);border-radius:3px}
+.vb{margin-bottom:14px}
+.vb-r{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;gap:8px}
+.vb-n{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--soft);letter-spacing:.06em;text-transform:uppercase}
+.vb-a{display:flex;gap:5px;flex-shrink:0}
+.cp{padding:3px 10px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;background:transparent;border:1px solid var(--border-h);color:var(--soft);cursor:pointer;transition:border-color .15s,color .15s;border-radius:6px}
+.cp:hover{border-color:var(--accent);color:var(--accent)}.cp.ok{border-color:var(--green);color:var(--green)}
+.ce{padding:3px 10px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;background:rgba(244,114,182,.08);border:1px solid rgba(244,114,182,.3);color:var(--accent);cursor:pointer;transition:background .15s;border-radius:6px}
+.ce:hover{background:rgba(244,114,182,.16)}
+.cb{background:#0a0c10;border:1px solid var(--border);padding:11px 13px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.8;color:var(--text);white-space:pre-wrap;word-break:break-word;cursor:pointer;transition:border-color .15s;border-radius:9px}
+.cb:hover{border-color:rgba(244,114,182,.3)}.cb .vh{color:#ff8a80;font-weight:500}.cb .vc{color:var(--muted)}.cb .vf{color:var(--cyan)}
+.rp-e{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;opacity:.45}
+.re-b{font-family:'Syne',sans-serif;font-weight:800;font-size:42px;color:var(--dim);line-height:1;letter-spacing:.02em}
+.re-m{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.06em;text-align:center}
+
+.mb-g{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(5px);padding:20px}
+.mb-g.show{display:flex}
+.mb-g .m{background:var(--bg2);border:1px solid rgba(244,114,182,.22);max-width:660px;width:100%;max-height:82vh;overflow-y:auto;border-radius:14px}
+.m::-webkit-scrollbar{width:4px}.m::-webkit-scrollbar-thumb{background:var(--dim);border-radius:3px}
+.m-h{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg2);z-index:1}
+.m-h h2{font-family:'Syne',sans-serif;font-weight:800;font-size:19px;letter-spacing:-.01em}.m-h h2 span{color:var(--accent)}
+.m-x{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;transition:color .2s}.m-x:hover{color:var(--red)}
+.m-b{padding:18px}
+.m-b h3{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:16px 0 7px;display:flex;align-items:center;gap:6px}
+.m-b h3::before{content:'//';color:var(--dim);font-size:9px}.m-b h3:first-child{margin-top:0}
+.m-b p,.m-b li{font-size:12px;color:var(--soft);line-height:1.8}
+.m-b ul{padding-left:15px;margin-bottom:8px}.m-b li::marker{color:var(--accent)}
+.m-b strong{color:var(--text);font-weight:500}
+kbd{font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--card);border:1px solid var(--border-h);padding:2px 7px;color:var(--text);border-radius:5px}
+.vt{width:100%;border-collapse:collapse;font-size:11px;margin-top:6px}
+.vt th{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:6px 8px;text-align:left;border-bottom:1px solid var(--border)}
+.vt td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--soft)}
+.vt td:first-child{font-family:'JetBrains Mono',monospace;color:#ff8a80}
+
+.toast{position:fixed;bottom:18px;right:18px;z-index:999;background:var(--card2);border:1px solid rgba(244,114,182,.3);border-left:3px solid var(--accent);padding:9px 15px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);transform:translateY(50px);opacity:0;transition:transform .22s,opacity .22s;pointer-events:none;border-radius:9px;box-shadow:0 12px 32px rgba(0,0,0,.45)}
+.toast.show{transform:translateY(0);opacity:1}
+
+@media(max-width:1100px){.app{grid-template-columns:190px 1fr 380px}}
+@media(max-width:980px){
+  .app{grid-template-columns:180px 1fr}
+  .rp{position:fixed;top:80px;right:0;bottom:0;width:min(460px,100vw);transform:translateX(101%);transition:transform .28s cubic-bezier(.16,1,.3,1);z-index:300;box-shadow:-24px 0 60px rgba(0,0,0,.55)}
+  .rp.open{transform:none}
+}
+@media(max-width:620px){
+  nav{padding:0 12px}
+  .nav-center{display:none}
+  .app{grid-template-columns:132px 1fr}
+  .vl{display:inline-block;font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:0;white-space:nowrap}.vi:focus-within{border-color:var(--accent);background:rgba(255,255,255,.05)}
+  .rp{width:100vw}
+}
+
+@media print{
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}
+  html,body{background:#fff !important;height:auto !important;overflow:visible !important}
+  #bg-canvas,#bg-glow,nav,.vbar,.sb,.ctr,.toast,.mb-g{display:none !important}
+  .app{display:block !important;height:auto !important;margin:0 !important;grid-template-columns:none !important}
+  .rp{position:static !important;width:100% !important;transform:none !important;border:none !important;box-shadow:none !important;background:#fff !important;display:block !important;overflow:visible !important}
+  .rp *{color:#111 !important}
+  .rp-h{background:#fff !important;border-bottom:1px solid #ccc !important}
+  .rp-h h3 span{color:#1a5fb4 !important}
+  .rf-a{color:#1a5fb4 !important}
+  .cb{background:#f6f7f9 !important;border:1px solid #ddd !important}
+  .cb .vh{color:#b00020 !important}.cb .vf{color:#06c !important}.cb .vc{color:#777 !important}
+  .cp,.ce,.rp-x{display:none !important}
+  @page{margin:1.4cm;size:A4}
+}
+
+.fx-local{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#8a93a3;border:1px solid rgba(255,255,255,.12);padding:3px 9px;border-radius:100px;white-space:nowrap}
+.fx-local::before{content:'';width:6px;height:6px;border-radius:50%;background:#22e584;box-shadow:0 0 6px rgba(34,229,132,.6)}
+@media(max-width:620px){.fx-local{display:none}}
+@media(max-width:1700px){.vbar{flex-direction:column;align-items:stretch}.vbar-chips{flex:0 0 auto}.vbar-r{display:flex;width:100%;justify-content:flex-end}}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div id="bg-glow"></div>
+
+
+<div class="mb-g" id="modal">
+  <div class="m">
+    <div class="m-h"><h2>HOW TO <span>USE</span></h2><button class="m-x" id="mClose">&#10005;</button></div>
+    <div class="m-b">
+      <h3>Overview</h3>
+      <p>Real-world Copilot Studio Builder reference. Production patterns, Power Automate integration, authentication, generative AI, testing, and governance for enterprise agents.</p>
+      <h3>Variable Bar</h3>
+      <ul>
+        <li><strong>agent name</strong> &mdash; your agent display name</li>
+        <li><strong>environment</strong> &mdash; Power Platform environment name</li>
+        <li><strong>tenant id</strong> &mdash; Azure AD tenant ID</li>
+        <li><strong>client id</strong> &mdash; App registration client ID</li>
+        <li><strong>bot id</strong> &mdash; Copilot Studio bot ID (28:xxx)</li>
+        <li><strong>sharepoint</strong> &mdash; SharePoint site URL for knowledge source</li>
+        <li><strong>flow url</strong> &mdash; Power Automate HTTP trigger URL</li>
+      </ul>
+      <h3>Navigation</h3>
+      <ul>
+        <li>Left sidebar &mdash; filter by category</li>
+        <li>Tag pills &mdash; filter by type</li>
+        <li>Search &mdash; find by name or keyword</li>
+        <li>Click any card &mdash; full content in right panel</li>
+        <li><strong>Copy</strong> copies content &nbsp;|&nbsp; <strong>Copy+Enter</strong> adds newline</li>
+      </ul>
+      <h3>Sample Data</h3>
+      <p>Click <strong>Load Sample</strong> to pre-fill with Contoso IT Helpdesk agent context.</p>
+      <h3>Keyboard</h3>
+      <ul><li><kbd>Ctrl+K</kbd> search &nbsp;|&nbsp; <kbd>?</kbd> help &nbsp;|&nbsp; <kbd>Esc</kbd> close</li></ul>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<nav>
+  <a href="index.html" class="nav-brand"><span class="nu">eusebio</span><span class="na">@</span><span class="nh">it-sec</span><span class="na">:</span><span class="nt">~</span><span class="nd">$</span><span class="nc"></span></a>
+  <div class="nav-center"><span class="nav-ver">v1.0</span><span class="nav-badge">copilot-cs</span></div>
+  <div class="nav-right">
+    <button class="nav-btn" id="helpBtn">? Help</button>
+    <button class="nav-btn clr" id="clrVars">&#10005; Clear Vars</button>
+    <span class="fx-local" title="Runs entirely in your browser — no data is uploaded or sent anywhere">Local-only</span>
+    <a href="projects.html" class="nav-back">&#8592; Projects</a>
+  </div>
+</nav>
+<div class="vbar">
+  <div class="vbar-chips">
+  <div class="vi"><span class="vl">agent name</span><input class="vinp" id="v_AgentName" placeholder="IT Helpdesk" style="width:110px"/></div>
+  <div class="vi"><span class="vl">environment</span><input class="vinp" id="v_Environment" placeholder="contoso" style="width:95px"/></div>
+  <div class="vi"><span class="vl">tenant id</span><input class="vinp" id="v_TenantID" placeholder="a1b2c3d4-..." style="width:140px"/></div>
+  <div class="vi"><span class="vl">client id</span><input class="vinp" id="v_ClientID" placeholder="b2c3d4e5-..." style="width:140px"/></div>
+  <div class="vi"><span class="vl">bot id</span><input class="vinp" id="v_BotID" placeholder="28:abc123..." style="width:125px"/></div>
+  <div class="vi"><span class="vl">sharepoint</span><input class="vinp" id="v_SharePointSite" placeholder="https://contoso.sharepoint.com/sites/IT" style="width:235px"/></div>
+  <div class="vi"><span class="vl">flow url</span><input class="vinp" id="v_FlowURL" placeholder="https://prod-xx.logic.azure.com/..." style="width:195px"/></div>
+  </div>
+  <div class="vbar-r">
+    <button class="vbtn ld" id="sampleBtn">&#9654; Load Sample</button>
+    <button class="vbtn cl" id="clrBtn2">Clear</button>
+  </div>
+</div>
+<div class="app">
+  <div class="sb">
+    <div class="sb-s"><input class="sb-si" id="srch" type="search" placeholder="Search topics…" autocomplete="off" aria-label="Search topics"/></div>
+    <div class="sb-all act" id="cat-all" role="button" tabindex="0" aria-label="Show all topics"><span class="sb-al">All</span><span class="sb-ac" id="cnt-all">0</span></div>
+    <div id="catList"></div>
+  </div>
+  <div class="ctr">
+    <div class="ch">
+      <span class="ch-t" id="actLbl">All Topics</span>
+      <span class="ch-c" id="visCnt"></span>
+      <div class="ch-f" id="tagF"></div>
+    </div>
+    <div class="cw" id="cw"></div>
+  </div>
+  <div class="rp" id="rp">
+    <div class="rp-e" id="rpE"><div class="re-b">BUILD</div><p class="re-m">select a topic</p></div>
+    <div id="rpC" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+      <div class="rp-h"><h3 id="rpT">Title</h3><button class="rp-x" id="rpX">&#10005;</button></div>
+      <div class="rp-i" id="rpI"></div>
+      <div class="vw" id="rpV"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ── smooth 3D background: sparse drifting points (usability-first, no links) ── */
+(function(){
+  var canvas=document.getElementById('bg-canvas'); if(!canvas) return;
+  if(typeof THREE==='undefined'){canvas.style.display='none';return;}
+  var renderer; try{renderer=new THREE.WebGLRenderer({canvas:canvas,alpha:true,antialias:true});}catch(e){canvas.style.display='none';return;}
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){canvas.style.opacity='.18';}
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(innerWidth,innerHeight);
+  var scene=new THREE.Scene(), camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,1,400);
+  camera.position.z=60; var group=new THREE.Group(); scene.add(group);
+  var N=innerWidth<760?50:110, R=40, base=new Float32Array(N*3), pos=new Float32Array(N*3), col=new Float32Array(N*3);
+  var C=new THREE.Color(0xf472b6), C2=new THREE.Color(0x2f81f7), i;
+  for(i=0;i<N;i++){ base[i*3]=(Math.random()*2-1)*R*1.9; base[i*3+1]=(Math.random()*2-1)*R*1.2; base[i*3+2]=(Math.random()*2-1)*R*0.6; var c=Math.random()<0.35?C2:C; col[i*3]=c.r;col[i*3+1]=c.g;col[i*3+2]=c.b; }
+  var sc=document.createElement('canvas');sc.width=sc.height=64;var sx=sc.getContext('2d');var g=sx.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.4,'rgba(255,255,255,.5)');g.addColorStop(1,'rgba(255,255,255,0)');sx.fillStyle=g;sx.beginPath();sx.arc(32,32,32,0,7);sx.fill();
+  var geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(pos,3)); geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  var mat=new THREE.PointsMaterial({size:1.5,map:new THREE.CanvasTexture(sc),vertexColors:true,transparent:true,opacity:.85,depthWrite:false,blending:THREE.AdditiveBlending});
+  group.add(new THREE.Points(geo,mat));
+  var mx=0,my=0; window.addEventListener('mousemove',function(e){mx=(e.clientX/innerWidth)*2-1;my=-(e.clientY/innerHeight)*2+1;},{passive:true});
+  var t=0; function loop(){ t+=0.006; group.rotation.y+=0.0008; camera.position.x+=(mx*6-camera.position.x)*0.03; camera.position.y+=(my*4-camera.position.y)*0.03; camera.lookAt(0,0,0); for(i=0;i<N;i++){ pos[i*3]=base[i*3]+Math.sin(t*0.6+i)*1.3; pos[i*3+1]=base[i*3+1]+Math.cos(t*0.5+i*1.3)*1.3; pos[i*3+2]=base[i*3+2]+Math.sin(t*0.4+i)*1.0; } geo.attributes.position.needsUpdate=true; renderer.render(scene,camera); requestAnimationFrame(loop); }
+  loop();
+  window.addEventListener('resize',function(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+  var glow=document.getElementById('bg-glow');
+  function hideForPrint(){ try{ if(canvas.parentNode) canvas.parentNode.removeChild(canvas); if(glow) glow.style.display='none'; }catch(e){} }
+  function showAfterPrint(){ try{ if(!canvas.parentNode) document.body.insertBefore(canvas, document.body.firstChild); if(glow) glow.style.display=''; }catch(e){} }
+  window.addEventListener('beforeprint', hideForPrint);
+  window.addEventListener('afterprint', showAfterPrint);
+  if(window.matchMedia){ var mqp=window.matchMedia('print'); var mqh=function(e){ e.matches?hideForPrint():showAfterPrint(); }; if(mqp.addEventListener) mqp.addEventListener('change',mqh); else if(mqp.addListener) mqp.addListener(mqh); }
+})();
+function kbd(el,fn){ if(!el)return; el.setAttribute('tabindex','0'); if(!el.getAttribute('role')) el.setAttribute('role','button'); el.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); fn(e); } }); }
+
+
+var CATS=[
+  {id:'topics',   label:'Topics & Conversations',  dot:'#c084fc'},
+  {id:'entities', label:'Entities & Slot Filling',  dot:'#00d4ff'},
+  {id:'variables',label:'Variables & Expressions',  dot:'#a3e635'},
+  {id:'actions',  label:'Actions & PA Integration', dot:'#ffa657'},
+  {id:'auth',     label:'Authentication & Security',dot:'#ff3d3d'},
+  {id:'genai',    label:'Generative AI & Knowledge',dot:'#2dd4bf'},
+  {id:'channels', label:'Channels & Deployment',    dot:'#1a8cff'},
+  {id:'testing',  label:'Testing & Debugging',      dot:'#ffd54f'},
+  {id:'govops',   label:'Governance & ALM',         dot:'#f472b6'},
+  {id:'patterns', label:'Design Patterns',          dot:'#8a9fb5'},
+  {id:'odata',     label:'OData & Filter Reference', dot:'#00d4ff'},
+  {id:'json',      label:'JSON & Adaptive Cards',    dot:'#ffa657'},
+  {id:'powerfx',   label:'Power Fx Deep Dive',       dot:'#a3e635'},
+  {id:'errors',    label:'Errors & Debugging',       dot:'#ff3d3d'},
+  {id:'autonomous',label:'Autonomous Agents',        dot:'#2dd4bf'},
+  {id:'multilang', label:'Multi-language',           dot:'#ffd54f'},
+  {id:'handoff',   label:'Human Handoff',            dot:'#f472b6'},
+  {id:'powerbi',   label:'Power BI Integration',     dot:'#1a8cff'},
+  {id:'realworld', label:'Real-World Builds',        dot:'#c084fc'},
+];
+
+var CHEATS=[
+{id:'t01',cat:'topics',icon:'💬',title:'System Topics Overview',
+ desc:'Built-in system topics every Copilot agent has — understand before customising',tags:['tp'],
+ variants:[{name:'All system topics',cmd:'# System topics (do NOT delete, customise carefully)\nGreeting          - first message user sends\nGoodbye           - conversation end\nEscalate          - user requests human agent\nStart Over        - user wants to restart\nThank You         - user says thanks\nConfirmed Success - positive confirmation\nConfirmed Failure - negative confirmation\nFallback          - no topic matched (most important to customise)\n\n# Best practices\n- Always customise Fallback to show helpful options\n- Customise Escalate to route to your actual support channel\n- Keep Greeting concise - users skip it\n- Add channel-specific greetings per deployment channel'}],refs:[{t:'Copilot Studio System Topics',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/authoring-system-topics'}]},
+{id:'t02',cat:'topics',icon:'💬',title:'Topic Trigger Design',
+ desc:'Best practices for trigger phrases and topic routing in production agents',tags:['tp'],
+ variants:[{name:'Trigger phrase rules',cmd:'# GOOD trigger phrases\n- 5-10 phrases minimum per topic\n- Use natural language, not keywords\n- Include common misspellings\n- Mix question and statement forms\n- Good: I need to reset my password\n- Good: how do I change my login\n- Bad:  password  (too short, causes false triggers)\n\n# Topic priority\n- More specific triggers win over broad ones\n- Use redirect nodes to chain related topics\n- Avoid overlapping triggers across topics\n\n# Naming convention\n- [Area] - [Action]: IT - Password Reset\n- [Area] - [Entity]: HR - Leave Balance'}]},
+{id:'t03',cat:'topics',icon:'💬',title:'Condition and Branching Logic',
+ desc:'Build dynamic conversations with conditions, switch cases, and redirects',tags:['tp'],
+ variants:[{name:'Condition patterns',cmd:'# Condition node - check variable\nCondition: Global.UserDepartment is equal to IT\n  -> Branch: Show IT-specific content\nAll other conditions:\n  -> Branch: Show general content\n\n# Switch/multi-branch pattern\nUse multiple condition branches:\n  Branch 1: Topic.Selection is equal to Option1\n  Branch 2: Topic.Selection is equal to Option2\n  Branch 3: All other conditions (default)\n\n# Redirect to another topic\nNode: Redirect\nTarget topic: [Topic Name]\nPass variables: Topic.UserEmail -> Topic.Email\n\n# End conversation vs end topic\nEnd Topic   - returns to calling topic if redirected\nEnd Conversation - closes the entire session'}]},
+{id:'t04',cat:'topics',icon:'💬',title:'Message Formatting',
+ desc:'Format messages with markdown, adaptive cards, and quick replies',tags:['tp'],
+ variants:[{name:'Text formatting',cmd:'# Markdown in message nodes\n**Bold text**\n*Italic text*\n- Bullet item\n1. Numbered item\n[Link text](https://example.com)\n\n# Insert variable in message\nYour ticket number is: {Topic.TicketNumber}\nHello {System.User.DisplayName}, how can I help?\n\n# Quick reply buttons\nAdd Quick Reply node after message\nOptions: Option1 | Option2 | Option3\nStores selection in: Topic.UserChoice\n\n# Adaptive Card (JSON)\nUse Send Message node > Adaptive Card\nDesign at: https://adaptivecards.io/designer/'},{name:'Adaptive card template',cmd:'{\n  "type": "AdaptiveCard",\n  "version": "1.4",\n  "body": [\n    {"type":"TextBlock","text":"${Topic.Title}","weight":"Bolder","size":"Medium"},\n    {"type":"TextBlock","text":"${Topic.Description}","wrap":true},\n    {"type":"FactSet","facts":[\n      {"title":"Status","value":"${Topic.Status}"},\n      {"title":"Created","value":"${Topic.Date}"}\n    ]}\n  ],\n  "actions": [\n    {"type":"Action.OpenUrl","title":"View Details","url":"${Topic.Link}"}\n  ]\n}'}],refs:[{t:'Adaptive Cards Designer',u:'https://adaptivecards.io/designer/'}]},
+{id:'t05',cat:'topics',icon:'💬',title:'Error Handling in Topics',
+ desc:'Handle failures gracefully with retry logic and fallback messages',tags:['tp'],
+ variants:[{name:'Retry and fallback pattern',cmd:'# Retry pattern for action failures\n1. Call action node (e.g. Power Automate flow)\n2. Add Condition: check Topic.ActionStatus\n   Success branch: continue happy path\n   Failure branch: show error message\n     -> Increment Topic.RetryCount\n     -> Condition: Topic.RetryCount < 3\n        Yes: Redirect back to action step\n        No:  Escalate to human agent\n\n# Generic error message best practices\n- Never show raw error codes to users\n- Always offer an alternative (escalate, retry, docs link)\n- Log error details to a variable for reporting\n\n# On Error system event\nAvailable in: Settings > System Topics > On Error\nUse to catch unhandled exceptions globally'}]},
+{id:'e01',cat:'entities',icon:'🏷️',title:'Built-in Entity Types',
+ desc:'System entities available out-of-the-box for common data extraction',tags:['en'],
+ variants:[{name:'All built-in entities',cmd:'# BUILT-IN ENTITIES (no training needed)\nPerson Name         - extracts full names\nEmail               - validates email format\nPhone Number        - international format\nCity                - major cities worldwide\nCountry or Region   - countries and regions\nDate and Time       - relative and absolute dates\nDuration            - time spans\nMoney               - currency amounts\nNumber              - integers and decimals\nOrdinal             - first, second, 1st, 2nd\nPercentage          - percent values\nTemperature         - with units\nAge                 - numeric age values\nBoolean (yes/no)    - confirmation intent\n\n# Using in question node\nQuestion: What is your email address?\nIdentify as: Email\nStore in: Topic.UserEmail'}],refs:[{t:'Entity types',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/advanced-entities-slot-filling'}]},
+{id:'e02',cat:'entities',icon:'🏷️',title:'Custom Entities',
+ desc:'Build closed list and regex entities for domain-specific data',tags:['en'],
+ variants:[{name:'Closed list entity',cmd:'# Example: Department entity\nEntity name: Department\nType: Closed list\nValues:\n  IT (synonyms: Information Technology, Tech, I.T.)\n  HR (synonyms: Human Resources, People Team)\n  Finance (synonyms: Accounts, Accounting)\n  Operations (synonyms: Ops, Operations Team)\n\n# Usage in question node\nQuestion: Which department are you in?\nIdentify as: Department (your custom entity)\nStore in: Topic.UserDept\n\n# Smart matching\nCopilot handles typos and synonyms automatically\nUser says: I work in the I.T. team\nExtracted: IT'},{name:'Regex entity',cmd:'# Example: Ticket number entity\nEntity name: TicketID\nType: Regular expression\nPattern: INC[0-9]{7}\n\n# Matches: INC0012345, INC9876543\n# Usage\nQuestion: What is your incident number?\nIdentify as: TicketID\nStore in: Topic.TicketID\n\n# Other useful regex patterns\nEmployee ID:  EMP[0-9]{5}\nCost centre:  CC[0-9]{4}\nOrder number: ORD-[A-Z]{2}-[0-9]{6}'}]},
+{id:'e03',cat:'entities',icon:'🏷️',title:'Slot Filling Patterns',
+ desc:'Collect multiple pieces of information in a single conversational turn',tags:['en'],
+ variants:[{name:'Multi-slot filling',cmd:'# Slot filling allows collecting multiple entities\n# from one user message before prompting for missing ones\n\n# Example: IT ticket creation\nSlots to fill:\n  Topic.IssueType  (entity: IssueCategory)\n  Topic.Priority   (entity: PriorityLevel)\n  Topic.UserEmail  (entity: Email)\n\n# User says: I need urgent help with my laptop email\n# Slot filling extracts:\n  IssueType = Laptop\n  Priority  = Urgent\n# Copilot only asks for missing slot:\n  What is your email address?\n\n# Enable slot filling\nQuestion node > Enable slot filling checkbox\nAdd all entities to the question node\nMap each to its variable'},{name:'Reprompt on invalid input',cmd:'# Configure reprompt in question node\nHow many times to retry: 2\nMessage if invalid: I did not understand that.\nPlease enter a valid {Entity.Type}\n\n# After max retries\nOption 1: Redirect to Escalate topic\nOption 2: Set default value and continue\nOption 3: End conversation gracefully'}]},
+{id:'v01',cat:'variables',icon:'📦',title:'Variable Types and Scope',
+ desc:'Topic, global, system, and environment variables — when to use each',tags:['va'],
+ variants:[{name:'Variable scopes',cmd:'# TOPIC variables (Topic.VarName)\n- Scope: current topic only\n- Auto-cleared when topic ends\n- Use for: intermediate data, user inputs\n- Example: Topic.UserEmail, Topic.TicketID\n\n# GLOBAL variables (Global.VarName)\n- Scope: entire conversation session\n- Persist across topic redirects\n- Use for: user profile, session state, auth token\n- Set via: Variable Management node\n- Example: Global.UserDept, Global.IsAuthenticated\n\n# SYSTEM variables (System.*)\n- Read-only, provided by platform\n- System.User.DisplayName\n- System.User.Email\n- System.User.Id\n- System.Conversation.Id\n- System.Activity.Text (last user message)\n\n# ENVIRONMENT variables\n- Defined in Power Platform solutions\n- Use for: API URLs, config values\n- Access via PA flow, pass back to Copilot'}]},
+{id:'v02',cat:'variables',icon:'📦',title:'Power Fx Expressions',
+ desc:'Common Power Fx formulas used in Copilot Studio conditions and variable nodes',tags:['va'],
+ variants:[{name:'String operations',cmd:'# Concatenate\nConcatenate(Topic.FirstName, " ", Topic.LastName)\n\n# Upper/Lower case\nUpper(Topic.Department)\nLower(Topic.Email)\n\n# Contains check\nContains(Topic.Message, "urgent")\n\n# String length\nLen(Topic.UserInput)\n\n# Trim whitespace\nTrim(Topic.UserInput)\n\n# Replace text\nSubstitute(Topic.Text, "old", "new")\n\n# Extract substring\nMid(Topic.TicketID, 4, 7)'},{name:'Date and number operations',cmd:'# Today\\\'s date\nText(Today(), "dd/mm/yyyy")\n\n# Date difference in days\nDateDiff(Topic.StartDate, Today(), Days)\n\n# Add days to date\nDateAdd(Today(), 7, Days)\n\n# Number formatting\nText(Topic.Amount, "[$-en-US]#,##0.00")\n\n# Conditional (If)\nIf(Topic.Count > 5, "many", "few")\n\n# Coalesce (first non-blank)\nCoalesce(Topic.UserInput, "default value")'},{name:'Boolean and comparison',cmd:'# Logical AND\nAnd(Topic.IsActive, Topic.HasPermission)\n\n# Logical OR\nOr(Topic.IsAdmin, Topic.IsManager)\n\n# IsBlank check\nIsBlank(Topic.UserEmail)\n\n# Not operator\nNot(IsBlank(Topic.TicketID))\n\n# Switch statement\nSwitch(Topic.Priority,\n  "High", "P1",\n  "Medium", "P2",\n  "Low", "P3",\n  "Unknown"\n)'}],refs:[{t:'Power Fx reference',u:'https://learn.microsoft.com/en-us/power-platform/power-fx/formula-reference'}]},
+{id:'v03',cat:'variables',icon:'📦',title:'Passing Variables to Power Automate',
+ desc:'Pass data into flows and receive outputs back in Copilot Studio',tags:['va','ac'],
+ variants:[{name:'Input and output pattern',cmd:'# In Copilot Studio - Call action node\nSelect: Call Power Automate flow\nChoose flow: [Your flow name]\n\n# Map inputs (Copilot -> Flow)\nFlow input: userEmail    <- Topic.UserEmail\nFlow input: ticketTitle  <- Topic.TicketTitle\nFlow input: priority     <- Topic.Priority\nFlow input: department   <- Global.UserDepartment\n\n# Map outputs (Flow -> Copilot)\nFlow output: ticketNumber -> Topic.TicketNumber\nFlow output: status       -> Topic.TicketStatus\nFlow output: errorMessage -> Topic.ErrorMsg\n\n# Supported input types\nText, Number, Boolean, Date and time, Table (JSON array)'},{name:'Table/JSON output handling',cmd:'# Flow returns JSON array as Table type\nFlow output variable type: Table\nStore in: Topic.ResultsTable\n\n# Access first record in table\nFirst(Topic.ResultsTable).columnName\n\n# Count records\nCountRows(Topic.ResultsTable)\n\n# Filter table\nFilter(Topic.ResultsTable, status = "Open")\n\n# Loop through table - use ForAll in Power Fx\nForAll(Topic.ResultsTable, Notify(Concatenate(title, " - ", status)))'}]},
+{id:'a01',cat:'actions',icon:'⚡',title:'Creating Flows for Copilot',
+ desc:'Build Power Automate flows designed to work with Copilot Studio',tags:['ac'],
+ variants:[{name:'Flow design requirements',cmd:'# REQUIRED: Copilot Studio trigger\nTrigger: When Copilot Studio calls a flow\n(Found in: Microsoft Copilot Studio connector)\n\n# Input parameters (what Copilot sends)\nAdd input: Text - userEmail\nAdd input: Text - ticketTitle\nAdd input: Number - priority\nAdd input: Boolean - isUrgent\n\n# Output parameters (what flow returns)\nReturn values step at end of flow\nAdd output: Text - ticketNumber\nAdd output: Text - status\nAdd output: Boolean - success\n\n# Best practices\n- Always return a success/failure boolean\n- Return user-friendly error messages (not raw errors)\n- Keep flows focused - one flow per action\n- Use environment variables for API endpoints'},{name:'Error handling in flows',cmd:"# Add parallel branch for error handling\n1. Add Scope action named Try\n2. Put all actions inside Try scope\n3. Add Scope action named Catch (run after = failed)\n   Configure Run After: Try has failed\n4. In Catch scope:\n   - Set success = false\n   - Set errorMessage = @{result(\\'Try\\')[\\'error\\'][\\'message\\']}\n   - Send alert email to support team\n5. Terminate action: Succeeded (always)\n   This ensures Copilot always gets a response\n\n# Flow timeout\nDefault Copilot timeout: 2 minutes\nFor long flows: trigger async and poll for result"}],refs:[{t:'Use flow in Copilot Studio',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/advanced-use-flow'}]},
+{id:'a02',cat:'actions',icon:'⚡',title:'HTTP Request Actions',
+ desc:'Call external APIs directly from Copilot Studio using HTTP actions',tags:['ac'],
+ variants:[{name:'Direct HTTP call pattern',cmd:'# Add HTTP Request action node in topic\nAction type: Send HTTP request\n\n# GET request\nMethod: GET\nURL: https://api.example.com/users/{Topic.UserID}\nHeaders:\n  Authorization: Bearer {Global.AccessToken}\n  Content-Type: application/json\n\n# POST request\nMethod: POST\nURL: https://api.example.com/tickets\nBody (JSON):\n{\n  "title": "{Topic.TicketTitle}",\n  "email": "{Topic.UserEmail}",\n  "priority": "{Topic.Priority}"\n}\n\n# Response\nStore response body in: Topic.ApiResponse\nAccess fields: Topic.ApiResponse.id\n               Topic.ApiResponse.status'},{name:'Parse JSON response',cmd:'# After HTTP action, parse the response\nTopic.ApiResponse is stored as Record type\n\n# Access nested properties\nTopic.ApiResponse.data.items\nTopic.ApiResponse.result.ticketId\n\n# Check HTTP status\nCondition: Topic.StatusCode = 200  -> success\nCondition: Topic.StatusCode = 404  -> not found\nCondition: Topic.StatusCode = 401  -> auth failed\n\n# Rate limits: implement retry with delay\nUse Pause topic action to add delay (seconds)\nThen retry the HTTP call'}]},
+{id:'a03',cat:'actions',icon:'⚡',title:'Connector Actions',
+ desc:'Use pre-built connector actions for M365, SharePoint, Dataverse',tags:['ac'],
+ variants:[{name:'Microsoft Graph via connector',cmd:'# Add connector action in topic\nConnector: Microsoft Graph\nAction: Get user (by UPN or ID)\nInput: System.User.Email\nOutputs: displayName, jobTitle, department, manager\n\n# Get SharePoint list items\nConnector: SharePoint\nAction: Get items\nSite: https://contoso.sharepoint.com/sites/IT\nList: ServiceCatalogue\nFilter: Status eq Active\n\n# Dataverse - get record\nConnector: Microsoft Dataverse\nAction: Get a row by ID\nTable: Accounts\nRow ID: {Topic.AccountID}\n\n# Always check for empty results\nCondition: IsEmpty(Topic.SPItems) -> show no results message'}]},
+{id:'au01',cat:'auth',icon:'🔐',title:'Authentication Configuration',
+ desc:'Configure user authentication for personalised and secure agents',tags:['auth'],
+ variants:[{name:'Authentication modes',cmd:'# NO AUTHENTICATION\n- Agent is public/anonymous\n- No user identity available\n- Use for: public FAQs, status pages\n- System.User.* variables are empty\n\n# MICROSOFT (TEAMS / ENTRA ID)\n- Auto sign-in via Teams SSO\n- System.User.DisplayName and Email populated\n- Use for: internal employee agents\n- Settings > Security > Authentication\n- Select: Authenticate with Microsoft\n\n# CUSTOM (OAUTH 2.0)\n- Bring your own identity provider\n- Supports: Azure AD, Google, Okta, Auth0\n- Requires: App registration in Entra ID\n- Provides: auth_token variable for API calls\n\n# Manual authentication (prompt user)\n- Add Authenticate node in topic\n- User sees sign-in card\n- On success: access token stored automatically'},{name:'Entra ID app registration',cmd:'# Register app for Copilot Studio auth\n1. Azure Portal > App registrations > New\n2. Name: Copilot-[AgentName]-Auth\n3. Redirect URI: Web\n   https://token.botframework.com/.auth/web/redirect\n4. API permissions:\n   Microsoft Graph: User.Read (delegated)\n   Add any custom API scopes needed\n5. Grant admin consent\n6. Create client secret (copy immediately)\n\n# In Copilot Studio\nSettings > Security > Authentication\nSelect: Manual (for custom OAuth)\nClient ID: [App registration Application ID]\nClient secret: [Secret from step 6]\nToken endpoint: https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/token\nScopes: openid profile email User.Read'}],refs:[{t:'Configure authentication',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/configuration-authentication-azure-ad'}]},
+{id:'au02',cat:'auth',icon:'🔐',title:'DLP and Security Controls',
+ desc:'Data loss prevention, connector restrictions, and tenant governance',tags:['auth'],
+ variants:[{name:'DLP policy for Copilot Studio',cmd:'# DLP policies control which connectors agents can use\nPower Platform Admin Center > Data policies\n\n# Connector classification\nBusiness (allowed):  SharePoint, Dataverse, Teams\nNon-Business:        Consumer connectors\nBlocked:             Connectors you never want used\n\n# Copilot Studio specific settings\nAdmin Center > Copilot Studio settings\n- Allow/block agent creation by users\n- Restrict publishing channels\n- Enable/disable generative AI features\n- Control which environments agents deploy to\n\n# Agent sharing\nPublish settings > Manage access\n- Everyone in organisation\n- Specific security groups\n- Specific users only'},{name:'Sensitive data handling',cmd:'# Never store sensitive data in variables\nBad:  Global.UserPassword = Topic.PasswordInput\nGood: Pass directly to PA flow, never store\n\n# Mask sensitive inputs\nQuestion node > Mask input = On\nInput is hidden in conversation transcript\n\n# Conversation transcript controls\nSettings > Security > Conversation transcript\nOption: Exclude sensitive topic transcripts\n\n# Audit logging\nAll agent activities logged to:\nPower Platform Admin Center > Analytics\nCopilot Studio > Analytics > Sessions'}]},
+{id:'au03',cat:'auth',icon:'🔐',title:'Channel Security',
+ desc:'Secure agent deployments per channel with appropriate controls',tags:['auth'],
+ variants:[{name:'Teams channel security',cmd:'# Teams deployment security checklist\n1. Enable only for required users/groups\n   Teams Admin Center > Manage apps\n   Permission policy: specific users or groups\n\n2. Use Teams SSO - no extra login needed\n   User identity auto-populated\n\n3. Block direct web channel if Teams-only agent\n   Channels > Web browser > Disable\n\n4. Enable proactive messaging only if needed\n   Requires additional Graph permissions\n\n# Website channel security\nChannels > Website > Add domain allowlist\nOnly allow specific domains to embed agent\nToken endpoint: use server-side token exchange'}]},
+{id:'g01',cat:'genai',icon:'🤖',title:'Knowledge Sources Configuration',
+ desc:'Add and optimise knowledge sources for generative AI answers',tags:['gen'],
+ variants:[{name:'Knowledge source types',cmd:'# WEBSITE (public URLs)\nAdd: full domain or specific page URLs\nRefresh: scheduled or on-demand\nBest for: public documentation, FAQ pages\nLimit: publicly accessible pages only\n\n# SHAREPOINT (internal)\nConnect SharePoint site or library\nRespects SharePoint permissions\nIndexes: pages, documents (PDF, DOCX, PPTX)\nBest for: internal KB, policies, procedures\n\n# DATAVERSE KNOWLEDGE\nConnect to Dynamics 365 KB articles\nReal-time, no indexing lag\nRespects Dataverse security roles\n\n# UPLOADED FILES\nUpload PDF, DOCX, XLSX directly\nMax 3MB per file\nGood for: quick prototyping\n\n# BEST PRACTICE\nUse 3-5 focused sources, not everything\nAvoid duplicate content across sources'},{name:'Improve answer quality',cmd:'# Answer quality settings\nSettings > Generative AI > Content moderation\nHigh: most restrictive, fewer answers\nMedium: balanced (recommended)\nLow: most permissive, more hallucination risk\n\n# Grounding instructions\nSettings > Generative AI > Instructions\nAdd: You are an IT support assistant for Contoso.\n     Only answer questions related to IT support.\n     If unsure, say you will escalate to a human.\n     Always be professional and concise.\n\n# Fallback to generative AI\nSettings > Generative AI > Fallback\nWhen no topic matches -> Use AI to generate answer\nRecommended: On for informational agents'}],refs:[{t:'Knowledge sources',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/knowledge-add-existing-copilot'}]},
+{id:'g02',cat:'genai',icon:'🤖',title:'Generative Orchestration',
+ desc:'Use AI to orchestrate multi-turn conversations and select topics dynamically',tags:['gen'],
+ variants:[{name:'Enable generative orchestration',cmd:'# Classic vs Generative mode\nClassic: strict topic matching, more predictable\nGenerative: AI routes to topics, more flexible\n\n# Enable in Settings\nSettings > Generative AI > How should your copilot interact with people\nSelect: Generative AI (classic + generative)\n\n# How it works\n1. User sends message\n2. AI reads topic descriptions and trigger phrases\n3. Selects best matching topic OR generates answer\n4. Runs topic or returns AI-generated response\n\n# Write better topic descriptions\nGeneric: Handles password issues\nBetter: Handles password reset requests, account\n        lockout, and MFA setup for Microsoft 365 users\n\n# Topic description = key for routing accuracy\nAdd a detailed description to every topic'}]},
+{id:'g03',cat:'genai',icon:'🤖',title:'Prompt Configuration',
+ desc:'Configure custom prompts and AI Builder prompts within Copilot Studio',tags:['gen'],
+ variants:[{name:'Custom prompt nodes',cmd:'# Add AI node: Create generative answers\nSource: Custom\nInstructions (system prompt):\n  You are a helpful IT assistant. Given the user message\n  and the following context, provide a concise answer.\n  Context: {Topic.ContextData}\n  User question: {System.Activity.Text}\n  Answer in 2-3 sentences maximum.\n\n# Dynamic prompt with variable injection\nConcatenate instructions at runtime:\n  Concat("Summarise this ticket: ", Topic.TicketBody)\n\n# AI Builder prompt (reusable)\nCreate in AI Builder > Prompts\nReference in Copilot via AI Builder connector\nBenefit: reusable across agents and flows'}]},
+{id:'ch01',cat:'channels',icon:'📡',title:'Deployment Channels',
+ desc:'Publish agents to Teams, websites, and other channels',tags:['ch'],
+ variants:[{name:'Available channels',cmd:'# Microsoft Teams (most common)\nChannels > Microsoft Teams > Turn on Teams\nPublish > Availability options > Teams\nShare link OR submit to Teams App Catalog\nEnterprise deploy: Teams Admin Center > Manage apps\n\n# Website / Web Chat\nChannels > Website\nCopy embed script to your web page:\n<script src="https://cdn.botframework.com/...">\n  data-bot-id="your-bot-id"\n  data-bot-name="Your Agent"\n<\/script>\n\n# SharePoint\nAdd Copilot Studio web part to SharePoint page\nConfigure with Bot ID from Channels > Website\n\n# Email / SMS / WhatsApp\nVia Azure Communication Services integration\nSettings > Channels > Direct Line'},{name:'Teams app manifest',cmd:'# Custom Teams app with branding\n1. Download manifest from Channels > Teams\n2. Edit manifest.json:\n   - id: unique GUID\n   - name: Your Agent Display Name\n   - description: Short and long description\n   - icons: colour (192x192) and outline (32x32)\n   - accentColor: #hex brand color\n3. Zip manifest.json + icons\n4. Upload to Teams Admin Center OR\n   Teams > Apps > Manage your apps > Upload custom app'}]},
+{id:'te01',cat:'testing',icon:'🧪',title:'Test Pane Best Practices',
+ desc:'Use the built-in test pane effectively for development and debugging',tags:['test'],
+ variants:[{name:'Test pane features',cmd:'# Access test pane\nClick Test your copilot (bottom left)\nOr: F5 shortcut\n\n# Key features\nReload: reset conversation state\nTrack between topics: shows topic routing\nVariable watch: see variable values in real time\n\n# Test methodology\n1. Test happy path first\n2. Test all condition branches\n3. Test with unexpected input (break it)\n4. Test entity extraction edge cases\n5. Test authentication flow\n6. Test Power Automate action responses\n\n# Test checklist per topic\n[ ] All trigger phrases route correctly\n[ ] All branches reachable\n[ ] Variables contain correct values\n[ ] Error paths handled\n[ ] Escalation path works\n[ ] Response messages clear and correct'},{name:'Debug conversation flow',cmd:'# Enable verbose testing\nTest pane > Track between topics = ON\nShows: which topic is active, node being executed\n\n# Check variable values during test\nVariables panel appears below test chat\nExpand to see all Topic and Global variables\n\n# Common issues\nTopic not triggering: check trigger phrases, add more\nVariable empty: check variable scope (topic vs global)\nFlow not running: check flow is published and enabled\nCondition wrong: check Power Fx syntax in condition\nEntity not extracted: check entity is saved to variable\n\n# Session analytics\nAnalytics > Sessions > View individual sessions\nReplay any user conversation step by step'}]},
+{id:'te02',cat:'testing',icon:'🧪',title:'Quality Assurance Checklist',
+ desc:'Pre-production QA checklist before publishing to users',tags:['test'],
+ variants:[{name:'Full QA checklist',cmd:'# TOPIC QUALITY\n[ ] Every topic has a clear, specific description\n[ ] Minimum 5 trigger phrases per topic\n[ ] No orphaned nodes (unreachable branches)\n[ ] All topics end with End Topic or End Conversation\n[ ] Fallback topic customised with helpful options\n[ ] Escalation topic routes to real support channel\n\n# CONTENT QUALITY\n[ ] All messages proofread\n[ ] Consistent tone and persona\n[ ] No placeholder text left in messages\n[ ] Adaptive cards render correctly in target channel\n\n# TECHNICAL QUALITY\n[ ] All Power Automate flows published\n[ ] Connections not using personal accounts\n[ ] Error handling on all action nodes\n[ ] Tested with real user accounts (not just admin)\n[ ] Tested in target channel (not just test pane)\n\n# SECURITY\n[ ] Auth configured correctly\n[ ] Sensitive data not stored in variables\n[ ] DLP policy applied to environment\n[ ] Agent only accessible to intended audience'}]},
+{id:'te03',cat:'testing',icon:'🧪',title:'Analytics and Monitoring',
+ desc:'Monitor agent performance and improve based on real usage data',tags:['test'],
+ variants:[{name:'Key metrics to monitor',cmd:'# Analytics dashboard\nCopilot Studio > Analytics > Summary\n\n# Engagement rate\n% of sessions where user sent 2+ messages\nTarget: > 60%\nLow: trigger phrases not matching, agent not useful\n\n# Resolution rate\n% of sessions ending with resolved status\nTarget: > 70% for transactional agents\nLow: flow failures, missing topics, unclear messages\n\n# Escalation rate\n% of sessions escalated to human agent\nTarget: < 20% (depends on agent purpose)\nHigh: missing knowledge, unclear entity extraction\n\n# Abandon rate\n% of sessions where user just stopped responding\nHigh: agent confusing, too many questions\n\n# Session details view\nAnalytics > Sessions > filter by Escalated or Abandoned\nRead actual user messages to identify gaps'},{name:'Improve based on analytics',cmd:'# Low engagement fix\n1. Check unrecognised utterances (Analytics > Topics)\n2. Add those phrases as triggers to existing topics\n3. Create new topics for common unmatched patterns\n\n# Low resolution fix\n1. Check most common escalation topics\n2. Review flow failure logs in Power Automate\n3. Simplify conversation flow - fewer steps = less drop-off\n\n# Session insights\nAnalytics > Topics > Drill into low-resolution topics\nSee exactly where users are dropping off\n\n# Set up alerting\nPower Automate: schedule daily analytics email\nConnect to: Copilot Studio Management connector\nAlert if: resolution rate drops below threshold'}]},
+{id:'go01',cat:'govops',icon:'🏛️',title:'Solution and ALM Setup',
+ desc:'Manage agents across environments with Power Platform solutions',tags:['gov'],
+ variants:[{name:'Solution-based development',cmd:'# Always work in solutions (not default environment)\nPower Apps > Solutions > New solution\nPublisher: your company prefix (e.g. contoso_)\nVersion: 1.0.0.0\n\n# Add Copilot Studio agent to solution\nSolutions > Add existing > Chatbot\nSelect your agent\n\n# Environment strategy\nDEV  -> BUILD -> QA -> UAT -> PROD\nMinimum: DEV -> UAT -> PROD\n\n# Pipelines for deployment\nPower Platform Pipelines (ALM)\nDeploy solution from DEV to PROD\nHandles: connection references, env variables\n\n# Connection references\nNever use personal accounts in flows\nCreate service account (non-personal)\nGrant only required permissions\nUse in all Copilot Studio flow connections'},{name:'Environment variables in solutions',cmd:'# Create environment variable in solution\nSolutions > New > Environment variable\nName: contoso_ApiBaseUrl\nType: Text\nDefault: https://api.dev.contoso.com\n\n# Use in Power Automate flows\nDynamic content > Environment variables\nSelect: contoso_ApiBaseUrl\n\n# Override per environment\nAfter importing solution to UAT/PROD:\nSolutions > Environment variables > Edit current value\nSet: https://api.prod.contoso.com\n\n# This means same solution, different config per env\nNo code changes needed between environments'}],refs:[{t:'ALM for Copilot Studio',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/advanced-export-import-copilot'}]},
+{id:'go02',cat:'govops',icon:'🏛️',title:'Version Control and Backup',
+ desc:'Export, backup, and version control Copilot Studio agents',tags:['gov'],
+ variants:[{name:'Export and import agents',cmd:'# Export agent (solution export)\nSolutions > select solution > Export\nFormat: Unmanaged (DEV) or Managed (PROD)\nDownloads: zip file with all components\n\n# Import to another environment\nTarget environment > Solutions > Import\nUpload zip > Next > Configure connections\nUpdate environment variable values\n\n# Store in source control\npac solution unpack --zipfile solution.zip --folder ./src\ngit add . && git commit -m "Release 1.2.0"\n\n# Power Platform CLI\npac auth create --url https://org.crm.dynamics.com\npac solution export --name MySolution --path ./export\npac solution import --path ./export/MySolution.zip'}]},
+{id:'p01',cat:'patterns',icon:'🎨',title:'Authentication Gate Pattern',
+ desc:'Require user to authenticate before accessing sensitive topics',tags:['pat'],
+ variants:[{name:'Auth gate implementation',cmd:'# Pattern: check auth at start of sensitive topic\n\nTopic: IT Support - View My Tickets\n\nNode 1: Condition\n  Is Global.IsAuthenticated = true?\n  YES -> continue to ticket lookup\n  NO  -> Redirect to: Authentication topic\n\nTopic: Authentication\nNode 1: Authenticate (sign-in card)\nNode 2: Set Global.IsAuthenticated = true\nNode 3: Set Global.UserEmail = System.User.Email\nNode 4: Redirect back to calling topic\n\n# Reuse across topics\nAny topic needing auth: add condition check\nOne central auth topic handles the flow\nGlobal.IsAuthenticated persists for whole session'}]},
+{id:'p02',cat:'patterns',icon:'🎨',title:'Confirmation Pattern',
+ desc:'Always confirm before destructive or important actions',tags:['pat'],
+ variants:[{name:'Confirmation before action',cmd:'# Pattern: confirm before calling PA flow\n\nNode 1: Message\n  You are about to raise a ticket:\n  Title: {Topic.TicketTitle}\n  Priority: {Topic.Priority}\n  Assigned to: {Topic.TeamName}\n\nNode 2: Question\n  Shall I go ahead and create this ticket?\n  Entity type: Boolean (Yes/No)\n  Store in: Topic.Confirmed\n\nNode 3: Condition\n  Topic.Confirmed = true\n  YES -> Call PA flow to create ticket\n  NO  -> Message: No problem, ticket not created.\n         End Topic\n\n# Apply to: deletions, submissions, approvals\n# Always show a summary of what will happen'}]},
+{id:'p03',cat:'patterns',icon:'🎨',title:'Disambiguation Pattern',
+ desc:'Handle ambiguous user input gracefully with clarifying questions',tags:['pat'],
+ variants:[{name:'Disambiguate user intent',cmd:'# When trigger phrases overlap, use disambiguation\n\nUser says: I need help with access\nCould mean: VPN access, App access, Building access\n\n# Option 1: Quick reply disambiguation\nNode 1: Message\n  What kind of access do you need help with?\nNode 2: Quick Reply\n  [ VPN Access ] [ App Access ] [ Building Access ]\nStore in: Topic.AccessType\nNode 3: Condition branches per selection\n\n# Option 2: Redirect with context\nSet Topic.SubType from user input\nRedirect to main topic\nMain topic checks Topic.SubType in first condition\n\n# Avoid: asking too many clarifying questions\nMax 2 clarifying questions before offering escalation'}]},
+{id:'p04',cat:'patterns',icon:'🎨',title:'Progressive Disclosure Pattern',
+ desc:'Show information in layers, offer more detail on request',tags:['pat'],
+ variants:[{name:'Progressive disclosure',cmd:'# Pattern: start with summary, offer detail\n\nNode 1: Message\n  Your leave balance: 12 days annual, 3 days sick.\n\nNode 2: Question\n  Would you like to see the breakdown by month?\n  Entity: Boolean\n  Store in: Topic.WantsDetail\n\nNode 3: Condition\n  YES -> Call PA flow to get detailed breakdown\n         Show adaptive card with full data\n  NO  -> Message: Let me know if I can help\n         with anything else!\n\n# Benefits\n- Shorter conversations for most users\n- Power users can still get full detail\n- Reduces cognitive load\n\n# Also applies to: help menus, error messages,\n  knowledge base results, search results'}]},
+{id:'p05',cat:'patterns',icon:'🎨',title:'Proactive Notification Pattern',
+ desc:'Send proactive messages to users for alerts and updates',tags:['pat'],
+ variants:[{name:'Proactive messaging via PA',cmd:'# Proactive = agent sends message without user initiating\n\n# Requirements\n- Teams channel only (for M365)\n- User must have had at least one conversation first\n- Or: use Proactive Messaging API\n\n# Pattern via Power Automate\nTrigger: When item created in SharePoint (approval)\n1. Get approver Teams ID\n2. Action: Post message in chat (Copilot Studio connector)\n   - Bot ID: your Copilot bot ID\n   - Recipient: approver AAD object ID\n   - Message: You have a new approval: {Title}\n\n# Proactive with topic trigger\nAfter sending proactive message:\nInclude deep link to start specific topic:\nhttps://teams.microsoft.com/l/chat/0/0?users=28:BOT_ID\n&topicName=Approve Request&message=approve {ID}'}]},
+{id:'odata01',cat:'odata',icon:'🔍',title:'OData Filter — SharePoint',
+ desc:'Real-world OData filter expressions for SharePoint Get Items actions',tags:['odata','ac'],
+ variants:[
+  {name:'Text filters',cmd:"# Equal to string (single quotes required)\nTitle eq 'Incident'\n\n# Contains\nsubstringof('VPN',Title) eq true\n\n# Starts with\nstartswith(Title,'INC') eq true\n\n# Ends with\nendswith(Title,'.pdf') eq true\n\n# Not equal\nTitle ne 'Closed'\n\n# SharePoint OData is case-INSENSITIVE for strings"},
+  {name:'Number and date filters',cmd:"# Number equals\nPriority eq 1\n\n# Greater than / Less than\nPriority gt 2\nPriority ge 1\nPriority le 10\n\n# Date - ISO 8601 format\nCreated ge datetime'2026-01-01T00:00:00Z'\nModified le datetime'2026-12-31T23:59:59Z'\n\n# Today: use PA expression formatDateTime(utcNow(),'yyyy-MM-ddTHH:mm:ssZ')\n# Then pass as string variable to filter"},
+  {name:'Person and choice filters',cmd:"# Filter by person field (Email)\nAssignedTo/EMail eq 'user@contoso.com'\n\n# Filter by current user\nCreatedBy/EMail eq '{Topic.UserEmail}'\n\n# Lookup column (by ID)\nDepartmentId eq 3\n\n# Choice column\nStatus eq 'Active'\n\n# Yes/No (boolean) column\n# Note: SP boolean OData uses 1/0 not true/false\nIsUrgent eq 1"},
+  {name:'Combined filters',cmd:"# AND\nStatus eq 'Active' and Priority eq 1\n\n# OR with parentheses\n(Status eq 'Active' or Status eq 'Pending') and Priority gt 2\n\n# NOT\nnot(Status eq 'Closed')\n\n# Practical: open tickets for current user\nAssignedTo/EMail eq '{Topic.UserEmail}' and Status ne 'Closed' and Priority le 2\n\n# WRONG:  Status eq Active\n# RIGHT:  Status eq 'Active'"},
+  {name:'OData select, top, orderby',cmd:"# Limit columns\n$select=Id,Title,Status,Priority,AssignedTo/EMail\n$expand=AssignedTo\n\n# Limit rows\n$top=10\n\n# Order\n$orderby=Created desc\n$orderby=Priority asc, Created desc\n\n# In PA Get Items action:\nTop Count: 10\nFilter Query: Status eq 'Active'\nOrder By: Created desc\nSelect Columns: Id,Title,Status,AssignedTo/EMail"}
+ ],refs:[{t:'SharePoint OData filter syntax',u:'https://learn.microsoft.com/en-us/sharepoint/dev/sp-add-ins/use-odata-query-operations-in-sharepoint-rest-requests'}]},
+
+{id:'odata02',cat:'odata',icon:'🔍',title:'OData Filter — Dataverse',
+ desc:'FetchXML and OData filters for Dataverse and Dynamics 365 connectors',tags:['odata','ac'],
+ variants:[
+  {name:'Dataverse OData filters',cmd:"# Use logical name not display name\n_ownerid_value eq '{Topic.UserGUID}'\nstatecode eq 0\n\n# String contains\ncontains(name,'Contoso')\n\n# Starts with\nstartswith(emailaddress1,'admin')\n\n# Dates (no datetime prefix like SP)\ncreatdon ge 2026-01-01\n\n# Status codes\nstatuscode eq 1   # Active\nstatuscode eq 2   # Inactive"},
+  {name:'FetchXML for complex queries',cmd:"<!-- Use in Dataverse List Rows with FetchXML query -->\n<fetch top='50'>\n  <entity name='incident'>\n    <attribute name='title'/>\n    <attribute name='statuscode'/>\n    <attribute name='prioritycode'/>\n    <filter type='and'>\n      <condition attribute='statuscode' operator='eq' value='1'/>\n      <condition attribute='ownerid' operator='eq' value='{Topic.UserGUID}'/>\n    </filter>\n    <order attribute='createdon' descending='true'/>\n  </entity>\n</fetch>\n\n# Use FetchXML for: table joins, aggregates, complex filters"}
+ ],refs:[{t:'Query Dataverse with OData',u:'https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/query-data-web-api'}]},
+
+{id:'odata03',cat:'odata',icon:'🔍',title:'OData Filter — Graph API',
+ desc:'Microsoft Graph API OData filters for users, groups, mail, and M365 data',tags:['odata','ac'],
+ variants:[
+  {name:'Graph API common filters',cmd:"# GET users by department\nGET /users?$filter=department eq 'Engineering'\n\n# Starts with name\nGET /users?$filter=startsWith(displayName,'John')\n\n# Calendar events date range\nGET /me/events?$filter=start/dateTime ge '2026-01-01T00:00:00Z'\n\n# Select fields\nGET /users?$select=displayName,mail,department,jobTitle\n\n# Combine filter and select\nGET /users?$filter=department eq 'IT'&$select=displayName,mail"},
+  {name:'Graph in Power Automate',cmd:"# HTTP action to Graph API\nMethod: GET\nURI: https://graph.microsoft.com/v1.0/users?$filter=department eq 'IT'\nHeaders:\n  Authorization: Bearer {access_token}\n  Content-Type: application/json\n\n# Parse response\nParse JSON action\nbody('Parse_JSON')?['value']\nbody('Parse_JSON')?['value'][0]?['displayName']\n\n# Count results\nlength(body('Parse_JSON')?['value'])"}
+ ]},
+
+{id:'json01',cat:'json',icon:'📋',title:'Adaptive Card — Confirmation',
+ desc:'Confirmation card with Confirm and Cancel buttons — paste-ready JSON',tags:['json','tp'],
+ variants:[
+  {name:'Confirmation card JSON',cmd:'{\n  "type": "AdaptiveCard",\n  "version": "1.5",\n  "body": [\n    {\n      "type": "TextBlock",\n      "text": "Confirm Your Request",\n      "weight": "Bolder",\n      "size": "Medium",\n      "color": "Accent"\n    },\n    {\n      "type": "FactSet",\n      "facts": [\n        {"title": "Type",     "value": "${Topic.RequestType}"},\n        {"title": "For",      "value": "${Topic.UserEmail}"},\n        {"title": "Priority", "value": "${Topic.Priority}"},\n        {"title": "Date",     "value": "${Topic.RequestDate}"}\n      ]\n    },\n    {\n      "type": "TextBlock",\n      "text": "Shall I go ahead with this request?",\n      "wrap": true,\n      "spacing": "Medium"\n    }\n  ],\n  "actions": [\n    {\n      "type": "Action.Submit",\n      "title": "Confirm",\n      "data": {"action": "confirm"}\n    },\n    {\n      "type": "Action.Submit",\n      "title": "Cancel",\n      "data": {"action": "cancel"}\n    }\n  ]\n}'}
+ ],refs:[{t:'Adaptive Cards Designer',u:'https://adaptivecards.io/designer/'},{t:'AC Schema',u:'https://adaptivecards.io/explorer/'}]},
+
+{id:'json02',cat:'json',icon:'📋',title:'Adaptive Card — Status Display',
+ desc:'Status info card with fact set, description, and portal link action',tags:['json','tp'],
+ variants:[
+  {name:'Status card JSON',cmd:'{\n  "type": "AdaptiveCard",\n  "version": "1.5",\n  "body": [\n    {\n      "type": "Container",\n      "style": "emphasis",\n      "items": [\n        {"type":"TextBlock","text":"${Topic.Title}","weight":"Bolder","size":"Large"},\n        {"type":"TextBlock","text":"ID: ${Topic.TicketID}","isSubtle":true,"spacing":"None"}\n      ]\n    },\n    {\n      "type": "FactSet",\n      "facts": [\n        {"title": "Status",   "value": "${Topic.Status}"},\n        {"title": "Priority", "value": "${Topic.Priority}"},\n        {"title": "Assigned", "value": "${Topic.AssignedTo}"},\n        {"title": "Created",  "value": "${Topic.CreatedDate}"}\n      ]\n    },\n    {"type":"TextBlock","text":"${Topic.Description}","wrap":true}\n  ],\n  "actions": [\n    {"type":"Action.OpenUrl","title":"Open in Portal","url":"${Topic.PortalLink}"}\n  ]\n}'}
+ ]},
+
+{id:'json03',cat:'json',icon:'📋',title:'Adaptive Card — Input Form',
+ desc:'User input form card with text, choice set, and multiline fields',tags:['json','tp'],
+ variants:[
+  {name:'Input form card JSON',cmd:'{\n  "type": "AdaptiveCard",\n  "version": "1.5",\n  "body": [\n    {"type":"TextBlock","text":"Raise a Support Ticket","weight":"Bolder","size":"Medium"},\n    {\n      "type": "Input.Text",\n      "id": "title",\n      "label": "Issue Title",\n      "placeholder": "Brief description",\n      "isRequired": true\n    },\n    {\n      "type": "Input.ChoiceSet",\n      "id": "priority",\n      "label": "Priority",\n      "value": "Medium",\n      "choices": [\n        {"title": "High",   "value": "High"},\n        {"title": "Medium", "value": "Medium"},\n        {"title": "Low",    "value": "Low"}\n      ]\n    },\n    {\n      "type": "Input.Text",\n      "id": "description",\n      "label": "Description",\n      "placeholder": "Full details...",\n      "isMultiline": true\n    }\n  ],\n  "actions": [\n    {"type":"Action.Submit","title":"Submit Ticket","data":{"formType":"supportTicket"}}\n  ]\n}'}
+ ]},
+
+{id:'json04',cat:'json',icon:'📋',title:'Adaptive Card — Approval Notification',
+ desc:'Approval card sent to manager with Approve and Reject action buttons',tags:['json','tp'],
+ variants:[
+  {name:'Approval card JSON',cmd:'{\n  "type": "AdaptiveCard",\n  "version": "1.5",\n  "body": [\n    {"type":"TextBlock","text":"Approval Required","weight":"Bolder","size":"Medium","color":"Warning"},\n    {"type":"TextBlock","text":"${Topic.RequesterName} is requesting ${Topic.RequestType}","wrap":true},\n    {\n      "type": "FactSet",\n      "facts": [\n        {"title": "Requested by", "value": "${Topic.RequesterName}"},\n        {"title": "Details",      "value": "${Topic.RequestDetails}"},\n        {"title": "Urgency",      "value": "${Topic.Urgency}"},\n        {"title": "Due by",       "value": "${Topic.DueDate}"}\n      ]\n    }\n  ],\n  "actions": [\n    {"type":"Action.Submit","title":"Approve","style":"positive","data":{"decision":"approved","requestId":"${Topic.RequestID}"}},\n    {"type":"Action.Submit","title":"Reject","style":"destructive","data":{"decision":"rejected","requestId":"${Topic.RequestID}"}}\n  ]\n}'}
+ ]},
+
+{id:'pfx01',cat:'powerfx',icon:'⚡',title:'Power Fx — Common Mistakes',
+ desc:'Most common Power Fx errors in conditions and variable nodes with correct fixes',tags:['va'],
+ variants:[
+  {name:'Comparison operator errors',cmd:"# WRONG: single = for comparison\nIf(Topic.Status = 'Active', true, false)\n\n# RIGHT: double == for comparison\nIf(Topic.Status == 'Active', true, false)\n\n# WRONG: number in quotes\nIf(Topic.Priority == '1', ...)\n# RIGHT: number without quotes\nIf(Topic.Priority == 1, ...)\n\n# Condition NODE uses 'is equal to' dropdown\n# NOT Power Fx syntax - different from formula bar\n\n# WRONG: quotes mismatch\nIf(Topic.Name == \"John\", ...)\n# RIGHT: consistent single quotes\nIf(Topic.Name == 'John', ...)"},
+  {name:'Blank and null errors',cmd:"# WRONG: empty string check\nIf(Topic.Email == '', ...)\n\n# RIGHT: IsBlank()\nIf(IsBlank(Topic.Email), 'No email', Topic.Email)\n\n# WRONG: nested wrong\nIsBlank(Topic.Name = true)\n\n# RIGHT: IsBlank standalone\nIsBlank(Topic.Name)\n\n# Check blank OR empty string\nOr(IsBlank(Topic.Email), Topic.Email == '')\n\n# Coalesce: return first non-blank\nCoalesce(Topic.UserInput, Topic.DefaultValue, 'fallback')"},
+  {name:'String and type conversion errors',cmd:"# WRONG: + for string join\nTopic.FirstName + ' ' + Topic.LastName\n\n# RIGHT: Concatenate() or &\nConcatenate(Topic.FirstName, ' ', Topic.LastName)\nTopic.FirstName & ' ' & Topic.LastName\n\n# WRONG: mixing number into Concatenate directly\nConcatenate('Ticket #', Topic.TicketNumber) # if Number type\n\n# RIGHT: convert to Text first\nConcatenate('Ticket #', Text(Topic.TicketNumber))\n\n# Date to text\nText(Today(), 'dd/MM/yyyy')\n\n# Text to number\nValue(Topic.AmountString)"},
+  {name:'Date operations',cmd:"# Days between two dates\nDateDiff(Topic.StartDate, Today(), Days)\n\n# Add 7 days\nDateAdd(Today(), 7, Days)\n\n# WRONG: comparing date to string\nToday() == '2026-05-17'\n\n# RIGHT: convert text to date first\nToday() == DateValue('2026-05-17')\n\n# Is date within next 7 days?\nDateDiff(Today(), Topic.DueDate, Days) <= 7\n\n# Is date in the past?\nToday() > Topic.DueDate\n\n# Format for display\nText(Topic.MyDate, 'dd MMM yyyy')"}
+ ],refs:[{t:'Power Fx function reference',u:'https://learn.microsoft.com/en-us/power-platform/power-fx/formula-reference'}]},
+
+{id:'pfx02',cat:'powerfx',icon:'⚡',title:'Power Fx — Table & Record Operations',
+ desc:'Work with tables and records returned from PA flows and connector actions',tags:['va'],
+ variants:[
+  {name:'Table operations',cmd:"# Count rows\nCountRows(Topic.ResultsTable)\n\n# First / Last record\nFirst(Topic.ResultsTable)\nLast(Topic.ResultsTable)\n\n# Field from first record\nFirst(Topic.ResultsTable).TicketTitle\n\n# Filter table\nFilter(Topic.ResultsTable, Status == 'Open')\n\n# Sort\nSort(Topic.ResultsTable, Created, SortOrder.Descending)\n\n# Is empty\nIsEmpty(Topic.ResultsTable)\n\n# Any record matches?\n!IsEmpty(Filter(Topic.ResultsTable, Priority == 1))\n\n# Get by index (1-based)\nIndex(Topic.ResultsTable, 1).Title"},
+  {name:'Record operations',cmd:"# Access property\nTopic.UserRecord.displayName\nTopic.UserRecord.mail\nTopic.UserRecord.department\n\n# Create inline record\n{FirstName: 'John', LastName: 'Doe', Dept: 'IT'}\n\n# Check field is blank\nIsBlank(Topic.UserRecord.manager)\n\n# Patch: update a field\nPatch(Topic.MyRecord, {Status: 'Updated'})\n\n# JSON array from PA flow\n# PA: Parse JSON -> output is Table type in Copilot\n# Then: First(Topic.ParsedTable).fieldName"}
+ ]},
+
+{id:'pfx03',cat:'powerfx',icon:'⚡',title:'Variable Scope Quick Reference',
+ desc:'When to use Topic vs Global vs System vs Environment variables — complete reference',tags:['va'],
+ variants:[
+  {name:'Full scope comparison',cmd:"# Topic.VarName\n#   Scope:   Current topic only\n#   Cleared: When topic ends\n#   Use for: User inputs, temp data, flow outputs\n#   Example: Topic.UserEmail, Topic.TicketID\n\n# Global.VarName\n#   Scope:   Entire conversation session\n#   Cleared: When session ends\n#   Use for: User profile, auth flags, cross-topic state\n#   Example: Global.IsAuthenticated, Global.UserDept\n\n# System.*\n#   Scope:   Read-only, platform-provided\n#   Use for: User identity, conversation metadata\n#   Example: System.User.Email, System.Activity.Text\n\n# Environment Variables\n#   Scope:   Admin-set config per Power Platform env\n#   Use for: API URLs, feature flags, thresholds\n#   Access:  Pass from PA flow output"},
+  {name:'All System variables',cmd:"# USER IDENTITY (auth required)\nSystem.User.DisplayName     # John Smith\nSystem.User.Email            # john@contoso.com\nSystem.User.Id               # AAD Object ID (GUID)\nSystem.User.FirstName        # John\nSystem.User.LastName         # Smith\nSystem.User.PrincipalName    # john@contoso.com\nSystem.User.IsLoggedIn       # true/false\n\n# CONVERSATION\nSystem.Conversation.Id       # unique session ID\nSystem.Activity.Text         # last user message\nSystem.Activity.Id           # activity/message ID\n\n# BOT & CHANNEL\nSystem.Bot.DisplayName       # your agent name\nSystem.Bot.Id                # bot ID (28:xxx)\nSystem.Bot.TenantId          # tenant GUID\nSystem.Channel.DisplayName   # 'Microsoft Teams'"}
+ ]},
+
+{id:'err01',cat:'errors',icon:'🛠️',title:'Error: Topic Not Triggering',
+ desc:'Diagnose and fix when user messages do not match the intended topic',tags:['test'],
+ variants:[
+  {name:'Diagnosis and fixes',cmd:"# Symptom: message not matched to correct topic\n\n# Fix 1: Add more trigger phrases (min 5-10)\nExisting: reset my password\nAdd: forgot password, cant log in, password expired\nAdd: how do I change my login, locked out, password help\n\n# Fix 2: Check for trigger conflicts\nTwo topics with similar phrases = unpredictable routing\nFix: merge topics or make triggers more specific\n\n# Fix 3: Enable Generative Orchestration\nSettings > Generative AI > How copilot interacts\nSelect: Generative (AI routes by topic description)\nWrite better, more specific topic descriptions\n\n# Fix 4: Test with exact phrase in test pane\nCorrect topic fires: phrasing variation issue\nWrong topic fires: conflicting triggers elsewhere\n\n# Fix 5: Check topic is Published\nSave is NOT enough - must click Publish button"}
+ ]},
+
+{id:'err02',cat:'errors',icon:'🛠️',title:'Error: Flow Not Running / Blank Output',
+ desc:'Diagnose Power Automate flow failures and blank variable returns',tags:['test','ac'],
+ variants:[
+  {name:'Flow not running',cmd:"# Fix 1: Flow must be PUBLISHED not just saved\nPA > My Flows > Status must be: On\nEdit flow > click Publish button\n\n# Fix 2: Connection using personal account\nCheck all connectors use service account not personal login\n\n# Fix 3: Input parameter name mismatch (CASE SENSITIVE)\nCopilot input name: userEmail\nFlow trigger name:   userEmail  <- must match EXACTLY\n\n# Fix 4: DLP policy blocking connector\nAdmin Center > Data Policies > check environment\nSharePoint, Teams must be in Business group\n\n# Fix 5: View run history\nPA > My Flows > select flow > Run history\nExpand failed run > see exact error at which action"},
+  {name:'Blank variable from flow',cmd:"# Fix 1: Output not mapped in Call Action node\nCall action > expand outputs\nFlow output: ticketId -> Topic.TicketID  <- map this!\n\n# Fix 2: Variable scope wrong\nTopic. variables die when topic ends\nIf using redirect: switch to Global. instead\n\n# Fix 3: Flow returning null\nPA run history > check return value\nAdd in flow: if(empty(outputs?['body']), 'N/A', ...)\n\n# Fix 4: Type mismatch\nFlow returns Number, Copilot expects Text\nFix: Text(Topic.NumberVariable)\n\n# Fix 5: Terminate action missing\nAlways end flows with Terminate > Succeeded\n# Without this, Copilot gets raw error"}
+ ]},
+
+{id:'err03',cat:'errors',icon:'🛠️',title:'Error: Auth & Sign-in Failures',
+ desc:'Fix the most common authentication errors in Copilot Studio agents',tags:['test','auth'],
+ variants:[
+  {name:'Auth error fixes',cmd:"# ERROR: Invalid redirect URI\n# Redirect URI MUST be exactly:\nhttps://token.botframework.com/.auth/web/redirect\n# No trailing slash. No http.\n\n# ERROR: Admin consent not granted\n# App registration > API permissions\n# Click: Grant admin consent for [tenant]\n# All permissions must show green tick\n\n# ERROR: Client secret expired\n# App reg > Certificates & secrets > check expiry\n# Create new secret, update in Copilot Studio settings\n# Set reminder 2 months before next expiry\n\n# ERROR: Scope mismatch\n# Copilot auth scopes must match app reg permissions\n# Common missing: offline_access\n# Full scopes: openid profile email User.Read offline_access\n\n# ERROR: Teams SSO loop\n# Fix 1: Bot must be PUBLISHED before Teams SSO works\n# Fix 2: App ID in manifest must match bot channel App ID"}
+ ]},
+
+{id:'err04',cat:'errors',icon:'🛠️',title:'PA Flow — Try-Catch Pattern',
+ desc:'Production error handling: Try-Catch scope with consistent output to Copilot Studio',tags:['ac','test'],
+ variants:[
+  {name:'Full Try-Catch pattern',cmd:"# Step 1: Initialize at top of flow (before Try scope)\nInitialize: success (Boolean) = true\nInitialize: userMessage (String) = empty\nInitialize: resultData (String) = empty\n\n# Step 2: Scope named TRY\n# Put ALL actions inside TRY\n\n# Step 3: Inside TRY - on success\nSet success = true\nSet userMessage = 'Done! Your request has been created.'\nSet resultData = @{outputs('Get_items')?['body/value']}\n\n# Step 4: Scope named CATCH\nConfigure run after: TRY has failed / timed out / skipped\n\n# Step 5: Inside CATCH\nSet success = false\nSet userMessage = 'Something went wrong. Our team has been notified.'\n# Log error (do NOT show raw error to user)\nCompose: @{result('TRY')[0]['error']['message']}\nSend alert email: it-alerts@contoso.com\n\n# Step 6: ALWAYS add Terminate at end of flow\nTerminate > Status: Succeeded\n# Without this Copilot gets a raw error and breaks\n\n# Step 7: Return values to Copilot\nReturn: success, userMessage, resultData\n# Copilot checks: if success = false -> show userMessage"}
+ ]},
+
+{id:'auto01',cat:'autonomous',icon:'🤖',title:'Autonomous Trigger Setup',
+ desc:'Configure proactive agents that fire on events without user initiation (2026)',tags:['gen','ac'],
+ variants:[
+  {name:'Trigger types',cmd:"# AUTONOMOUS TRIGGERS (2026 feature)\n# Agent fires automatically on event - no user needed\n\n# 1. Dataverse record event\nWhen row added/modified/deleted\nTable: pick Dataverse table\nFilter rows: statuscode eq 1 and prioritycode eq 1\n\n# 2. Schedule (recurrence)\nEvery 1 hour / daily at 8am / weekly Monday\n\n# 3. HTTP webhook\nWhen HTTP request received\nExternal system POSTs JSON to trigger URL\n\n# 4. Teams channel message\nWhen message posted to channel\nFilter: keyword contains 'urgent'\n\n# Configure in Copilot Studio:\nTopics > + New Topic > From blank\nChange trigger: Phrases -> event type above"},
+  {name:'Example: P1 ticket auto-response',cmd:"# Trigger: Dataverse row created\nTable: incidents\nFilter: statecode eq 0 and prioritycode eq 1\n\n# Agent actions on trigger:\n1. Get full ticket from Dataverse\n   Get row by ID: triggerBody()?['incidentid']\n\n2. Check if assigned\n   Condition: IsBlank(ownerid)\n     YES -> Update row: ownerid = on-call-queue-guid\n\n3. Notify requester via proactive Teams DM\n   Post message in chat (Copilot connector)\n   Bot ID: {BotID}\n   Recipient: requester AAD object ID\n   Message: Your P1 ticket has been received and assigned\n\n4. Alert SOC Teams channel\n   Post adaptive card with ticket details\n\n# No user starts this - fully automated on ticket creation"}
+ ],refs:[{t:'Autonomous triggers',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/advanced-plugin-actions'}]},
+
+{id:'auto02',cat:'autonomous',icon:'🤖',title:'Agent-to-Agent Communication',
+ desc:'Route from a master orchestrator agent to specialist sub-agents',tags:['gen','ac'],
+ variants:[
+  {name:'Orchestration architecture',cmd:"# MASTER + SPECIALIST PATTERN\n\nMaster Agent (all user messages route here)\n  |-- Specialist: IT Helpdesk Agent\n  |-- Specialist: HR Leave Agent\n  |-- Specialist: Finance Procurement Agent\n\n# In Master Agent topic:\nNode: Condition - detect intent\n  IT keywords -> Call IT Specialist\n  HR keywords -> Call HR Specialist\n\nNode: Call an action\nConnector: Microsoft Copilot Studio\nAction: Trigger an agent\nAgent: [select specialist from dropdown]\nInput: Topic.UserMessage, context object\nOutput: Topic.SpecialistResponse\n\n# Benefits:\n# Smaller focused agents = higher accuracy\n# Each specialist has own knowledge source\n# Reuse specialists across multiple masters"},
+  {name:'Pass context between agents',cmd:"# Build context before calling specialist\nSet Topic.Context = {\n  userEmail:   System.User.Email,\n  userDept:    Global.UserDepartment,\n  originalMsg: System.Activity.Text,\n  sessionId:   System.Conversation.Id,\n  intent:      Topic.DetectedIntent\n}\n\n# Specialist uses context to:\n# Personalise without re-asking who they are\n# Use originalMsg without user repeating themselves\n# Log sessionId for end-to-end audit trail\n\n# Specialist returns:\nOutput: responseText, actionTaken, status, followUp\n\n# Master decides:\nIf followUp = true -> ask clarifying question\nIf status = completed -> confirm and close"}
+ ]},
+
+{id:'ml01',cat:'multilang',icon:'🌐',title:'Multi-language Agent Setup',
+ desc:'Detect user language and serve responses in multiple languages',tags:['gen','tp'],
+ variants:[
+  {name:'Language detection approaches',cmd:"# METHOD 1: System locale (Teams/M365)\nSystem.User.Locale  # en-US, fr-FR, es-ES\nSet Global.Lang = First(Split(System.User.Locale, '-'))\n# Result: 'en', 'fr', 'es'\n\n# METHOD 2: Ask user (most reliable)\nQuestion: What is your preferred language?\nQuick Replies: English | Francais | Espanol | Chinese\nStore in: Global.Language\nSet in Greeting topic\n\n# METHOD 3: AI Builder language detection\nAction: Detect language (AI Builder)\nInput: System.Activity.Text (first message)\nOutput: Global.DetectedLanguage\n\n# Then in each topic - language branch:\nCondition: Global.Lang == 'fr'\n  -> French message\nCondition: Global.Lang == 'es'\n  -> Spanish message\nDefault:\n  -> English"},
+  {name:'Scalable SharePoint lookup pattern',cmd:"# SP List: AgentMessages\n# Columns: MessageKey | EN | FR | ES | AR\n\n# In topic - get message from SP\nFilter: MessageKey eq 'TicketCreated'\nStore: Topic.MsgRow = First(Topic.SPItems)\n\n# Show correct language\nCondition: Global.Lang == 'fr'\n  Message: {Topic.MsgRow.FR}\nCondition: Global.Lang == 'es'\n  Message: {Topic.MsgRow.ES}\nDefault:\n  Message: {Topic.MsgRow.EN}\n\n# NATIVE LOCALISATION\nSettings > Languages > Add language\nTranslate trigger phrases and messages\nAgent auto-detects from user locale\nBest for new agents built multilingual from start"}
+ ],refs:[{t:'Copilot Studio multilingual support',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/authoring-language-support'}]},
+
+{id:'ho01',cat:'handoff',icon:'🧑‍💼',title:'Human Handoff — Teams Escalation',
+ desc:'Escalate to Teams channel with transcript, context, and ticket creation',tags:['tp','ch'],
+ variants:[
+  {name:'Teams escalation topic',cmd:"# TOPIC: Escalate to Human Agent\n# Triggered by: system Escalate topic or manual redirect\n\nStep 1: Collect reason\nQuestion: Can you briefly describe what you need help with?\nStore: Topic.EscalationReason\n\nStep 2: Set metadata\nSet Global.EscalatedAt = Text(Now(), 'dd/MM/yyyy HH:mm')\nSet Global.ConversationId = System.Conversation.Id\n\nStep 3: Call PA flow\nInputs: userEmail, userName, reason, conversationId, escalatedAt\nFlow actions:\n  1. Create ticket in SP / ServiceNow\n  2. Post adaptive card to Teams #support channel\n     Card: user name, reason, ticket ref, transcript link\n  3. Send DM to user confirming escalation\n\nStep 4: Message to user\nMessage: Your request has been passed to the support team.\nReference: {Topic.TicketNumber}\nExpected response: within 2 business hours."},
+  {name:'Omnichannel D365 handoff',cmd:"# Requires: Dynamics 365 Customer Service + Omnichannel\n\n# Step 1: Connect in Copilot Studio\nSettings > Customer engagement hub\nConnect to: Dynamics 365 CS environment\n\n# Step 2: Transfer Conversation node\nNode type: Transfer Conversation\nQueue: 'IT Support Queue'\nContext variables to pass:\n  CustomerName:  System.User.DisplayName\n  CustomerEmail: System.User.Email\n  IssueType:     Global.IssueType\n  Priority:      Topic.Priority\n\n# What agent sees:\n- Full conversation transcript\n- Context variables pre-populated\n- Customer details auto-filled\n\n# Handle no agents available:\nOut of hours OR all busy:\nMessage: No agents available right now.\nOffer: leave message / schedule callback\nFallback: create email ticket via PA flow"}
+ ],refs:[{t:'Omnichannel handoff',u:'https://learn.microsoft.com/en-us/microsoft-copilot-studio/advanced-hand-off'}]},
+
+{id:'pbi01',cat:'powerbi',icon:'📊',title:'Power BI — Agent Analytics Dashboard',
+ desc:'Push Copilot Studio usage metrics to Power BI for executive reporting',tags:['ac','gov'],
+ variants:[
+  {name:'Streaming dataset + PA flow',cmd:"# ARCHITECTURE:\n# Copilot Studio Analytics -> PA flow (daily) -> Power BI streaming\n\n# Step 1: Create Power BI streaming dataset\nPower BI > My workspace > + New > Streaming dataset\nType: API\nFields:\n  sessionCount      Number\n  resolutionRate    Number\n  escalationRate    Number\n  abandonRate       Number\n  topTopic          Text\n  reportDate        DateTime\nCopy push URL from dataset settings\n\n# Step 2: PA scheduled flow (daily 6am)\nTrigger: Recurrence\nAction: Copilot Studio Management connector\n  Get conversations - past 24 hours\nCalculate: count, resolution rate, escalation rate\nHTTP POST to Power BI push URL\nBody: {sessionCount, resolutionRate, topTopic, reportDate}"},
+  {name:'Dashboard tiles to build',cmd:"# Recommended Power BI tiles\n\n# 1. Card: Sessions today\n# 2. Gauge: Resolution rate (target 70%)\n#    Green > 70%, Amber 50-70%, Red < 50%\n# 3. Line chart: Sessions over 30 days\n#    X: reportDate, Y: sessionCount\n# 4. Bar chart: Top escalation topics\n#    Shows where agent needs improvement\n# 5. Donut: Resolution vs Escalation vs Abandon\n# 6. Table: Session detail (date, topic, outcome)\n\n# Copilot Studio Management connector in PA\n# Actions available:\nGet bot - retrieve agent details\nGet conversations - session list\nGet conversation transcript - full transcript\n\n# Calculate resolution rate in PA\n# resolvedCount / totalCount * 100"}
+ ],refs:[{t:'Power BI streaming datasets',u:'https://learn.microsoft.com/en-us/power-bi/connect-data/service-real-time-streaming'}]},
+
+{id:'gov03',cat:'govops',icon:'🏗️',title:'Agent Governance Checklist',
+ desc:'Enterprise governance framework before go-live for any Copilot Studio agent',tags:['gov'],
+ variants:[
+  {name:'Pre-production checklist',cmd:"# IDENTITY & SECURITY\n[ ] Authentication type confirmed (Teams SSO / OAuth / Anonymous)\n[ ] Service account used for ALL flow connections (not personal)\n[ ] App reg secrets documented with expiry dates + calendar reminders\n[ ] DLP policy applied to environment\n[ ] Agent access scoped to correct security group\n\n# DATA HANDLING\n[ ] No sensitive data stored in Global variables beyond session\n[ ] PII inputs masked in question nodes where applicable\n[ ] Conversation transcripts reviewed - disable if sensitive topics\n[ ] GDPR / data residency requirements met (check env region)\n\n# QUALITY\n[ ] All topics have 5+ trigger phrases\n[ ] All topics have a description (required for generative orchestration)\n[ ] Fallback topic customised with useful options\n[ ] Escalation topic routes to real support channel\n[ ] All PA flows have error handling (Try-Catch + Terminate)\n[ ] Tested with real user accounts in target channel\n\n# OPERATIONS\n[ ] Deployed via solution (not default environment)\n[ ] Environment variables used for all config values\n[ ] Agent added to source control (pac solution unpack)\n[ ] Analytics monitoring configured\n[ ] Runbook created: who to contact if agent breaks"},
+  {name:'Multi-agent naming convention',cmd:"# Agent naming: Company-Domain-Type-Env\ncontoso-IT-Helpdesk-PROD\ncontoso-HR-Onboarding-PROD\ncontoso-Finance-Procurement-UAT\n\n# Topic naming: Area - Action\nIT - Password Reset\nHR - Leave Balance\nHR - Submit Leave Request\n\n# Variable naming: PascalCase\nTopic.TicketNumber\nGlobal.UserDepartment\nGlobal.IsAuthenticated\n\n# PA flow naming: Agent-Action-v#\nIT-Helpdesk-CreateTicket-v1\nHR-Helpdesk-SubmitLeave-v2\n\n# Environment naming\ncontoso-IT-DEV\ncontoso-IT-UAT\ncontoso-IT-PROD\n\n# Solution naming: Company_Domain_Version\ncontoso_IT_1_2_0_0"}
+ ]},
+
+{id:'rw01',cat:'realworld',icon:'🏢',title:'IT Helpdesk Agent — Full Blueprint',
+ desc:'Complete IT Helpdesk: password reset, ticket creation, VPN access, status check',tags:['pat','ac'],
+ variants:[
+  {name:'Topics to build',cmd:"# CORE TOPICS\n\n1. Greeting\n   Auth check -> personalised welcome\n   Quick reply menu: Password | Ticket | Status | VPN | Other\n\n2. Password Reset\n   Triggers: reset password, forgot password, locked out, cant login\n   Verify identity -> PA flow: Graph API reset\n   Output: temp password via SMS/email\n\n3. Create IT Ticket\n   Triggers: raise ticket, report issue, broken, IT support\n   Collect: title, description, priority (Quick Reply), category\n   Confirmation card -> PA flow -> create in SP/ServiceNow\n   Output: INC number, estimated response time\n\n4. Check Ticket Status\n   Triggers: check ticket, ticket status, update on INC\n   Entity: TicketID (regex: INC[0-9]{7})\n   PA flow -> get from SP/ServiceNow\n   Show: status card with assignee, last update, notes\n\n5. VPN Access Request\n   Triggers: VPN access, remote access, work from home\n   Collect: justification, duration, manager email\n   Flow: send manager approval -> Entra group add if approved\n\n6. Escalate to Human\n   System Escalate topic: collect reason -> post to Teams #it-support"},
+  {name:'Key PA flows to build',cmd:"# Flow 1: Create Ticket\nInputs: title, description, priority, category, userEmail\n  Create SP list item (Tickets list)\n  Generate INC number\n  Alert Teams if priority = High\n  Teams DM to user confirming\nOutputs: incNumber, estimatedResponse\n\n# Flow 2: Get Ticket Status\nInputs: incNumber, userEmail\n  Get SP items: filter IncNumber = input\n  Security check: verify requestedBy = ticket owner\nOutputs: status, assignee, lastUpdate, notes, isFound\n\n# Flow 3: Password Reset (Graph API)\nInputs: userEmail, verificationAnswer\n  Verify answer vs HR SharePoint record\n  Graph PATCH /users/{id}:\n    passwordProfile.temporaryPassword: [random]\n    forceChangePasswordNextSignIn: true\n  Send password via SMS/email\nOutputs: success, message\n\n# Flow 4: VPN Access\nInputs: userEmail, justification, duration, managerEmail\n  Create approval -> managerEmail\n  If approved: Graph POST /groups/{VPN-GroupId}/members\n  Notify user: decision + access details\nOutputs: approvalStatus, accessGranted"}
+ ]},
+
+{id:'rw02',cat:'realworld',icon:'🏢',title:'HR Onboarding Agent — Full Blueprint',
+ desc:'HR agent: leave requests, policy Q&A, onboarding checklist, team directory',tags:['pat','ac'],
+ variants:[
+  {name:'Topics to build',cmd:"# HR AGENT TOPICS\n\n1. Greeting & Menu\n   Auth: Teams SSO\n   Menu: Leave | Policy Question | Onboarding | Benefits | Directory\n\n2. Leave Request\n   Triggers: apply for leave, time off, annual leave, sick leave\n   Collect: type (Quick Reply), start date, end date, reason\n   Confirmation card -> PA flow: SP record + manager approval\n   Output: reference number, approval notification\n\n3. Policy Q&A (Generative AI)\n   Knowledge: SharePoint /sites/HR (HR Policies library)\n   No manual authoring needed\n   Handles: leave policy, remote work, dress code, GDPR\n   Fallback: escalate to HR team if no answer\n\n4. Onboarding Checklist\n   Triggers: new hire, onboarding, first day, what do I need to do\n   Show step-by-step card: IT setup, access, training, benefits\n   Links to: IT Setup Guide, Benefits Portal, Handbook\n\n5. Benefits Enquiry\n   Knowledge: Benefits SP library\n   Generative AI with source citations\n\n6. Team Directory\n   Entity: Person Name (built-in)\n   Graph API: GET /users?$filter=startsWith(displayName,'{Name}')\n   Return: profile card with email, phone, department"},
+  {name:'Leave request flow',cmd:"# LEAVE REQUEST PA FLOW\nInputs: userEmail, leaveType, startDate, endDate, reason\n\n# Validate\nCondition: startDate > Today()\n  NO -> error: start date must be in future\n\n# Check balance\nGet SP item: EmployeeLeaveBalance, filter by email\nCondition: availableDays >= requestedDays\n  NO -> error: insufficient leave balance\n\n# Create record\nSP List: Leave Requests\nColumns: Employee, Type, StartDate, EndDate, Status=Pending\n\n# Get manager\nGraph: GET /users/{userEmail}/manager\n\n# Send approval\nApprovals: Start and wait\nAssigned to: managerEmail\nTimeout: 3 days\n\n# Update on decision\nIf Approved:\n  SP: Status = Approved\n  Deduct from leave balance\n  Teams DM: approved + calendar invite\nIf Rejected:\n  SP: Status = Rejected\n  Teams DM: rejected + manager comments\n\nOutputs: refNumber, outcome"}
+ ]},
+
+{id:'rw03',cat:'realworld',icon:'🏢',title:'Security Incident Agent — Full Blueprint',
+ desc:'Security agent: phishing reporting, account revocation, SOC escalation',tags:['pat','ac','auth'],
+ variants:[
+  {name:'Topics to build',cmd:"# SECURITY INCIDENT AGENT\n\n1. Report Phishing\n   Triggers: phishing, suspicious email, scam, fake email\n   Collect: sender, subject\n   Critical: Did you click any links?\n     YES -> P1: revoke sessions + alert SOC immediately\n     NO  -> P2: log + advise user\n   Always: send guidance card (what to do now)\n\n2. Report Suspicious Activity\n   Triggers: suspicious login, hacked, account compromised\n   Auth required: verify identity first\n   Collect: what noticed, when, which device/location\n   Flow:\n     Revoke all sessions (Graph revokeSignInSessions)\n     Force MFA re-registration\n     Create P1 incident\n     Page SOC on-call via Teams urgent message\n\n3. Request Access Revocation\n   Triggers: disable account, employee leaving, revoke access\n   Auth: HR or IT Security role verified\n   Collect: target user email, reason, immediate or scheduled\n   Flow:\n     Verify requester authority (group membership check)\n     Disable AAD account\n     Remove from all groups\n     Revoke all sessions\n     Create audit log\n\n4. Security Policy Q&A\n   Knowledge: Security Policy SP library\n   Topics: password policy, MFA, acceptable use, BYOD"},
+  {name:'Graph API: Emergency Revocation Flow',cmd:"# Flow: Emergency Account Revocation\nInputs: targetUserEmail, requestedByEmail, reason\n\n# 1. Verify requester authority\nGraph: GET /users/{requestedByEmail}/memberOf\nCheck: groups include 'IT-Security' or 'HR-Team'\nNot member -> return: not authorised\n\n# 2. Get target user\nGraph: GET /users/{targetUserEmail}\nStore: targetUserId\n\n# 3. Revoke all sessions\nGraph: POST /users/{targetUserId}/revokeSignInSessions\n\n# 4. Disable account\nGraph: PATCH /users/{targetUserId}\nBody: {accountEnabled: false}\n\n# 5. Remove from all groups\nGraph: GET /users/{targetUserId}/memberOf\nForEach groupId:\n  DELETE /groups/{groupId}/members/{targetUserId}\n\n# 6. Audit log\nSP List: SecurityActions\nCreate: Action, Target, RequestedBy, Reason, Timestamp\n\n# 7. Alert SOC Teams channel\nPost card with full action summary\n\nOutputs: success, actionsCompleted, auditRef\n\n# Service account needs:\n# User.ReadWrite.All, GroupMember.ReadWrite.All"}
+ ]}
+];
+
+var SAMPLE={AgentName:'IT Helpdesk',Environment:'contoso',TenantID:'a1b2c3d4-e5f6-7890-abcd-ef1234567890',ClientID:'b2c3d4e5-f6a7-8901-bcde-f23456789012',BotID:'28:abc123def456',SharePointSite:'https://contoso.sharepoint.com/sites/IT',FlowURL:'https://prod-xx.westus.logic.azure.com:443/workflows/abc123'};
+
+var TM={tp:'tg-a',en:'tg-v',va:'tg-l',ac:'tg-p',auth:'tg-e',gen:'tg-m',ch:'tg-x',test:'tg-w',gov:'tg-s',pat:'tg-r',odata:'tg-v',json:'tg-p',pfx:'tg-l',err:'tg-e',auto:'tg-m',ml:'tg-w',ho:'tg-s',pbi:'tg-x',rw:'tg-a'};
+var TL={tp:'topics',en:'entities',va:'variables',ac:'actions',auth:'security',gen:'gen-ai',ch:'channels',test:'testing',gov:'governance',pat:'patterns',odata:'odata/filter',json:'json/cards',pfx:'power-fx',err:'errors',auto:'autonomous',ml:'multilang',ho:'handoff',pbi:'power-bi',rw:'real-world'};
+
+var aCat='all',aTag=null,aSrch='',sel=null;
+var V={AgentName:'',Environment:'',TenantID:'',ClientID:'',BotID:'',SharePointSite:'',FlowURL:''};
+
+Object.keys(V).forEach(function(k){
+  var el=document.getElementById('v_'+k);
+  if(!el)return;
+  el.addEventListener('input',function(){V[k]=el.value.trim();if(sel)renderR(sel);});
+});
+
+function sv(cmd){return cmd.replace(/\{([A-Z_]+)\}/g,function(m,k){return V[k]||m;});}
+
+function hl(raw){
+  var s=sv(raw).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  s=s.replace(/\{([A-Z_]+)\}/g,'<span class="vh">{$1}</span>');
+  s=s.replace(/((?:^|\s)-{1,2}[a-zA-Z][a-zA-Z0-9_-]*)/gm,'<span class="vf">$1</span>');
+  s=s.replace(/(#[^\n]*)/g,'<span class="vc">$1</span>');
+  return s;
+}
+
+function buildSB(){
+  var el=document.getElementById('catList');el.innerHTML='';
+  CATS.forEach(function(c){
+    var n=CHEATS.filter(function(x){return x.cat===c.id;}).length;
+    var d=document.createElement('div');d.className='sbc';d.dataset.cat=c.id;
+    d.innerHTML='<div class="sc-lf"><div class="sc-d" style="background:'+c.dot+'"></div><span class="sc-l">'+c.label+'</span></div><span class="sc-n">'+n+'</span>';
+    var f=function(){setC(c.id,c.label);};d.addEventListener('click',f);kbd(d,f);
+    el.appendChild(d);
+  });
+  document.getElementById('cnt-all').textContent=CHEATS.length;
+}
+
+function setC(id,lbl){
+  aCat=id;
+  document.querySelectorAll('.sbc,.sb-all').forEach(function(e){e.classList.remove('act');});
+  if(id==='all'){document.getElementById('cat-all').classList.add('act');document.getElementById('actLbl').textContent='All Topics';}
+  else{document.querySelectorAll('.sbc').forEach(function(e){if(e.dataset.cat===id)e.classList.add('act');});document.getElementById('actLbl').textContent=lbl;}
+  renderCards();
+}
+
+(function buildTF(){
+  var seen={},at=[];
+  CHEATS.forEach(function(c){c.tags.forEach(function(t){if(!seen[t]){seen[t]=true;at.push(t);}});});
+  var wrap=document.getElementById('tagF');
+  at.forEach(function(t){
+    var b=document.createElement('button');b.className='tf';b.textContent=TL[t]||t;b.dataset.tag=t;
+    b.addEventListener('click',function(){
+      if(aTag===t){aTag=null;b.classList.remove('act');}
+      else{document.querySelectorAll('.tf').forEach(function(x){x.classList.remove('act');});aTag=t;b.classList.add('act');}
+      renderCards();
+    });
+    wrap.appendChild(b);
+  });
+})();
+
+function renderCards(){
+  var wrap=document.getElementById('cw');
+  var f=CHEATS.filter(function(c){
+    if(aCat!=='all'&&c.cat!==aCat)return false;
+    if(aTag&&!c.tags.includes(aTag))return false;
+    if(aSrch){var s=aSrch.toLowerCase();return c.title.toLowerCase().includes(s)||c.desc.toLowerCase().includes(s)||c.tags.some(function(t){return(TL[t]||t).includes(s);})||c.variants.some(function(v){return v.cmd.toLowerCase().includes(s)||v.name.toLowerCase().includes(s);});}
+    return true;
+  });
+  document.getElementById('visCnt').textContent=f.length+' topics';
+  wrap.innerHTML='';
+  f.forEach(function(ch){
+    var d=document.createElement('div');d.className='cc'+(sel&&sel.id===ch.id?' sel':'');
+    d.innerHTML='<div class="cc-t"><span class="cc-i">'+ch.icon+'</span><span class="cc-n">'+ch.title+'</span></div><div class="cc-d">'+ch.desc+'</div><div class="cc-tg">'+ch.tags.map(function(t){return '<span class="tg '+(TM[t]||'tg-r')+'">'+(TL[t]||t)+'</span>';}).join('')+'</div>';
+    var pick=function(){document.querySelectorAll('.cc').forEach(function(c){c.classList.remove('sel');});d.classList.add('sel');sel=ch;renderR(ch);var rp=document.getElementById('rp');if(rp)rp.classList.add('open');};d.addEventListener('click',pick);kbd(d,pick);
+    wrap.appendChild(d);
+  });
+}
+
+function renderR(ch){
+  document.getElementById('rpE').style.display='none';
+  var rc=document.getElementById('rpC');rc.style.display='flex';
+  var cat=CATS.find(function(c){return c.id===ch.cat;});
+  var w=ch.title.split(' ');
+  document.getElementById('rpT').innerHTML=w.slice(0,-1).join(' ')+' <span>'+w[w.length-1]+'</span>';
+  var rf=ch.refs?(ch.refs.map(function(r){return '<a class="rf-a" href="https://learn.microsoft.com/en-us/search/?terms='+encodeURIComponent(r.t)+'" target="_blank" rel="noopener">'+r.t+'</a>';}).join('')):'';
+  document.getElementById('rpI').innerHTML='<div class="ri-t">'+ch.title+'</div><div class="ri-d">'+ch.desc+'</div><div class="ri-tg"><span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;padding:1px 6px;background:rgba(255,255,255,.04);color:var(--muted);border:1px solid var(--border)">'+(cat?cat.label:ch.cat)+'</span>'+ch.tags.map(function(t){return '<span class="tg '+(TM[t]||'tg-r')+'">'+(TL[t]||t)+'</span>';}).join('')+'</div>'+(rf?'<div class="ri-rf">'+rf+'</div>':'');
+  var vw=document.getElementById('rpV');vw.innerHTML='';
+  ch.variants.forEach(function(v,vi){
+    var b=document.createElement('div');b.className='vb';
+    b.innerHTML='<div class="vb-r"><span class="vb-n">'+v.name+'</span><div class="vb-a"><button class="cp" data-vi="'+vi+'">Copy</button><button class="ce" data-vi="'+vi+'">Copy+Enter</button></div></div><div class="cb" data-vi="'+vi+'">'+hl(v.cmd)+'</div>';
+    vw.appendChild(b);
+    b.querySelectorAll('[data-vi]').forEach(function(btn){
+      btn.addEventListener('click',function(e){
+        e.stopPropagation();
+        var isE=btn.tagName==='BUTTON'&&btn.classList.contains('ce');
+        navigator.clipboard.writeText(sv(v.cmd)+(isE?'\n':'')).then(function(){
+          toast('Copied'+(isE?' + Enter':'')+'!');
+          if(btn.tagName==='BUTTON'&&btn.classList.contains('cp')){btn.textContent='Copied!';btn.classList.add('ok');setTimeout(function(){btn.textContent='Copy';btn.classList.remove('ok');},1400);}
+        });
+      });
+    });
+  });
+}
+
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},1700);}
+function clearV(){Object.keys(V).forEach(function(k){V[k]='';var el=document.getElementById('v_'+k);if(el)el.value='';});if(sel)renderR(sel);toast('Variables cleared');}
+
+document.getElementById('srch').addEventListener('input',function(){aSrch=this.value.trim();renderCards();});
+document.getElementById('cat-all').addEventListener('click',function(){setC('all','All Topics');});
+kbd(document.getElementById('cat-all'),function(){setC('all','All Topics');});
+document.getElementById('clrVars').addEventListener('click',clearV);
+document.getElementById('clrBtn2').addEventListener('click',clearV);
+document.getElementById('sampleBtn').addEventListener('click',function(){
+  Object.keys(SAMPLE).forEach(function(k){V[k]=SAMPLE[k];var el=document.getElementById('v_'+k);if(el)el.value=SAMPLE[k];});
+  if(sel)renderR(sel);toast('Loaded — Contoso IT Agent');
+});
+document.getElementById('rpX').addEventListener('click',function(){sel=null;document.getElementById('rpC').style.display='none';document.getElementById('rpE').style.display='flex';document.querySelectorAll('.cc').forEach(function(c){c.classList.remove('sel');});var rp=document.getElementById('rp');if(rp)rp.classList.remove('open');});
+function openM(){document.getElementById('modal').classList.add('show');}
+function closeM(){document.getElementById('modal').classList.remove('show');}
+document.getElementById('helpBtn').addEventListener('click',openM);
+document.getElementById('mClose').addEventListener('click',closeM);
+document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeM();});
+document.addEventListener('keydown',function(e){
+  if(e.key==='?'&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName)){openM();return;}
+  if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();document.getElementById('srch').focus();}
+  if(e.key==='Escape'){closeM();var rp=document.getElementById('rp');if(rp)rp.classList.remove('open');}
+});
+
+buildSB();renderCards();
+if(!localStorage.getItem('ccs1')){setTimeout(openM,500);localStorage.setItem('ccs1','1');}
+})();
+</script>
+<script>(function(){function s(){var a=document.querySelector('.app'),v=document.querySelector('.vbar');if(!a)return;if(!v||getComputedStyle(v).display==='none'){a.style.marginTop='';a.style.height='';return;}var o=Math.round(v.getBoundingClientRect().bottom);a.style.marginTop=o+'px';a.style.height='calc(100vh - '+o+'px)';}window.addEventListener('resize',s);window.addEventListener('load',s);document.addEventListener('DOMContentLoaded',s);var vb=document.querySelector('.vbar');if(vb)vb.addEventListener('input',s);s();})();</script>
+</body>
+</html>

@@ -1,0 +1,2013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CA Policy Advisor — eusebio@it-sec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=JetBrains+Mono:wght@300;400;500;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+
+:root{
+  --void:#070809;--bg:#070809;--bg2:#0d0f13;--card:#13161d;--card2:#191d26;
+  --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.14);--line-2:rgba(255,255,255,.14);
+  --blue:#2f81f7;--cyan:#00e5ff;--red:#ff3b4e;--green:#22e584;--orange:#ffb454;--yellow:#ffd166;--purple:#b98aff;--violet:#b98aff;--teal:#2dd4bf;
+  --text:#e7ebf2;--soft:#8a93a3;--muted:#525c6b;--dim:#2a303a;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+body{background:var(--void);color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;line-height:1.65;overflow-x:hidden;min-height:100vh}
+::selection{background:var(--teal);color:#04201c}
+#bg-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.5}
+#bg-glow{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(55% 45% at 15% 8%,rgba(45,212,191,.06),transparent 70%),radial-gradient(55% 45% at 88% 92%,rgba(47,129,247,.05),transparent 70%)}
+/* accessibility: visible keyboard focus */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible,.tab-btn:focus-visible{outline:2px solid var(--teal);outline-offset:2px;border-radius:4px}
+.check-pill:focus-within{outline:2px solid var(--teal);outline-offset:2px}
+.ca-toasts{position:fixed;right:18px;bottom:18px;z-index:700;display:flex;flex-direction:column;gap:8px;max-width:340px;pointer-events:none}
+.ca-toast{display:flex;align-items:flex-start;gap:9px;background:var(--card2);border:1px solid var(--border2);border-left:3px solid var(--teal);border-radius:10px;padding:11px 13px;font-size:12.5px;color:var(--text);box-shadow:0 12px 32px rgba(0,0,0,.45);opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s;pointer-events:auto}
+.ca-toast.show{opacity:1;transform:none}
+.ca-toast-success{border-left-color:var(--green)}.ca-toast-info{border-left-color:var(--blue)}.ca-toast-danger{border-left-color:var(--red)}.ca-toast-warn{border-left-color:var(--yellow)}
+.ca-toast-ic{flex-shrink:0;font-size:13px;line-height:1.5}
+.ca-toast-success .ca-toast-ic{color:var(--green)}.ca-toast-info .ca-toast-ic{color:var(--blue)}.ca-toast-danger .ca-toast-ic{color:var(--red)}.ca-toast-warn .ca-toast-ic{color:var(--yellow)}
+.ca-toast-msg{flex:1;line-height:1.5}
+.ca-toast-act{margin-left:2px;background:transparent;border:1px solid var(--line-2);color:var(--teal);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:6px;cursor:pointer;flex-shrink:0}
+.ca-toast-act:hover{border-color:var(--teal);background:rgba(45,212,191,.1)}
+.ca-spin{display:inline-block;width:11px;height:11px;border:2px solid rgba(255,255,255,.25);border-top-color:currentColor;border-radius:50%;animation:caspin .6s linear infinite;vertical-align:-1px}
+@keyframes caspin{to{transform:rotate(360deg)}}
+@media(max-width:700px){.ca-toasts{left:12px;right:12px;bottom:12px;max-width:none}}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(16px,3vw,32px);height:54px;background:rgba(7,8,9,.62);backdrop-filter:blur(18px);border-bottom:1px solid var(--border)}
+.nav-brand{font-family:'JetBrains Mono',monospace;font-size:12px;display:flex;align-items:center;text-decoration:none;color:var(--text)}
+.nu{color:#79c0ff}.na{color:var(--muted)}.nh{color:var(--cyan)}.nt{color:var(--orange)}.nd{color:var(--teal);margin-left:4px}
+.nc{display:inline-block;width:7px;height:13px;background:var(--teal);margin-left:3px;vertical-align:middle;animation:blink .9s steps(1) infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.nav-path{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)}.nav-path span{color:var(--teal)}
+.nav-back{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);text-decoration:none;letter-spacing:.08em;text-transform:uppercase;transition:color .2s}
+.nav-back:hover{color:var(--cyan)}
+
+.tabs{position:sticky;top:54px;z-index:100;background:rgba(7,8,9,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);display:flex;align-items:stretch;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tabs::-webkit-scrollbar{height:0}
+.tab-btn{padding:0 22px;height:48px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;background:transparent;border:none;color:var(--muted);cursor:pointer;transition:color .2s,border-color .2s;border-bottom:2px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:7px;flex-shrink:0}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--teal);border-bottom-color:var(--teal)}
+.tab-num{font-size:9px;background:var(--dim);color:var(--muted);padding:1px 6px;border-radius:100px}
+.tab-btn.active .tab-num{background:rgba(45,212,191,.15);color:var(--teal)}
+.tab-content{display:none;position:relative;z-index:2}
+.tab-content.active{display:block;animation:fadeIn .25s ease}
+
+.hero{padding:78px clamp(16px,3vw,32px) 30px;border-bottom:1px solid var(--border);position:relative;z-index:2}
+.hero-inner{max-width:1100px;margin:0 auto}
+.hero-eye{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--teal);margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.hero-eye::before{content:'';width:22px;height:1px;background:var(--teal)}
+.hero-title{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(34px,5vw,60px);line-height:.98;letter-spacing:-.02em;margin-bottom:10px}
+.hero-title span{color:var(--teal)}
+.hero-sub{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.04em;line-height:1.85}
+.hero-sub b{color:var(--soft)}
+
+.main{max-width:1100px;margin:0 auto;padding:28px clamp(16px,3vw,32px) 80px;position:relative;z-index:2}
+
+.sec-title{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--teal);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.card{background:var(--card);border:1px solid var(--border);padding:18px 20px;margin-bottom:12px;border-radius:12px}
+.card2{background:var(--card2);border:1px solid var(--border);border-radius:12px}
+
+.form-row{display:grid;gap:12px;margin-bottom:14px}
+.form-row.col2{grid-template-columns:1fr 1fr}
+.form-row.col3{grid-template-columns:1fr 1fr 1fr}
+.form-row.col4{grid-template-columns:repeat(4,1fr)}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.form-input,.form-select{background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;padding:9px 11px;outline:none;transition:border-color .2s,box-shadow .2s;width:100%;border-radius:8px;-webkit-appearance:none;appearance:none}
+.form-input:focus,.form-select:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(45,212,191,.08)}
+.form-select{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23525c6b' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:28px}
+.form-select option{background:#0d0f13}
+.form-input::placeholder{color:var(--dim)}
+
+.ca-filterbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.ca-search{position:relative;flex:1;min-width:200px}
+.ca-search-ic{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;pointer-events:none}
+.ca-search .form-input{padding-left:30px}
+.ca-filterbar .form-select{max-width:172px;flex-shrink:0}
+.ca-count{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);white-space:nowrap;margin-left:auto}
+
+.check-group{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.check-pill{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border:1px solid var(--border);cursor:pointer;font-size:12px;color:var(--soft);transition:border-color .15s,color .15s,background .15s;user-select:none;border-radius:100px;position:relative}
+.check-pill input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+.check-pill.selected{border-color:var(--teal);color:var(--teal);background:rgba(45,212,191,.07)}
+.check-pill.selected-red{border-color:var(--red);color:var(--red);background:rgba(255,59,78,.07)}
+
+.btn{padding:8px 18px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border:1px solid var(--line-2);background:transparent;color:var(--soft);transition:border-color .2s,color .2s,box-shadow .2s;border-radius:8px}
+.btn:hover{border-color:var(--teal);color:var(--teal)}
+.btn-primary{background:var(--teal);border-color:var(--teal);color:#04201c;font-weight:600}
+.btn-primary:hover{box-shadow:0 0 18px rgba(45,212,191,.35)}
+.btn-danger{border-color:rgba(255,59,78,.4);color:var(--red)}
+.btn-danger:hover{background:var(--red);color:#fff;border-color:var(--red)}
+.btn-ghost{border-color:transparent;color:var(--muted);padding:5px 10px;font-size:9px}
+.btn-ghost:hover{color:var(--text);border-color:var(--border)}
+.btn-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px}
+
+.policy-card{background:var(--card);border:1px solid var(--border);margin-bottom:10px;position:relative;transition:border-color .2s;border-radius:11px;overflow:hidden}
+.policy-card:hover{border-color:var(--border2)}
+.policy-card.state-on{border-left:3px solid var(--teal)}
+.policy-card.state-report{border-left:3px solid var(--yellow)}
+.policy-card.state-off{border-left:3px solid var(--dim);opacity:.6}
+.pc-header{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;flex-wrap:wrap}
+.pc-state{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 8px;letter-spacing:.06em;flex-shrink:0;border-radius:100px}
+.pc-state-on{background:rgba(34,229,132,.1);color:var(--green);border:1px solid rgba(34,229,132,.25)}
+.pc-state-report{background:rgba(255,209,102,.08);color:var(--yellow);border:1px solid rgba(255,209,102,.2)}
+.pc-state-off{background:rgba(42,48,58,.5);color:var(--muted);border:1px solid var(--border)}
+.pc-name{font-size:13px;font-weight:600;flex:1;min-width:140px}
+.pc-tags{display:flex;gap:5px;flex-wrap:wrap}
+.pc-tag{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 7px;border:1px solid var(--border);color:var(--muted);border-radius:100px}
+.pc-actions{display:flex;gap:6px;flex-shrink:0}
+.pc-body{display:none;border-top:1px solid var(--border);padding:14px}
+.pc-body.open{display:block}
+.pc-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pc-field{margin-bottom:10px}
+.pc-field-label{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.pc-field-value{font-size:12px;color:var(--soft)}
+
+.scenario-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.signal-card{background:var(--card);border:1px solid var(--border);padding:14px;border-radius:11px}
+.signal-icon{font-size:18px;margin-bottom:6px}
+.signal-title{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+
+.result-panel{background:var(--card2);border:1px solid var(--border);padding:20px;margin-top:20px;border-radius:12px}
+.result-outcome{display:flex;align-items:center;gap:14px;padding:16px 18px;margin-bottom:16px;border-radius:11px}
+.result-outcome.grant{background:rgba(34,229,132,.07);border:1px solid rgba(34,229,132,.2)}
+.result-outcome.block{background:rgba(255,59,78,.07);border:1px solid rgba(255,59,78,.2)}
+.result-outcome.mfa{background:rgba(47,129,247,.07);border:1px solid rgba(47,129,247,.2)}
+.result-outcome.limited{background:rgba(255,180,84,.07);border:1px solid rgba(255,180,84,.2)}
+.ro-icon{font-size:28px;flex-shrink:0}
+.ro-title{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;letter-spacing:-.01em}
+.ro-sub{font-size:12px;color:var(--soft);margin-top:2px}
+
+.pr-row{display:flex;align-items:flex-start;gap:12px;padding:10px 12px;border-bottom:1px solid var(--border);font-size:12px}
+.pr-row:last-child{border-bottom:none}
+.pr-apply{width:16px;height:16px;border-radius:50%;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:9px}
+.pr-yes{background:rgba(34,229,132,.2);color:var(--green)}
+.pr-no{background:rgba(42,48,58,.8);color:var(--muted)}
+.pr-warn{background:rgba(255,209,102,.15);color:var(--yellow)}
+.pr-name{flex:1;font-weight:500}
+.pr-reason{color:var(--muted);font-size:11px}
+.pr-controls{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
+.pr-ctrl{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 7px;border:1px solid var(--blue);color:var(--blue);background:rgba(47,129,247,.07);border-radius:100px}
+.pr-ctrl-block{border-color:var(--red);color:var(--red);background:rgba(255,59,78,.07)}
+
+.gap-card{border:1px solid var(--border);padding:14px 16px;margin-bottom:10px;position:relative;background:var(--card);border-radius:11px}
+.gap-card.gap-crit{border-left:3px solid var(--red)}
+.gap-card.gap-high{border-left:3px solid var(--orange)}
+.gap-card.gap-med{border-left:3px solid var(--yellow)}
+.gap-card.gap-ok{border-left:3px solid var(--green);opacity:.72}
+.gap-header{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+.gap-sev{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 8px;letter-spacing:.06em;border-radius:100px}
+.gap-sev-c{background:rgba(255,59,78,.1);color:var(--red);border:1px solid rgba(255,59,78,.3)}
+.gap-sev-h{background:rgba(255,180,84,.1);color:var(--orange);border:1px solid rgba(255,180,84,.3)}
+.gap-sev-m{background:rgba(255,209,102,.08);color:var(--yellow);border:1px solid rgba(255,209,102,.25)}
+.gap-sev-ok{background:rgba(34,229,132,.08);color:var(--green);border:1px solid rgba(34,229,132,.25)}
+.gap-title{font-size:13px;font-weight:600}
+.gap-desc{font-size:12px;color:var(--soft);margin-bottom:6px;line-height:1.7}
+.gap-fix{font-size:12px;color:var(--cyan);display:flex;align-items:flex-start;gap:6px}
+.gap-fix::before{content:'\2192';flex-shrink:0;color:var(--teal)}
+
+.posture-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:20px}
+.pb-cell{background:var(--card);border:1px solid var(--border);padding:14px 12px;text-align:center;border-radius:11px}
+.pb-num{font-family:'Syne',sans-serif;font-weight:800;font-size:28px;line-height:1;margin-bottom:2px}
+.pb-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+.learn-card{background:var(--card);border:1px solid var(--border);padding:18px 20px;margin-bottom:14px;border-radius:12px}
+.learn-tag{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:2px 9px;border:1px solid;display:inline-block;margin-bottom:8px;border-radius:100px}
+.learn-title{font-size:15px;font-weight:600;margin-bottom:8px}
+.learn-body{font-size:12px;color:var(--soft);line-height:1.8}
+.learn-body strong{color:var(--text)}
+.learn-example{background:var(--bg2);border:1px solid var(--border);padding:10px 14px;margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--soft);line-height:1.7;border-radius:9px}
+.learn-example .lex-c{color:var(--dim)}.learn-example .lex-k{color:var(--teal)}.learn-example .lex-v{color:var(--orange)}.learn-example .lex-g{color:var(--green)}
+.alert-box{padding:12px 14px;margin:12px 0;font-size:12px;line-height:1.7;display:flex;gap:10px;border-radius:9px}
+.alert-info{background:rgba(47,129,247,.07);border-left:3px solid var(--blue)}
+.alert-warn{background:rgba(255,209,102,.05);border-left:3px solid var(--yellow)}
+.alert-danger{background:rgba(255,59,78,.06);border-left:3px solid var(--red)}
+
+.wm-dot.active{background:var(--teal) !important}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--dim);border-radius:3px}
+
+@media(max-width:960px){
+  .form-row.col4{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:700px){
+  .form-row.col2,.form-row.col3,.form-row.col4,.scenario-grid,.pc-grid{grid-template-columns:1fr}
+  .main,.hero{padding-left:16px;padding-right:16px}
+  nav{padding-left:16px;padding-right:16px}
+  .tab-btn{padding:0 16px}
+  .posture-bar{grid-template-columns:repeat(3,1fr)}
+  .ca-filterbar .form-select{max-width:none;flex:1}
+  .ca-count{margin-left:0;width:100%}
+}
+@media(max-width:420px){
+  .posture-bar{grid-template-columns:repeat(2,1fr)}
+}
+
+/* PRINT */
+@media print{
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}
+  html,body{background:#fff !important}
+  body>*{display:none !important}
+  #bg-canvas,#bg-glow{display:none !important}
+  #caPrintDoc{display:block !important}
+  @page{margin:16mm;size:A4}
+  #caPrintDoc{font-family:Georgia,serif;font-size:10pt;color:#111;background:#fff;line-height:1.55}
+  .cpd-cover{min-height:100vh;display:flex;flex-direction:column;justify-content:flex-end;page-break-after:always}
+  .cpd-band{background:#0a1628;padding:36mm 16mm 20mm;color:#fff}
+  .cpd-tag{font-family:Arial,sans-serif;font-size:7pt;letter-spacing:.2em;text-transform:uppercase;color:#2dd4bf;margin-bottom:6mm}
+  .cpd-title{font-family:Arial,sans-serif;font-size:28pt;font-weight:700;line-height:1.05;color:#fff;margin-bottom:2mm}
+  .cpd-title span{color:#2dd4bf}
+  .cpd-sub{font-size:9pt;color:rgba(255,255,255,.6);margin-bottom:6mm}
+  .cpd-kpi-row{display:flex;gap:4mm;border-top:1px solid rgba(255,255,255,.15);padding-top:5mm;margin-top:3mm}
+  .cpd-kpi{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);padding:4mm 6mm;flex:1;text-align:center}
+  .cpd-kpi-num{font-family:Arial,sans-serif;font-size:20pt;font-weight:700;line-height:1}
+  .cpd-kpi-lbl{font-family:Arial,sans-serif;font-size:7pt;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.5);margin-top:1mm}
+  .cpd-white{background:#fff;padding:10mm 16mm 6mm;display:flex;gap:4mm;flex-wrap:wrap}
+  .cpd-meta{flex:1;min-width:35mm;border:1pt solid #e0e0e0;padding:3mm 4mm}
+  .cpd-meta-lbl{font-family:Arial,sans-serif;font-size:7pt;text-transform:uppercase;letter-spacing:.1em;color:#888;margin-bottom:1mm}
+  .cpd-meta-val{font-size:9.5pt;font-weight:600;color:#111}
+  .cpd-pg-break{page-break-before:always}
+  .cpd-sec{font-family:Arial,sans-serif;font-size:7pt;text-transform:uppercase;letter-spacing:.18em;color:#1a8cff;border-bottom:1.5pt solid #1a8cff;padding-bottom:1.5mm;margin:6mm 0 3mm}
+  .cpd-exec{border:1pt solid #e0e0e0;padding:5mm;background:#fafafa;margin-bottom:5mm}
+  .cpd-exec h3{font-family:Arial,sans-serif;font-size:9pt;font-weight:700;margin-bottom:2mm}
+  .cpd-exec p{font-size:8.5pt;color:#333;line-height:1.7;margin-bottom:2mm}
+  .cpd-policy-row{border:1pt solid #ddd;margin-bottom:2.5mm;page-break-inside:avoid}
+  .cpd-policy-head{display:flex;gap:3mm;align-items:center;padding:2.5mm 4mm;background:#f5f5f5;border-bottom:0.5pt solid #ddd}
+  .cpd-policy-body{padding:2.5mm 4mm;font-size:8.5pt;color:#333;line-height:1.6}
+  .cpd-state{font-family:Arial,sans-serif;font-size:7pt;font-weight:700;padding:1mm 2.5mm;letter-spacing:.06em}
+  .cpd-state-on{background:#e6fff4;color:#006630;border:0.5pt solid #99ddbb}
+  .cpd-state-rpt{background:#fffbe6;color:#665000;border:0.5pt solid #ddc855}
+  .cpd-state-off{background:#f0f0f0;color:#777;border:0.5pt solid #ccc}
+  .cpd-pname{font-weight:700;font-size:9.5pt;flex:1}
+  .cpd-gap-row{border:1pt solid #ddd;margin-bottom:2mm;page-break-inside:avoid}
+  .cpd-gap-c{border-left:3pt solid #cc2222}
+  .cpd-gap-h{border-left:3pt solid #c05000}
+  .cpd-gap-m{border-left:3pt solid #c09000}
+  .cpd-gap-ok{border-left:3pt solid #007733;opacity:.7}
+  .cpd-gap-head{display:flex;gap:3mm;align-items:center;padding:2.5mm 4mm;background:#f8f8f8;border-bottom:0.5pt solid #eee}
+  .cpd-gap-body{padding:2.5mm 4mm;font-size:8.5pt;line-height:1.6}
+  .cpd-sev{font-family:Arial,sans-serif;font-size:6.5pt;font-weight:700;padding:1mm 2.5mm;letter-spacing:.08em}
+  .cpd-sev-c{background:#ffecec;color:#cc2222;border:0.5pt solid #ffaaaa}
+  .cpd-sev-h{background:#fff0e6;color:#c05000;border:0.5pt solid #ffcc99}
+  .cpd-sev-m{background:#fffbe6;color:#806000;border:0.5pt solid #ffe88a}
+  .cpd-sev-ok{background:#e6fff4;color:#006630;border:0.5pt solid #99ddbb}
+  .cpd-gap-title{font-weight:700;font-size:9pt;flex:1}
+  .cpd-gap-desc{color:#333;margin-bottom:1.5mm}
+  .cpd-gap-fix{color:#0050aa}
+  .cpd-gap-fix::before{content:'→ Required action: ';font-weight:700}
+  .cpd-sim-row{border:1pt solid #ddd;margin-bottom:2mm;page-break-inside:avoid;padding:3mm 4mm}
+  .cpd-sim-outcome{font-family:Arial,sans-serif;font-size:11pt;font-weight:700;margin-bottom:2mm}
+  .cpd-sim-detail{font-size:8.5pt;color:#333;line-height:1.6}
+  .cpd-disclaimer{font-size:7.5pt;color:#888;line-height:1.6;border-top:0.5pt solid #ddd;padding-top:3mm;margin-top:5mm}
+}
+
+.fx-local{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#8a93a3;border:1px solid rgba(255,255,255,.12);padding:3px 9px;border-radius:100px;white-space:nowrap}
+.fx-local::before{content:'';width:6px;height:6px;border-radius:50%;background:#22e584;box-shadow:0 0 6px rgba(34,229,132,.6)}
+@media(max-width:620px){.fx-local{display:none}}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div id="bg-glow"></div>
+<div id="caToasts" class="ca-toasts" aria-live="polite" aria-atomic="false"></div>
+
+
+
+<div id="caPrintDoc" style="display:none"></div>
+
+<nav>
+  <a href="index.html" class="nav-brand">
+    <span class="nu">eusebio</span><span class="na">@</span><span class="nh">it-sec</span><span class="na">:</span><span class="nt">~</span><span class="nd">$</span><span class="nc"></span>
+  </a>
+  <span class="nav-path">~/tools/<span>ca-policy-advisor</span></span>
+  <div style="display:flex;align-items:center;gap:8px"><button id="helpBtn" style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 12px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--teal)';this.style.color='var(--teal)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">? How to Use</button><span class="fx-local" title="Runs entirely in your browser — no data is uploaded or sent anywhere">Local-only</span>
+  <a href="projects.html" class="nav-back">&#8592; Projects</a></div>
+</nav>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-eye">Entra ID · Conditional Access · Expert Advisor</div>
+    <div class="hero-title">CA POLICY<br><span>ADVISOR</span></div>
+    <div class="hero-sub">
+      <b>Build &middot; Simulate &middot; Analyse &middot; Report</b> &nbsp;&middot;&nbsp; eusebio@it-sec<br>
+      Design enterprise CA policies &middot; Simulate real sign-in scenarios &middot; Identify gaps &middot; Generate executive reports
+    </div>
+  </div>
+</div>
+
+<div class="tabs" id="tabBar">
+  <button class="tab-btn active" data-tab="builder">&#128736; Policy Builder <span class="tab-num" id="tn-builder">0</span></button>
+  <button class="tab-btn" data-tab="simulator">&#9654; Scenario Simulator</button>
+  <button class="tab-btn" data-tab="advisor">&#128269; Gap Advisor <span class="tab-num" id="tn-gaps">0</span></button>
+  <button class="tab-btn" data-tab="learn">&#128218; Learn CA</button>
+  <button class="tab-btn" data-tab="report" style="margin-left:auto;color:var(--teal)">&#128196; Export Report</button>
+</div>
+
+<!-- ══════════════════════════════════════
+     TAB 1: POLICY BUILDER
+══════════════════════════════════════ -->
+<div class="tab-content active" data-tab="builder">
+<div class="main">
+
+  <div class="btn-row" style="margin-bottom:18px">
+    <div class="sec-title" style="flex:1;margin-bottom:0">Your CA Policies</div>
+    <button class="btn" id="loadTemplateBtn">&#9889; Load Enterprise Baseline</button>
+    <button class="btn" id="importBtn">&#8599; Import JSON</button><button class="btn" id="exportBtn2">&#8600; Export JSON</button><button class="btn btn-primary" id="addPolicyBtn">+ Add Policy</button>
+  </div>
+
+  <div id="caFilterBar" class="ca-filterbar" style="display:none">
+    <div class="ca-search">
+      <span class="ca-search-ic" aria-hidden="true">&#9906;</span>
+      <input id="caSearch" class="form-input" type="search" placeholder="Search policies by name, app, user or grant…" aria-label="Search policies"/>
+    </div>
+    <select id="caStateFilter" class="form-select" aria-label="Filter by policy state" title="Filter by policy state">
+      <option value="all">All states</option><option value="on">Enabled</option><option value="report">Report-only</option><option value="off">Disabled</option>
+    </select>
+    <select id="caSort" class="form-select" aria-label="Sort policies" title="Sort policies">
+      <option value="default">Sort: default</option><option value="name">Sort: name (A–Z)</option><option value="state">Sort: state</option>
+    </select>
+    <span id="caResultCount" class="ca-count" aria-live="polite"></span>
+  </div>
+  <div id="policyList"></div>
+  <div id="emptyPolicies" style="text-align:center;padding:40px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;border:1px dashed var(--border)">
+    No policies yet. Click <strong style="color:var(--teal)">Load Enterprise Baseline</strong> to start with a proven enterprise policy set, or <strong style="color:var(--teal)">Add Policy</strong> to build from scratch.
+  </div>
+
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     TAB 2: SCENARIO SIMULATOR
+══════════════════════════════════════ -->
+<div class="tab-content" data-tab="simulator">
+<div class="main">
+
+  <div class="sec-title">Describe the Sign-in Scenario</div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:16px;font-family:'JetBrains Mono',monospace">Fill in the sign-in context below. The simulator evaluates all your enabled CA policies against this scenario and shows exactly what happens — and why.</div>
+
+  <div class="scenario-grid">
+
+    <div class="signal-card">
+      <div class="signal-icon">👤</div>
+      <div class="signal-title">User Identity</div>
+      <div class="form-group">
+        <label class="form-label">User Type</label>
+        <select class="form-select" id="s-usertype">
+          <option value="member">Member (standard employee)</option>
+          <option value="admin">Global Administrator</option>
+          <option value="priv-admin">Privileged Role Admin / Exchange Admin</option>
+          <option value="guest">Guest / External User</option>
+          <option value="service">Service Account / Workload Identity</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-top:10px">
+        <label class="form-label">User Risk Level (Entra Identity Protection)</label>
+        <select class="form-select" id="s-userrisk">
+          <option value="none">None — no risk detected</option>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High — confirmed compromise signals</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="signal-card">
+      <div class="signal-icon">📱</div>
+      <div class="signal-title">Device State</div>
+      <div class="form-group">
+        <label class="form-label">Device Type</label>
+        <select class="form-select" id="s-device">
+          <option value="compliant">Intune Compliant (Windows/Mac managed)</option>
+          <option value="hybrid">Hybrid Azure AD Joined (on-prem domain joined)</option>
+          <option value="registered">Azure AD Registered (personal/BYOD)</option>
+          <option value="unmanaged">Unmanaged / Unknown device</option>
+          <option value="mobile-managed">Mobile — Intune enrolled (iOS/Android)</option>
+          <option value="mobile-unmanaged">Mobile — personal, no MDM</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-top:10px">
+        <label class="form-label">Platform</label>
+        <select class="form-select" id="s-platform">
+          <option value="windows">Windows</option>
+          <option value="macos">macOS</option>
+          <option value="ios">iOS</option>
+          <option value="android">Android</option>
+          <option value="linux">Linux</option>
+          <option value="browser-only">Browser only (unknown OS)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="signal-card">
+      <div class="signal-icon">🌍</div>
+      <div class="signal-title">Location & Network</div>
+      <div class="form-group">
+        <label class="form-label">Location</label>
+        <select class="form-select" id="s-location">
+          <option value="trusted">Trusted named location (office / VPN)</option>
+          <option value="untrusted">Outside named locations (home / public Wi-Fi)</option>
+          <option value="tor">TOR / Anonymous IP</option>
+          <option value="high-risk-country">High-risk country (not in approved list)</option>
+          <option value="impossible-travel">Impossible travel detected</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-top:10px">
+        <label class="form-label">Sign-in Risk (real-time)</label>
+        <select class="form-select" id="s-signinrisk">
+          <option value="none">None</option>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High — anonymous IP / malware-linked IP</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="signal-card">
+      <div class="signal-icon">☁️</div>
+      <div class="signal-title">Application & Client</div>
+      <div class="form-group">
+        <label class="form-label">Target Application</label>
+        <select class="form-select" id="s-app">
+          <option value="exchange">Exchange Online (Outlook)</option>
+          <option value="sharepoint">SharePoint / OneDrive</option>
+          <option value="teams">Microsoft Teams</option>
+          <option value="azure-portal">Azure Portal / Admin Centers</option>
+          <option value="all-apps">All Microsoft 365 Apps</option>
+          <option value="third-party">Third-party SaaS App</option>
+          <option value="graph">Microsoft Graph API</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-top:10px">
+        <label class="form-label">Client Application Type</label>
+        <select class="form-select" id="s-client">
+          <option value="modern">Modern Auth (Browser / O365 Apps)</option>
+          <option value="legacy-imap">Legacy — IMAP</option>
+          <option value="legacy-pop3">Legacy — POP3</option>
+          <option value="legacy-smtp">Legacy — SMTP AUTH</option>
+          <option value="legacy-eas">Legacy — Exchange ActiveSync (basic auth)</option>
+          <option value="other-legacy">Legacy — Other clients</option>
+        </select>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="form-group" style="margin-bottom:16px">
+    <label class="form-label">MFA Status at Sign-in</label>
+    <select class="form-select" id="s-mfa" style="max-width:400px">
+      <option value="not-done">MFA not yet completed (pre-challenge)</option>
+      <option value="done-app">MFA completed — Authenticator app</option>
+      <option value="done-fido2">MFA completed — FIDO2 security key</option>
+      <option value="done-whfb">MFA completed — Windows Hello for Business</option>
+      <option value="done-sms">MFA completed — SMS (not phishing-resistant)</option>
+    </select>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" id="runSimBtn">&#9654;&nbsp; Run Simulation</button>
+    <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">Evaluates all enabled policies against this scenario</span>
+  </div>
+
+  <div id="simResult" style="display:none"></div>
+
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     TAB 3: GAP ADVISOR
+══════════════════════════════════════ -->
+<div class="tab-content" data-tab="advisor">
+<div class="main">
+
+  <div class="btn-row" style="margin-bottom:18px">
+    <div class="sec-title" style="flex:1;margin-bottom:0">Policy Gap Analysis</div>
+    <button class="btn btn-primary" id="runAdvisorBtn">&#128269;&nbsp; Analyse My Policies</button>
+  </div>
+
+  <div id="advisorResult">
+    <div style="text-align:center;padding:40px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;border:1px dashed var(--border)">
+      Build your policies in the Policy Builder tab, then click <strong style="color:var(--teal)">Analyse My Policies</strong> to get expert recommendations.
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     TAB 4: LEARN CA
+══════════════════════════════════════ -->
+<div class="tab-content" data-tab="learn">
+<div class="main">
+
+  <div class="sec-title">Conditional Access — Enterprise Knowledge Base</div>
+
+  <div class="learn-card">
+    <div class="learn-tag" style="border-color:var(--teal);color:var(--teal)">Fundamentals</div>
+    <div class="learn-title">How Conditional Access Works — The If-Then Engine</div>
+    <div class="learn-body">
+      <p>Conditional Access is <strong>not a firewall</strong> and it is <strong>not a VPN</strong>. It is a policy engine that sits between a user completing their first-factor sign-in and actually reaching the resource they requested. Every sign-in is evaluated against all applicable CA policies simultaneously.</p>
+      <p style="margin-top:8px">The logic is simple: <strong>IF</strong> a set of conditions is true at sign-in, <strong>THEN</strong> enforce specific controls. All matching policies are applied together — if two policies both apply, the user must satisfy both. The outcome is always the most restrictive combination.</p>
+      <div class="learn-example">
+<span class="lex-c"># CA Policy evaluation flow</span>
+User authenticates (password / passwordless)
+        ↓
+<span class="lex-k">Entra ID evaluates ALL enabled CA policies</span>
+        ↓
+For each policy:
+  Does the user match? (users/groups/roles assignment)
+  Does the app match? (target resources)
+  Do conditions match? (location, device, risk, client app)
+        ↓
+All matching policies → <span class="lex-g">Grant controls combined (AND logic)</span>
+Any policy says BLOCK → <span class="lex-v">Access denied immediately</span>
+No policies match → <span class="lex-g">Access granted (no controls)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="learn-card">
+    <div class="learn-tag" style="border-color:var(--orange);color:var(--orange)">Common Mistake</div>
+    <div class="learn-title">Sign-in Risk vs User Risk — They Are Different Signals</div>
+    <div class="learn-body">
+      <p><strong>Sign-in risk</strong> is evaluated in real time during the authentication attempt. Is this specific sign-in suspicious? Anonymous IP, impossible travel, malware-linked IP, unfamiliar sign-in properties.</p>
+      <p style="margin-top:8px"><strong>User risk</strong> is calculated by Identity Protection in the background based on patterns over time. Is this user's account likely compromised? Leaked credentials, unusual activity patterns.</p>
+      <div class="alert-box alert-warn">
+        <span>⚠️</span>
+        <span>A policy combining BOTH sign-in risk AND user risk in the same condition uses AND logic — both must be true simultaneously. This rarely happens in practice and makes the policy nearly useless. Create two separate policies: one for sign-in risk, one for user risk.</span>
+      </div>
+      <div class="learn-example">
+<span class="lex-c"># WRONG: Combined risk condition (rarely triggers)</span>
+Conditions: Sign-in risk = High <span class="lex-v">AND</span> User risk = High
+Result: Both must be elevated at the same moment = rare
+
+<span class="lex-c"># RIGHT: Separate policies</span>
+Policy 1: Sign-in risk = High → Block access
+Policy 2: User risk = High → Require password change + MFA
+      </div>
+    </div>
+  </div>
+
+  <div class="learn-card">
+    <div class="learn-tag" style="border-color:var(--red);color:var(--red)">Critical Gap</div>
+    <div class="learn-title">What CA Does NOT Cover — The Blind Spots</div>
+    <div class="learn-body">
+      <p>Even a perfectly configured "All users, All apps" CA policy does not cover everything. These actions require dedicated policies or are outside CA scope entirely:</p>
+      <div class="learn-example">
+<span class="lex-c"># Actions requiring dedicated CA policy (not covered by "All apps"):</span>
+<span class="lex-v">Security info registration</span>   → requires User Action policy
+<span class="lex-v">Device registration/join</span>      → requires User Action policy
+<span class="lex-v">Azure AD B2B guest sign-in</span>   → excluded unless explicitly included
+
+<span class="lex-c"># Outside CA scope entirely:</span>
+<span class="lex-v">Legacy auth protocols</span>        → CA cannot enforce MFA (block them instead)
+<span class="lex-v">App-level permissions</span>        → use App roles + RBAC
+<span class="lex-v">Data access within an app</span>    → use DLP, sensitivity labels
+<span class="lex-v">Device actions (wipe/lock)</span>   → use Intune
+      </div>
+    </div>
+  </div>
+
+  <div class="learn-card">
+    <div class="learn-tag" style="border-color:var(--blue);color:var(--blue)">Licensing</div>
+    <div class="learn-title">What Requires P1 vs P2 vs No Licence</div>
+    <div class="learn-body">
+      <div class="learn-example">
+<span class="lex-c"># No additional licence (included in all M365)</span>
+Security Defaults (basic MFA + legacy auth block) — not CA
+
+<span class="lex-c"># Entra ID P1 (M365 E3 / Business Premium)</span>
+<span class="lex-g">✓</span> All Conditional Access policy creation
+<span class="lex-g">✓</span> Group, role, and location-based policies
+<span class="lex-g">✓</span> Device compliance and hybrid join requirements
+<span class="lex-g">✓</span> Authentication strength requirements
+<span class="lex-g">✓</span> Named locations (IP ranges, countries)
+<span class="lex-g">✓</span> Session controls (sign-in frequency, persistent browser)
+
+<span class="lex-c"># Entra ID P2 (M365 E5)</span>
+<span class="lex-g">✓</span> Sign-in risk conditions (Identity Protection)
+<span class="lex-g">✓</span> User risk conditions (Identity Protection)
+<span class="lex-g">✓</span> Token protection (preview)
+<span class="lex-g">✓</span> Insider risk conditions (Purview integration)
+<span class="lex-g">✓</span> GPS-based named locations
+      </div>
+    </div>
+  </div>
+
+  <div class="learn-card">
+    <div class="learn-tag" style="border-color:var(--purple);color:var(--purple)">Enterprise Pattern</div>
+    <div class="learn-title">The 6-Policy Enterprise Baseline — Minimum Viable CA</div>
+    <div class="learn-body">
+      <p>These six policies represent the minimum enterprise CA baseline. Every policy has one job. Build them in this order — each one closes a specific attack surface.</p>
+      <div class="learn-example">
+<span class="lex-k">Policy 1:</span> BLOCK — Legacy Authentication
+  Why: Legacy protocols bypass MFA entirely. Block first.
+  Users: All | Apps: All | Client apps: EAS + Other clients | Grant: Block
+
+<span class="lex-k">Policy 2:</span> REQUIRE — MFA for All Users
+  Why: Baseline identity verification for every sign-in.
+  Users: All (excl. break-glass) | Apps: All | Grant: Require MFA
+
+<span class="lex-k">Policy 3:</span> REQUIRE — Phishing-Resistant MFA for Admins
+  Why: Standard MFA is bypassable via AiTM. Admins need stronger auth.
+  Users: Privileged roles | Apps: All | Grant: Auth strength = PR-MFA
+  Session: Sign-in frequency = 1 hour
+
+<span class="lex-k">Policy 4:</span> REQUIRE — Compliant Device for Corporate Apps
+  Why: Unmanaged devices have no security baseline.
+  Users: All | Apps: Exchange, SharePoint, Teams | Grant: Compliant device
+
+<span class="lex-k">Policy 5:</span> BLOCK — High-Risk Sign-ins (requires P2)
+  Why: Automated blocking of confirmed malicious sign-ins.
+  Users: All | Apps: All | Conditions: Sign-in risk = High | Grant: Block
+
+<span class="lex-k">Policy 6:</span> REQUIRE — MFA for Security Info Registration
+  Why: Prevents attackers registering their own MFA method.
+  Users: All | User actions: Register security info | Location: Not trusted | Grant: MFA
+      </div>
+      <div class="alert-box alert-info" style="margin-top:10px">
+        <span>💡</span>
+        <span>Load this baseline automatically in the Policy Builder tab using the <strong>Load Enterprise Baseline</strong> button. All policies start in Report-only mode so you can review before enforcing.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="learn-card">
+    <div class="learn-tag" style="border-color:var(--purple);color:var(--purple)">Governance</div>
+    <div class="learn-title">Policy Naming Convention — Enterprise Standard</div>
+    <div class="learn-body">
+      <p>A consistent naming convention means anyone troubleshooting at midnight can understand what a policy does without reading its full configuration. Microsoft recommends one policy = one job, with the action and scope in the name.</p>
+      <div class="learn-example">
+<span class="lex-c"># Recommended format: ACTION — SCOPE — DETAIL</span>
+
+<span class="lex-k">BLOCK</span>  — Legacy Authentication
+<span class="lex-k">BLOCK</span>  — High-Risk Sign-ins (P2)
+<span class="lex-k">BLOCK</span>  — Unsupported Countries
+
+<span class="lex-k">REQUIRE</span> — MFA for All Users
+<span class="lex-k">REQUIRE</span> — Phishing-Resistant MFA for Admin Roles
+<span class="lex-k">REQUIRE</span> — Compliant Device for Corporate Apps
+<span class="lex-k">REQUIRE</span> — MFA for Security Info Registration
+
+<span class="lex-k">SESSION</span> — Short Sign-in Frequency for Admins
+<span class="lex-k">SESSION</span> — Browser-Only for Unmanaged Devices
+
+<span class="lex-c"># Always add the policy purpose in the Description field:</span>
+<span class="lex-v">"Deployed 2026-05-20. Break-glass excluded. Reviewed quarterly."</span>
+<span class="lex-c"># This is visible in audit logs and the What If tool output</span>
+      </div>
+      <div class="alert-box alert-info" style="margin-top:10px">
+        <span>💡</span>
+        <span>This tool automatically applies the BLOCK/REQUIRE/SESSION naming pattern when you use the enterprise baseline. Edit policy names to match this convention when building your own.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="learn-card">
+    <div class="learn-tag" style="border-color:var(--cyan);color:var(--cyan)">2026 Updates</div>
+    <div class="learn-title">Key CA Changes in 2026 — What Changed and Why It Matters</div>
+    <div class="learn-body">
+      <div class="learn-example">
+<span class="lex-k">March–June 2026: OIDC Scope Enforcement Fix</span>
+  What changed: CA policies targeting All Resources with exclusions
+  previously skipped sign-ins requesting only OIDC scopes
+  (openid, profile, email, User.Read).
+  Impact: Apps using Azure CLI, custom OAuth apps, or developer tools
+  that previously bypassed your policies will now be evaluated.
+  Action: Run this KQL to find affected apps:
+  <span class="lex-c">SigninLogs | where ConditionalAccessStatus == "notApplied"
+  | where AuthenticationRequirement == "singleFactorAuthentication"
+  | summarize count() by AppDisplayName | order by count_ desc</span>
+
+<span class="lex-k">February 2026: Revoke Sessions — New Behaviour</span>
+  What changed: "Revoke sessions" now invalidates ALL tokens
+  including MFA-satisfied sessions. Previously only revoked MFA state.
+  Action: Update all IR playbooks and SOC runbooks.
+  Correct action: Entra ID → User → Revoke sessions (not just password reset)
+
+<span class="lex-k">2026: Passkey-First Authentication (Preview)</span>
+  Microsoft is rolling out passkey (FIDO2 platform authenticator)
+  as the default sign-in method for new accounts.
+  CA policies using Authentication Strength = Phishing-resistant MFA
+  automatically include passkeys — no policy change required.
+
+<span class="lex-k">October 2025: Azure MFA Phase 2 Enforcement</span>
+  MFA is now mandatory for all Azure resource management actions.
+  Any automation or script using password-only auth for Azure
+  management APIs is non-compliant and will fail.
+      </div>
+    </div>
+  </div>
+
+  <div class="learn-card">
+    <div class="learn-tag" style="border-color:var(--orange);color:var(--orange)">Token Security</div>
+    <div class="learn-title">Token Protection and AiTM Attacks — What Admins Need to Know</div>
+    <div class="learn-body">
+      <p><strong>AiTM (Adversary-in-the-Middle)</strong> phishing uses a relay proxy (Evilginx, Modlishka) that sits between the user and the real Microsoft sign-in page. The user completes legitimate MFA through the proxy — the attacker captures the resulting session token and replays it from their own machine. MFA is already satisfied. CA policies are bypassed.</p>
+      <div class="learn-example">
+<span class="lex-c"># AiTM Attack Flow</span>
+User clicks phishing link → proxy relays real Microsoft sign-in
+User completes MFA (Authenticator push) → proxy captures token
+Attacker replays token from their IP → MFA already satisfied
+<span class="lex-v">CA policies see: valid token, MFA completed → Access granted</span>
+
+<span class="lex-c"># Defences</span>
+<span class="lex-g">1. Phishing-Resistant MFA (FIDO2/WHfB)</span>
+   Keys are bound to the legitimate site URL.
+   Proxy cannot relay — the key challenge fails on the attacker's domain.
+
+<span class="lex-g">2. Token Protection (CA preview feature)</span>
+   Binds tokens to the specific device they were issued on.
+   Replayed token from different device = rejected.
+   Enable: CA policy → Session → Token protection: Enabled
+
+<span class="lex-g">3. Continuous Access Evaluation (CAE)</span>
+   Near-real-time revocation. When sessions are revoked,
+   CAE-capable apps reject the token within minutes.
+   Not instant — but dramatically reduces the replay window.
+
+<span class="lex-g">4. Sign-in frequency (1 hour for admins)</span>
+   Limits how long a stolen token remains useful.
+      </div>
+    </div>
+  </div>
+
+  <div class="learn-card">
+    <div class="learn-tag" style="border-color:var(--green);color:var(--green)">Deployment</div>
+    <div class="learn-title">Safe Deployment Order — How to Roll Out Without Breaking Things</div>
+    <div class="learn-body">
+      <div class="learn-example">
+<span class="lex-k">Week 1–2: Report-only mode</span>
+  Deploy ALL new policies in Report-only first.
+  Review sign-in logs → identify impacted users, apps, service accounts.
+  Use Entra ID → Monitoring → Sign-in logs → CA: Report-only results column.
+
+<span class="lex-k">Week 3: Enforce Block Legacy Auth first</span>
+  Lowest disruption risk. Modern clients are unaffected.
+  Identify any remaining legacy auth usage before enforcing.
+
+<span class="lex-k">Week 4: Enforce MFA for All Users</span>
+  Communicate to users 1 week before enforcement.
+  Ensure all users have Authenticator app registered.
+  Have helpdesk ready for MFA registration queries.
+
+<span class="lex-k">Week 5–6: Enforce Device Compliance</span>
+  Highest disruption risk — unmanaged devices lose access.
+  Run Intune compliance report first: identify non-compliant devices.
+  Grace period: set 3–5 days for devices to become compliant.
+
+<span class="lex-k">Week 7+: Enforce remaining policies</span>
+  Admin phishing-resistant MFA, risk-based policies, session controls.
+  Monitor for service account breakage — PA flows, scheduled tasks, SMTP relays.
+
+<span class="lex-c"># ALWAYS keep 2 break-glass accounts excluded from ALL policies</span>
+<span class="lex-c"># Test every policy with the What If tool before enforcing</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     TAB 5: EXPORT REPORT
+══════════════════════════════════════ -->
+<div class="tab-content" data-tab="report">
+<div class="main">
+  <div class="sec-title">Executive Report</div>
+  <div style="font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:20px">
+    Generates a full PDF-ready report of your CA policy architecture, gap analysis, and recommendations. Run the Gap Advisor first for best results.
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="sec-title" style="margin-bottom:12px">Report Details</div>
+    <div class="form-row col2">
+      <div class="form-group">
+        <label class="form-label">Organisation Name</label>
+        <input class="form-input" id="rpt-org" placeholder="Contoso Ltd" value=""/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Prepared by</label>
+        <input class="form-input" id="rpt-author" placeholder="Timothy James Eusebio" value="Timothy James Eusebio"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tenant / Environment</label>
+        <input class="form-input" id="rpt-tenant" placeholder="contoso.onmicrosoft.com" value=""/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Report Classification</label>
+        <select class="form-select" id="rpt-class">
+          <option>Confidential — Internal Use Only</option>
+          <option>Confidential — Restricted</option>
+          <option>Internal</option>
+          <option>Client Deliverable</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" id="generateReportBtn">&#128196;&nbsp; Generate &amp; Export PDF</button>
+    <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">Opens print dialog — save as PDF</span>
+  </div>
+
+  <div id="reportPreview" style="margin-top:24px"></div>
+</div>
+</div>
+
+<!-- ══════════════════════
+     ADD / EDIT POLICY MODAL
+══════════════════════ -->
+<div id="policyModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;align-items:flex-start;justify-content:center;padding:52px 16px;backdrop-filter:blur(4px);overflow-y:auto">
+  <div style="background:var(--bg2);border:1px solid rgba(45,212,191,.25);width:100%;max-width:720px;position:relative">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border)">
+      <div style="font-family:'Syne',sans-serif;font-size:18px;letter-spacing:.06em">POLICY <span id="modalMode" style="color:var(--teal)">BUILDER</span></div>
+      <button id="modalClose" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1">&#10005;</button>
+    </div>
+    <div style="padding:20px" id="modalBody">
+
+      <div class="form-row col2">
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Policy Name</label>
+          <input class="form-input" id="m-name" placeholder="e.g. REQUIRE — MFA for All Users"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Policy State</label>
+          <select class="form-select" id="m-state">
+            <option value="report">Report-only (monitoring, not enforcing)</option>
+            <option value="on">Enabled (enforcing)</option>
+            <option value="off">Disabled</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Policy Purpose</label>
+          <select class="form-select" id="m-purpose">
+            <option value="mfa">Require MFA</option>
+            <option value="block-legacy">Block Legacy Authentication</option>
+            <option value="block-access">Block Access</option>
+            <option value="compliant-device">Require Compliant Device</option>
+            <option value="pr-mfa">Require Phishing-Resistant MFA</option>
+            <option value="session">Session / Sign-in Frequency Control</option>
+            <option value="risk-block">Block High-Risk Sign-ins</option>
+            <option value="mfa-register">MFA Registration Control</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="sec-title" style="margin-top:6px">Assignments — Who</div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">Include Users</label>
+        <div class="check-group" id="m-users-inc">
+          <label class="check-pill selected"><input type="checkbox" value="all" checked> All Users</label>
+          <label class="check-pill"><input type="checkbox" value="admins"> Admin Roles</label>
+          <label class="check-pill"><input type="checkbox" value="guests"> Guests Only</label>
+          <label class="check-pill"><input type="checkbox" value="members"> Members Only</label>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px">
+        <label class="form-label">Exclude Users / Groups</label>
+        <div class="check-group" id="m-users-exc">
+          <label class="check-pill"><input type="checkbox" value="breakglass"> Break-glass Accounts</label>
+          <label class="check-pill"><input type="checkbox" value="service-accounts"> Service Accounts</label>
+          <label class="check-pill"><input type="checkbox" value="specific-group"> Specific Group (exclusion)</label>
+        </div>
+      </div>
+
+      <div class="sec-title">Target Resources — What</div>
+      <div class="form-group" style="margin-bottom:14px">
+        <label class="form-label">Target Apps</label>
+        <div class="check-group" id="m-apps">
+          <label class="check-pill selected"><input type="checkbox" value="all" checked> All Resources</label>
+          <label class="check-pill"><input type="checkbox" value="exchange"> Exchange Online</label>
+          <label class="check-pill"><input type="checkbox" value="sharepoint"> SharePoint / OneDrive</label>
+          <label class="check-pill"><input type="checkbox" value="teams"> Microsoft Teams</label>
+          <label class="check-pill"><input type="checkbox" value="azure-mgmt"> Azure Management</label>
+          <label class="check-pill"><input type="checkbox" value="register-security-info"> Register Security Info (User Action)</label>
+        </div>
+      </div>
+
+      <div class="sec-title">Conditions</div>
+      <div class="form-row col2" style="margin-bottom:10px">
+        <div class="form-group">
+          <label class="form-label">Client App Types</label>
+          <div class="check-group" id="m-clients">
+            <label class="check-pill"><input type="checkbox" value="modern"> Modern Auth</label>
+            <label class="check-pill selected-red"><input type="checkbox" value="legacy-eas" checked> Exchange ActiveSync</label>
+            <label class="check-pill selected-red"><input type="checkbox" value="other-legacy" checked> Other Clients</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Device Platforms</label>
+          <div class="check-group" id="m-platforms">
+            <label class="check-pill selected"><input type="checkbox" value="any" checked> Any Platform</label>
+            <label class="check-pill"><input type="checkbox" value="windows"> Windows</label>
+            <label class="check-pill"><input type="checkbox" value="macos"> macOS</label>
+            <label class="check-pill"><input type="checkbox" value="ios"> iOS</label>
+            <label class="check-pill"><input type="checkbox" value="android"> Android</label>
+          </div>
+        </div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group">
+          <label class="form-label">Location Condition</label>
+          <select class="form-select" id="m-location">
+            <option value="any">Any location</option>
+            <option value="outside-trusted">Outside named/trusted locations only</option>
+            <option value="inside-trusted">Inside named locations only</option>
+            <option value="specific-countries">Specific countries (block / allow list)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sign-in Risk (P2 required)</label>
+          <select class="form-select" id="m-signinrisk">
+            <option value="any">Not configured</option>
+            <option value="high">High risk</option>
+            <option value="medium-high">Medium or High risk</option>
+            <option value="low-medium-high">Low, Medium, or High risk</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">User Risk (P2 required)</label>
+          <select class="form-select" id="m-userrisk">
+            <option value="any">Not configured</option>
+            <option value="high">High risk</option>
+            <option value="medium-high">Medium or High risk</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="sec-title" style="margin-top:6px">Grant Controls</div>
+      <div class="form-row col2">
+        <div class="form-group">
+          <label class="form-label">Access Control</label>
+          <select class="form-select" id="m-grant">
+            <option value="block">Block access</option>
+            <option value="mfa">Require MFA</option>
+            <option value="pr-mfa">Require Phishing-Resistant MFA (FIDO2/WHfB)</option>
+            <option value="compliant">Require compliant device</option>
+            <option value="compliant-or-hybrid">Require compliant OR hybrid-joined device</option>
+            <option value="mfa-compliant">Require MFA AND compliant device</option>
+            <option value="grant">Grant access (no additional controls)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Session Control</label>
+          <select class="form-select" id="m-session">
+            <option value="none">No session control</option>
+            <option value="1h">Sign-in frequency: 1 hour</option>
+            <option value="4h">Sign-in frequency: 4 hours</option>
+            <option value="8h">Sign-in frequency: 8 hours</option>
+            <option value="1d">Sign-in frequency: 1 day</option>
+            <option value="no-persist">No persistent browser session</option>
+            <option value="app-enforced">App-enforced restrictions</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top:6px">
+        <label class="form-label">Notes (internal documentation)</label>
+        <input class="form-input" id="m-notes" placeholder="e.g. Deployed 2026-05-20. Reviewed by Timothy. Break-glass excluded."/>
+      </div>
+
+    </div>
+    <div style="padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" id="modalCancel">Cancel</button>
+      <button class="btn btn-primary" id="modalSave">Save Policy</button>
+    </div>
+  </div>
+</div>
+
+<!-- WELCOME MODAL -->
+<div id="welcomeModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:600;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(6px)">
+  <div style="background:var(--bg2);border:1px solid rgba(45,212,191,.3);width:100%;max-width:540px;position:relative">
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,rgba(45,212,191,.08),rgba(26,140,255,.05));padding:28px 28px 20px;border-bottom:1px solid var(--border)">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--teal);margin-bottom:8px">CA Policy Advisor &middot; eusebio@it-sec</div>
+      <div style="font-family:'Syne',sans-serif;font-size:26px;letter-spacing:.04em">WELCOME TO THE <span style="color:var(--teal)">CA ADVISOR</span></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">Build, simulate, and audit Conditional Access policies like an enterprise architect.</div>
+    </div>
+    <!-- Step content -->
+    <div style="padding:24px 28px">
+      <div style="font-size:36px;margin-bottom:10px" id="wm-icon">🏗️</div>
+      <div style="font-family:'Syne',sans-serif;font-size:20px;letter-spacing:.04em;margin-bottom:8px;color:var(--text)" id="wm-title">Step 1 — Policy Builder</div>
+      <div style="font-size:13px;color:var(--soft);line-height:1.75;margin-bottom:12px" id="wm-desc">Start here.</div>
+      <div style="background:rgba(45,212,191,.06);border-left:3px solid var(--teal);padding:10px 14px;font-size:12px;color:var(--soft);line-height:1.7" id="wm-tip"></div>
+    </div>
+    <!-- Step dots -->
+    <div style="display:flex;justify-content:center;gap:8px;padding-bottom:4px">
+      <div class="wm-dot active" style="width:6px;height:6px;border-radius:50%;background:var(--teal);transition:background .2s"></div>
+      <div class="wm-dot" style="width:6px;height:6px;border-radius:50%;background:var(--dim);transition:background .2s"></div>
+      <div class="wm-dot" style="width:6px;height:6px;border-radius:50%;background:var(--dim);transition:background .2s"></div>
+      <div class="wm-dot" style="width:6px;height:6px;border-radius:50%;background:var(--dim);transition:background .2s"></div>
+    </div>
+    <!-- Actions -->
+    <div style="padding:14px 28px 20px;display:flex;align-items:center;gap:10px;border-top:1px solid var(--border);margin-top:10px">
+      <button id="wm-prev" style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;background:transparent;border:1px solid var(--border);color:var(--muted);padding:7px 14px;cursor:pointer;visibility:hidden;transition:all .2s">← Prev</button>
+      <button id="wm-action" data-tab="builder" style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;background:transparent;border:1px solid var(--teal);color:var(--teal);padding:7px 16px;cursor:pointer;transition:all .2s;flex:1">Go to Policy Builder</button>
+      <button id="wm-next" style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;background:var(--teal);border:1px solid var(--teal);color:#000;padding:7px 18px;cursor:pointer;font-weight:700;transition:all .2s">Next →</button>
+    </div>
+    <div style="text-align:center;padding-bottom:14px">
+      <button id="wm-skip" style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;background:transparent;border:none;color:var(--dim);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--muted)'" onmouseout="this.style.color='var(--dim)'">Skip intro — I know how to use this</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+(function(){
+'use strict';
+
+/* ── smooth 3D background: sparse drifting points (usability-first, no links) ── */
+(function(){
+  var canvas=document.getElementById('bg-canvas'); if(!canvas) return;
+  if(typeof THREE==='undefined'){canvas.style.display='none';return;}
+  var renderer; try{renderer=new THREE.WebGLRenderer({canvas:canvas,alpha:true,antialias:true});}catch(e){canvas.style.display='none';return;}
+  var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches; if(reduce){canvas.style.opacity='.2';}
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(innerWidth,innerHeight);
+  var scene=new THREE.Scene(), camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,1,400);
+  camera.position.z=60; var group=new THREE.Group(); scene.add(group);
+  var N=innerWidth<760?55:120, R=40, base=new Float32Array(N*3), pos=new Float32Array(N*3), col=new Float32Array(N*3);
+  var C=new THREE.Color(0x2dd4bf), C2=new THREE.Color(0x1a8cff), i;
+  for(i=0;i<N;i++){ base[i*3]=(Math.random()*2-1)*R*1.9; base[i*3+1]=(Math.random()*2-1)*R*1.2; base[i*3+2]=(Math.random()*2-1)*R*0.6; var c=Math.random()<0.35?C2:C; col[i*3]=c.r;col[i*3+1]=c.g;col[i*3+2]=c.b; }
+  var sc=document.createElement('canvas');sc.width=sc.height=64;var sx=sc.getContext('2d');var g=sx.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.4,'rgba(255,255,255,.5)');g.addColorStop(1,'rgba(255,255,255,0)');sx.fillStyle=g;sx.beginPath();sx.arc(32,32,32,0,7);sx.fill();
+  var geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(pos,3)); geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  var mat=new THREE.PointsMaterial({size:1.5,map:new THREE.CanvasTexture(sc),vertexColors:true,transparent:true,opacity:.9,depthWrite:false,blending:THREE.AdditiveBlending});
+  group.add(new THREE.Points(geo,mat));
+  var mx=0,my=0; window.addEventListener('mousemove',function(e){mx=(e.clientX/innerWidth)*2-1;my=-(e.clientY/innerHeight)*2+1;},{passive:true});
+  var t=0; function loop(){ t+=0.006; group.rotation.y+=0.0009; camera.position.x+=(mx*6-camera.position.x)*0.03; camera.position.y+=(my*4-camera.position.y)*0.03; camera.lookAt(0,0,0); for(i=0;i<N;i++){ pos[i*3]=base[i*3]+Math.sin(t*0.6+i)*1.3; pos[i*3+1]=base[i*3+1]+Math.cos(t*0.5+i*1.3)*1.3; pos[i*3+2]=base[i*3+2]+Math.sin(t*0.4+i)*1.0; } geo.attributes.position.needsUpdate=true; renderer.render(scene,camera); requestAnimationFrame(loop); }
+  loop();
+  window.addEventListener('resize',function(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+  var glow=document.getElementById('bg-glow');
+  function hideForPrint(){ try{ if(canvas.parentNode) canvas.parentNode.removeChild(canvas); if(glow) glow.style.display='none'; }catch(e){} }
+  function showAfterPrint(){ try{ if(!canvas.parentNode) document.body.insertBefore(canvas, document.body.firstChild); if(glow) glow.style.display=''; }catch(e){} }
+  window.addEventListener('beforeprint', hideForPrint);
+  window.addEventListener('afterprint', showAfterPrint);
+  if(window.matchMedia){ var mqp=window.matchMedia('print'); var mqh=function(e){ e.matches?hideForPrint():showAfterPrint(); }; if(mqp.addEventListener) mqp.addEventListener('change',mqh); else if(mqp.addListener) mqp.addListener(mqh); }
+})();
+
+/* ── policy list search / filter / sort ── */
+var policyQuery='', policyStateFilter='all', policySort='default';
+function caToast(msg,type,actionLabel,actionFn){
+  var wrap=document.getElementById('caToasts'); if(!wrap){return;}
+  var t=document.createElement('div'); t.className='ca-toast ca-toast-'+(type||'info');
+  var ic={success:'✓',info:'ℹ',danger:'⚠',warn:'⚠'}[type||'info']||'ℹ';
+  var icS=document.createElement('span'); icS.className='ca-toast-ic'; icS.textContent=ic; t.appendChild(icS);
+  var m=document.createElement('span'); m.className='ca-toast-msg'; m.textContent=msg; t.appendChild(m);
+  var to;
+  function remove(){ clearTimeout(to); t.classList.remove('show'); setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); },300); }
+  if(actionLabel&&actionFn){ var b=document.createElement('button'); b.className='ca-toast-act'; b.textContent=actionLabel; b.onclick=function(){ try{actionFn();}catch(e){} remove(); }; t.appendChild(b); }
+  wrap.appendChild(t);
+  requestAnimationFrame(function(){ t.classList.add('show'); });
+  to=setTimeout(remove, (actionLabel?7000:3500));
+}
+function caBusy(btn,label,fn){
+  if(!btn){ try{fn();}catch(e){} return; }
+  if(btn._busy) return; btn._busy=true;
+  var html=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="ca-spin"></span> '+label;
+  setTimeout(function(){ try{ fn(); }catch(e){ caToast('Something went wrong: '+(e&&e.message||e),'danger'); } btn.disabled=false; btn.innerHTML=html; btn._busy=false; }, 350);
+}
+(function(){
+  function wire(id,ev,fn){var el=document.getElementById(id);if(el)el.addEventListener(ev,fn);}
+  wire('caSearch','input',function(e){policyQuery=(e.target.value||'').trim();renderPolicies();});
+  wire('caStateFilter','change',function(e){policyStateFilter=e.target.value;renderPolicies();});
+  wire('caSort','change',function(e){policySort=e.target.value;renderPolicies();});
+})();
+
+
+/* ══════════════════════════════════════════
+   DATA MODEL
+══════════════════════════════════════════ */
+var policies=[];
+var editingId=null;
+var gapResults=[];
+var simResults=null;
+
+/* ══════════════════════════════════════════
+   ENTERPRISE BASELINE TEMPLATES
+══════════════════════════════════════════ */
+var BASELINE=[
+  {id:uid(),name:'BLOCK — Legacy Authentication',state:'report',purpose:'block-legacy',
+   usersInc:['all'],usersExc:['breakglass'],apps:['all'],clients:['legacy-eas','other-legacy'],
+   platforms:['any'],location:'any',signinRisk:'any',userRisk:'any',grant:'block',session:'none',
+   notes:'Block all legacy authentication protocols. Deploy first — lowest disruption risk. Run in Report-only for 2 weeks first to identify any remaining legacy auth usage.'},
+  {id:uid(),name:'REQUIRE — MFA for All Users',state:'report',purpose:'mfa',
+   usersInc:['all'],usersExc:['breakglass','service-accounts'],apps:['all'],clients:['modern'],
+   platforms:['any'],location:'any',signinRisk:'any',userRisk:'any',grant:'mfa',session:'none',
+   notes:'Baseline MFA for all sign-ins. Communicate to users before enforcing. Ensure all users have Authenticator registered first.'},
+  {id:uid(),name:'REQUIRE — Phishing-Resistant MFA for Admin Roles',state:'report',purpose:'pr-mfa',
+   usersInc:['admins'],usersExc:['breakglass'],apps:['all'],clients:['modern'],
+   platforms:['any'],location:'any',signinRisk:'any',userRisk:'any',grant:'pr-mfa',session:'1h',
+   notes:'FIDO2 or Windows Hello for Business required for all privileged roles. Prevents AiTM bypass. 1-hour sign-in frequency enforced.'},
+  {id:uid(),name:'REQUIRE — Compliant Device for Corporate Apps',state:'report',purpose:'compliant-device',
+   usersInc:['all'],usersExc:['breakglass'],apps:['exchange','sharepoint','teams'],clients:['modern'],
+   platforms:['any'],location:'any',signinRisk:'any',userRisk:'any',grant:'compliant-or-hybrid',session:'none',
+   notes:'Requires Intune compliance policy to be configured first. Deploy after confirming device compliance rates.'},
+  {id:uid(),name:'BLOCK — High-Risk Sign-ins (P2)',state:'report',purpose:'risk-block',
+   usersInc:['all'],usersExc:['breakglass'],apps:['all'],clients:['modern'],
+   platforms:['any'],location:'any',signinRisk:'high',userRisk:'any',grant:'block',session:'none',
+   notes:'Requires Entra ID P2. Automatically blocks sign-ins with high risk score from Identity Protection. Review risk detections weekly.'},
+  {id:uid(),name:'REQUIRE — MFA for Security Info Registration',state:'report',purpose:'mfa-register',
+   usersInc:['all'],usersExc:['breakglass'],apps:['register-security-info'],clients:['modern'],
+   platforms:['any'],location:'outside-trusted',signinRisk:'any',userRisk:'any',grant:'mfa',session:'none',
+   notes:'Prevents attackers from registering their own MFA method on compromised accounts. Critical control.'}
+];
+
+function uid(){return 'p'+Math.random().toString(36).substr(2,9);}
+
+/* ══════════════════════════════════════════
+   TABS
+══════════════════════════════════════════ */
+document.querySelectorAll('.tab-btn').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var tab=this.dataset.tab;
+    document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
+    document.querySelectorAll('.tab-content').forEach(function(c){c.classList.remove('active');});
+    this.classList.add('active');
+    document.querySelector('.tab-content[data-tab="'+tab+'"]').classList.add('active');
+    if(tab==='advisor') runAdvisor();
+  });
+});
+
+/* ══════════════════════════════════════════
+   POLICY BUILDER
+══════════════════════════════════════════ */
+document.getElementById('importBtn').addEventListener('click',importPoliciesJSON);
+document.getElementById('exportBtn2').addEventListener('click',exportPoliciesJSON);
+
+document.getElementById('loadTemplateBtn').addEventListener('click',function(){
+  caBusy(this,'Loading baseline…',function(){
+    var backup=policies.slice();
+    policies=BASELINE.map(function(p){return Object.assign({},p,{id:uid()});});
+    renderPolicies(); updateTabCount();
+    caToast('Enterprise baseline loaded — '+policies.length+' policies','success', backup.length?'Undo':null, backup.length?function(){policies=backup;renderPolicies();updateTabCount();caToast('Reverted to your previous policies','info');}:null);
+  });
+});
+
+document.getElementById('addPolicyBtn').addEventListener('click',function(){
+  editingId=null;
+  openModal(null);
+});
+
+function renderPolicies(){
+  var list=document.getElementById('policyList');
+  var empty=document.getElementById('emptyPolicies');
+  var fb=document.getElementById('caFilterBar');
+  if(policies.length===0){list.innerHTML='';empty.style.display='block';if(fb)fb.style.display='none';updateTabCount();return;}
+  empty.style.display='none'; if(fb)fb.style.display='flex';
+  var view=policies.filter(function(p){
+    if(policyStateFilter!=='all'&&p.state!==policyStateFilter) return false;
+    if(policyQuery){ var q=policyQuery.toLowerCase(); var hay=(p.name+' '+p.usersInc.join(' ')+' '+p.apps.join(' ')+' '+p.grant+' '+(p.notes||'')).toLowerCase(); if(hay.indexOf(q)===-1) return false; }
+    return true;
+  });
+  if(policySort==='name') view.sort(function(a,b){return a.name.localeCompare(b.name);});
+  else if(policySort==='state'){var ord={on:0,report:1,off:2}; view.sort(function(a,b){return (ord[a.state]||9)-(ord[b.state]||9);});}
+  var rc=document.getElementById('caResultCount'); if(rc) rc.textContent='Showing '+view.length+' of '+policies.length;
+  if(view.length===0){ list.innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-family:\'JetBrains Mono\',monospace;font-size:11px;border:1px dashed var(--border);border-radius:11px">No policies match your search or filter.</div>'; updateTabCount(); return; }
+  list.innerHTML=view.map(function(p,idx){
+    var stCls=p.state==='on'?'pc-state-on':p.state==='report'?'pc-state-report':'pc-state-off';
+    var stLbl=p.state==='on'?'ENABLED':p.state==='report'?'REPORT-ONLY':'DISABLED';
+    var cardCls=p.state==='on'?'state-on':p.state==='report'?'state-report':'state-off';
+    var grantLabel={block:'Block',mfa:'Require MFA','pr-mfa':'Phishing-Resistant MFA',compliant:'Compliant Device','compliant-or-hybrid':'Compliant/Hybrid Device','mfa-compliant':'MFA + Compliant','grant':'Grant'}[p.grant]||p.grant;
+    var tags=[grantLabel];
+    if(p.usersInc.includes('admins')) tags.push('Admins');
+    if(p.signinRisk!=='any') tags.push('Risk:'+p.signinRisk);
+    if(p.session!=='none') tags.push('Session:'+p.session);
+    return '<div class="policy-card '+cardCls+'" id="pc-'+p.id+'">'
+      +'<div class="pc-header" onclick="togglePCard(\''+p.id+'\')">'
+      +'<span class="pc-state '+stCls+'">'+stLbl+'</span>'
+      +'<span class="pc-num" style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:var(--dim);flex-shrink:0">'+(idx+1)+'.</span>'
+      +'<span class="pc-name">'+escHtml(p.name)+'</span>'
+      +'<div class="pc-tags">'+tags.map(function(t){return'<span class="pc-tag">'+t+'</span>';}).join('')+'</div>'
+      +'<div class="pc-actions">'
+      +'<button class="btn btn-ghost" onclick="event.stopPropagation();editPolicy(\''+p.id+'\')">Edit</button>'
+      +'<button class="btn btn-ghost btn-danger" onclick="event.stopPropagation();deletePolicy(\''+p.id+'\')">✕</button>'
+      +'</div></div>'
+      +'<div class="pc-body" id="pcb-'+p.id+'">'
+      +'<div class="pc-grid">'
+      +'<div><div class="pc-field"><div class="pc-field-label">Users — Include</div><div class="pc-field-value">'+p.usersInc.join(', ')+'</div></div>'
+      +'<div class="pc-field"><div class="pc-field-label">Users — Exclude</div><div class="pc-field-value">'+(p.usersExc.length?p.usersExc.join(', '):'None')+'</div></div>'
+      +'<div class="pc-field"><div class="pc-field-label">Target Apps</div><div class="pc-field-value">'+p.apps.join(', ')+'</div></div></div>'
+      +'<div><div class="pc-field"><div class="pc-field-label">Client Apps</div><div class="pc-field-value">'+p.clients.join(', ')+'</div></div>'
+      +'<div class="pc-field"><div class="pc-field-label">Location</div><div class="pc-field-value">'+p.location+'</div></div>'
+      +'<div class="pc-field"><div class="pc-field-label">Sign-in Risk</div><div class="pc-field-value">'+p.signinRisk+'</div></div>'
+      +'<div class="pc-field"><div class="pc-field-label">Grant</div><div class="pc-field-value" style="color:var(--teal)">'+grantLabel+'</div></div>'
+      +(p.session!=='none'?'<div class="pc-field"><div class="pc-field-label">Session</div><div class="pc-field-value">'+p.session+'</div></div>':'')
+      +(p.notes?'<div class="pc-field"><div class="pc-field-label">Notes</div><div class="pc-field-value" style="font-style:italic">'+escHtml(p.notes)+'</div></div>':'')
+      +'</div></div></div></div>';
+  }).join('');
+  updateTabCount();
+}
+
+window.togglePCard=function(id){
+  var b=document.getElementById('pcb-'+id);
+  if(b) b.classList.toggle('open');
+};
+window.editPolicy=function(id){
+  var p=policies.find(function(x){return x.id===id;});
+  if(p){editingId=id;openModal(p);}
+};
+window.deletePolicy=function(id){
+  var idx=policies.findIndex(function(p){return p.id===id;});
+  if(idx<0) return;
+  var removed=policies[idx];
+  policies=policies.filter(function(p){return p.id!==id;});
+  renderPolicies(); updateTabCount();
+  caToast('Policy deleted — “'+removed.name+'”','info','Undo',function(){ policies.splice(Math.min(idx,policies.length),0,removed); renderPolicies(); updateTabCount(); caToast('Policy restored','success'); });
+};
+
+/* ══════════════════════════════════════════
+   MODAL
+══════════════════════════════════════════ */
+function openModal(p){
+  var modal=document.getElementById('policyModal');
+  document.getElementById('modalMode').textContent=p?'EDITOR':'BUILDER';
+  if(p){
+    document.getElementById('m-name').value=p.name;
+    document.getElementById('m-state').value=p.state;
+    document.getElementById('m-purpose').value=p.purpose;
+    document.getElementById('m-location').value=p.location;
+    document.getElementById('m-signinrisk').value=p.signinRisk;
+    document.getElementById('m-userrisk').value=p.userRisk;
+    document.getElementById('m-grant').value=p.grant;
+    document.getElementById('m-session').value=p.session;
+    document.getElementById('m-notes').value=p.notes||'';
+    setCheckGroup('m-users-inc',p.usersInc);
+    setCheckGroup('m-users-exc',p.usersExc);
+    setCheckGroup('m-apps',p.apps);
+    setCheckGroup('m-clients',p.clients);
+    setCheckGroup('m-platforms',p.platforms);
+  } else {
+    document.getElementById('m-name').value='';
+    document.getElementById('m-state').value='report';
+    document.getElementById('m-purpose').value='mfa';
+    document.getElementById('m-location').value='any';
+    document.getElementById('m-signinrisk').value='any';
+    document.getElementById('m-userrisk').value='any';
+    document.getElementById('m-grant').value='mfa';
+    document.getElementById('m-session').value='none';
+    document.getElementById('m-notes').value='';
+    setCheckGroup('m-users-inc',['all']);
+    setCheckGroup('m-users-exc',[]);
+    setCheckGroup('m-apps',['all']);
+    setCheckGroup('m-clients',['modern']);
+    setCheckGroup('m-platforms',['any']);
+  }
+  modal.style.display='flex';
+}
+
+function setCheckGroup(id,vals){
+  document.querySelectorAll('#'+id+' .check-pill').forEach(function(pill){
+    var inp=pill.querySelector('input');
+    var isSelected=vals.includes(inp.value);
+    inp.checked=isSelected;
+    pill.classList.toggle('selected',isSelected&&!pill.classList.contains('selected-red'));
+    pill.classList.toggle('selected-red',isSelected&&pill.classList.contains('selected-red'));
+  });
+}
+
+function getCheckGroup(id){
+  var vals=[];
+  document.querySelectorAll('#'+id+' input:checked').forEach(function(inp){vals.push(inp.value);});
+  return vals.length?vals:['any'];
+}
+
+document.querySelectorAll('#policyModal .check-pill').forEach(function(pill){
+  pill.addEventListener('click',function(){
+    var inp=this.querySelector('input');
+    inp.checked=!inp.checked;
+    var isRed=this.classList.contains('selected-red')||this.dataset.red;
+    if(inp.checked){this.classList.add(isRed?'selected-red':'selected');}
+    else{this.classList.remove('selected','selected-red');}
+  });
+});
+
+document.getElementById('modalSave').addEventListener('click',function(){
+  var name=document.getElementById('m-name').value.trim();
+  if(!name){caToast('Please enter a policy name.','warn');var _nm=document.getElementById('m-name');if(_nm)_nm.focus();return;}
+  var p={
+    id:editingId||uid(),
+    name:name,
+    state:document.getElementById('m-state').value,
+    purpose:document.getElementById('m-purpose').value,
+    usersInc:getCheckGroup('m-users-inc'),
+    usersExc:getCheckGroup('m-users-exc'),
+    apps:getCheckGroup('m-apps'),
+    clients:getCheckGroup('m-clients'),
+    platforms:getCheckGroup('m-platforms'),
+    location:document.getElementById('m-location').value,
+    signinRisk:document.getElementById('m-signinrisk').value,
+    userRisk:document.getElementById('m-userrisk').value,
+    grant:document.getElementById('m-grant').value,
+    session:document.getElementById('m-session').value,
+    notes:document.getElementById('m-notes').value.trim()
+  };
+  if(editingId){
+    var idx=policies.findIndex(function(x){return x.id===editingId;});
+    if(idx!==-1) policies[idx]=p;
+  } else {
+    policies.push(p);
+  }
+  var _wasEdit=!!editingId;
+  document.getElementById('policyModal').style.display='none';
+  renderPolicies(); updateTabCount();
+  caToast(_wasEdit?'Policy updated — “'+p.name+'”':'Policy added — “'+p.name+'”','success');
+});
+
+['modalClose','modalCancel'].forEach(function(id){
+  document.getElementById(id).addEventListener('click',function(){
+    document.getElementById('policyModal').style.display='none';
+  });
+});
+
+/* ══════════════════════════════════════════
+   SIMULATOR ENGINE
+══════════════════════════════════════════ */
+document.getElementById('runSimBtn').addEventListener('click',function(){caBusy(this,'Running simulation…',runSimulation);});
+
+function runSimulation(){
+  var scenario={
+    userType:document.getElementById('s-usertype').value,
+    userRisk:document.getElementById('s-userrisk').value,
+    device:document.getElementById('s-device').value,
+    platform:document.getElementById('s-platform').value,
+    location:document.getElementById('s-location').value,
+    signinRisk:document.getElementById('s-signinrisk').value,
+    app:document.getElementById('s-app').value,
+    client:document.getElementById('s-client').value,
+    mfa:document.getElementById('s-mfa').value
+  };
+
+  var isLegacy=scenario.client.startsWith('legacy');
+  var isAdmin=scenario.userType==='admin'||scenario.userType==='priv-admin';
+  var isGuest=scenario.userType==='guest';
+  var isCompliant=scenario.device==='compliant';
+  var isHybrid=scenario.device==='hybrid';
+  var isTrusted=scenario.location==='trusted';
+  var isPRMFA=scenario.mfa==='done-fido2'||scenario.mfa==='done-whfb';
+  var isMFADone=scenario.mfa!=='not-done';
+
+  var enabledPolicies=policies.filter(function(p){return p.state==='on'||p.state==='report';});
+  var results=[];
+  var overallBlock=false;
+  var requiredControls=[];
+
+  enabledPolicies.forEach(function(p){
+    var reasons=[];
+    var applies=true;
+
+    /* USER MATCH */
+    var userMatch=false;
+    if(p.usersInc.includes('all')) userMatch=true;
+    if(p.usersInc.includes('admins')&&isAdmin) userMatch=true;
+    if(p.usersInc.includes('guests')&&isGuest) userMatch=true;
+    if(p.usersInc.includes('members')&&!isGuest) userMatch=true;
+    /* Exclusions override */
+    if(p.usersExc.includes('breakglass')&&scenario.userType==='service') userMatch=false;
+    if(!userMatch){applies=false;reasons.push('User type not in scope');}
+
+    /* APP MATCH */
+    if(applies){
+      var appMatch=p.apps.includes('all');
+      var appMap={exchange:'exchange',sharepoint:'sharepoint',teams:'teams','azure-portal':'azure-mgmt','graph':'all','all-apps':'all','third-party':'all'};
+      var mappedApp=appMap[scenario.app]||'other';
+      if(p.apps.includes(mappedApp)) appMatch=true;
+      if(p.apps.includes('register-security-info')&&scenario.app!=='register-security-info') appMatch=false;
+      if(!appMatch){applies=false;reasons.push('App not targeted by this policy');}
+    }
+
+    /* CLIENT APP MATCH */
+    if(applies){
+      var clientMatch=false;
+      if(p.clients.includes('modern')&&!isLegacy) clientMatch=true;
+      if(isLegacy){
+        var legacyMap={'legacy-imap':'legacy-eas','legacy-pop3':'other-legacy','legacy-smtp':'other-legacy','legacy-eas':'legacy-eas','other-legacy':'other-legacy'};
+        var mappedClient=legacyMap[scenario.client]||'other-legacy';
+        if(p.clients.includes(mappedClient)||p.clients.includes('other-legacy')) clientMatch=true;
+      }
+      if(!clientMatch){applies=false;reasons.push('Client app type not targeted');}
+    }
+
+    /* LOCATION MATCH */
+    if(applies&&p.location!=='any'){
+      var locMatch=false;
+      if(p.location==='outside-trusted'&&!isTrusted) locMatch=true;
+      if(p.location==='inside-trusted'&&isTrusted) locMatch=true;
+      if(p.location==='specific-countries') locMatch=true;
+      if(!locMatch){applies=false;reasons.push('Location condition not met (policy applies to different location)');}
+    }
+
+    /* RISK CONDITIONS */
+    if(applies&&p.signinRisk!=='any'){
+      var riskMap={none:0,low:1,medium:2,high:3};
+      var sRisk=riskMap[scenario.signinRisk]||0;
+      var pRisk=p.signinRisk==='high'?3:p.signinRisk==='medium-high'?2:1;
+      if(sRisk<pRisk){applies=false;reasons.push('Sign-in risk level below policy threshold');}
+    }
+    if(applies&&p.userRisk!=='any'){
+      var uRiskMap={none:0,low:1,medium:2,high:3};
+      var uRisk=uRiskMap[scenario.userRisk]||0;
+      var pURisk=p.userRisk==='high'?3:2;
+      if(uRisk<pURisk){applies=false;reasons.push('User risk level below policy threshold');}
+    }
+
+    /* OUTCOME if applies */
+    var outcome='',ctrlList=[];
+    if(applies){
+      if(p.grant==='block'){outcome='block';overallBlock=true;}
+      else if(p.grant==='mfa'&&!isMFADone){outcome='mfa-required';requiredControls.push('MFA');}
+      else if(p.grant==='pr-mfa'&&!isPRMFA){outcome='pr-mfa-required';requiredControls.push('Phishing-Resistant MFA (FIDO2/WHfB)');}
+      else if(p.grant==='compliant'&&!isCompliant){outcome='device-required';requiredControls.push('Compliant Device');}
+      else if(p.grant==='compliant-or-hybrid'&&!isCompliant&&!isHybrid){outcome='device-required';requiredControls.push('Compliant or Hybrid-Joined Device');}
+      else if(p.grant==='mfa-compliant'&&(!isMFADone||!isCompliant)){outcome='mfa-device-required';if(!isMFADone)requiredControls.push('MFA');if(!isCompliant)requiredControls.push('Compliant Device');}
+      else{outcome='satisfied';}
+      if(p.session!=='none') ctrlList.push('Session: '+p.session);
+      if(p.grant!=='block'&&p.grant!=='grant') ctrlList.push(p.grant);
+    }
+
+    results.push({
+      policy:p,applies:applies,outcome:outcome,
+      reasons:applies?ctrlList:reasons,
+      reportOnly:p.state==='report'
+    });
+  });
+
+  /* Dedupe required controls */
+  requiredControls=requiredControls.filter(function(v,i,a){return a.indexOf(v)===i;});
+
+  simResults={scenario:scenario,results:results,overallBlock:overallBlock,requiredControls:requiredControls};
+  renderSimResult(simResults);
+}
+
+function renderSimResult(sim){
+  var appliedPolicies=sim.results.filter(function(r){return r.applies;});
+  var reportOnlyApplied=appliedPolicies.filter(function(r){return r.reportOnly;});
+  var enforcedApplied=appliedPolicies.filter(function(r){return !r.reportOnly;});
+  var notApplied=sim.results.filter(function(r){return !r.applies;});
+
+  /* Overall outcome */
+  var outcomeCls,outcomeIcon,outcomeTitle,outcomeSub;
+  if(sim.overallBlock&&enforcedApplied.some(function(r){return r.outcome==='block';})){
+    outcomeCls='block';outcomeIcon='🚫';outcomeTitle='ACCESS BLOCKED';
+    outcomeSub='One or more enforced policies block this sign-in.';
+  } else if(sim.requiredControls.length>0&&enforcedApplied.length>0){
+    outcomeCls='mfa';outcomeIcon='🔐';outcomeTitle='ADDITIONAL CONTROLS REQUIRED';
+    outcomeSub='User must satisfy: '+sim.requiredControls.join(' + ');
+  } else if(reportOnlyApplied.length>0&&enforcedApplied.length===0){
+    outcomeCls='limited';outcomeIcon='📋';outcomeTitle='REPORT-ONLY — No Enforcement';
+    outcomeSub=reportOnlyApplied.length+' polic'+(reportOnlyApplied.length===1?'y':'ies')+' would apply if enforced. Currently only logging.';
+  } else if(appliedPolicies.length>0){
+    outcomeCls='grant';outcomeIcon='✅';outcomeTitle='ACCESS GRANTED';
+    outcomeSub='All applicable policy requirements are satisfied by this sign-in context.';
+  } else {
+    outcomeCls='limited';outcomeIcon='⚠️';outcomeTitle='NO POLICIES APPLIED';
+    outcomeSub='No enabled policies match this scenario. Access is granted with no controls — this is a coverage gap.';
+  }
+
+  /* Advisor insight */
+  var insight='';
+  if(outcomeCls==='limited'&&appliedPolicies.length===0){
+    insight='<div class="alert-box alert-danger" style="margin-top:12px"><span>🚨</span><span><strong>Coverage gap detected.</strong> This sign-in scenario has no applicable policies. If this is a real user accessing corporate resources from an unmanaged device or unexpected location, there is no control enforced. Review your policy scope.</span></div>';
+  }
+  if(sim.scenario.client.startsWith('legacy')&&!sim.results.some(function(r){return r.applies&&r.policy.purpose==='block-legacy';})){
+    insight+='<div class="alert-box alert-warn" style="margin-top:10px"><span>⚠️</span><span><strong>Legacy authentication not blocked.</strong> This scenario uses a legacy protocol but no block-legacy policy applies. Add a policy to block legacy authentication — it bypasses MFA entirely.</span></div>';
+  }
+  if(sim.scenario.userType==='admin'&&!sim.results.some(function(r){return r.applies&&r.policy.purpose==='pr-mfa';})){
+    insight+='<div class="alert-box alert-warn" style="margin-top:10px"><span>⚠️</span><span><strong>Admin without phishing-resistant MFA.</strong> This admin user is not covered by a phishing-resistant MFA policy. Standard MFA is bypassable via AiTM attacks for privileged accounts.</span></div>';
+  }
+
+  function policyRow(r){
+    var icon=r.applies?(r.outcome==='block'?'🚫':r.outcome==='satisfied'?'✅':'🔐'):'○';
+    var dotCls=r.applies?(r.outcome==='block'?'pr-warn':r.outcome==='satisfied'?'pr-yes':'pr-warn'):'pr-no';
+    var reasonText=r.applies?
+      (r.outcome==='block'?'Blocks access':(r.outcome==='satisfied'?'Requirements satisfied':(r.outcome.includes('required')?'Requires: '+r.reasons.join(', '):'Controls applied')))
+      :'Not applicable: '+r.reasons.join('; ');
+    return '<div class="pr-row">'
+      +'<div class="pr-apply '+dotCls+'">'+icon+'</div>'
+      +'<div style="flex:1">'
+      +'<div class="pr-name">'+escHtml(r.policy.name)
+      +(r.reportOnly?'<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:var(--yellow);margin-left:8px">REPORT-ONLY</span>':'')
+      +'</div>'
+      +'<div class="pr-reason">'+reasonText+'</div>'
+      +'</div>'
+      +'</div>';
+  }
+
+  var html='<div class="result-panel">'
+    +'<div class="result-outcome '+outcomeCls+'">'
+    +'<div class="ro-icon">'+outcomeIcon+'</div>'
+    +'<div><div class="ro-title">'+outcomeTitle+'</div><div class="ro-sub">'+outcomeSub+'</div></div>'
+    +'</div>'
+    +insight
+    +'<div class="sec-title" style="margin-top:16px">Policy Evaluation Detail ('+sim.results.length+' policies)</div>'
+    +'<div style="border:1px solid var(--border)">'
+    +(appliedPolicies.length?'<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);padding:6px 12px;background:rgba(45,212,191,.04)">APPLIES ('+appliedPolicies.length+')</div>'+appliedPolicies.map(policyRow).join(''):'')
+    +(notApplied.length?'<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);padding:6px 12px;background:rgba(0,0,0,.2);margin-top:2px">NOT APPLICABLE ('+notApplied.length+')</div>'+notApplied.map(policyRow).join(''):'')
+    +'</div>'
+    +'<div style="margin-top:14px;font-size:11px;color:var(--dim);font-family:\'JetBrains Mono\',monospace;line-height:1.7">'
+    +'<strong style="color:var(--muted)">How to read this:</strong> Report-only policies are logged but not enforced. '
+    +'All enabled (enforced) policies must be satisfied — they combine using AND logic. '
+    +'A single BLOCK policy overrides all others.'
+    +'</div>'
+    +'</div>';
+
+  var panel=document.getElementById('simResult');
+  panel.style.display='block';
+  panel.innerHTML=html;
+  try{panel.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}
+  var _o=simResults&&simResults.overallBlock, _c=simResults&&simResults.requiredControls&&simResults.requiredControls.length;
+  caToast(_o?'Simulation complete — access blocked':(_c?'Simulation complete — controls required':'Simulation complete — access granted'), _o?'danger':(_c?'info':'success'));
+}
+
+/* ══════════════════════════════════════════
+   GAP ADVISOR ENGINE
+══════════════════════════════════════════ */
+document.getElementById('runAdvisorBtn').addEventListener('click',function(){caBusy(this,'Analysing policies…',runAdvisor);});
+
+function runAdvisor(){
+  var enabled=policies.filter(function(p){return p.state!=='off';});
+  var enforced=policies.filter(function(p){return p.state==='on';});
+  var gaps=[];
+
+  function hasPolicy(purpose){return enabled.some(function(p){return p.purpose===purpose;});}
+  function hasPolicyEnforced(purpose){return enforced.some(function(p){return p.purpose===purpose;});}
+  function coversAll(p){return p.usersInc.includes('all');}
+  function coversAllApps(p){return p.apps.includes('all');}
+
+  /* GAP 1: No legacy auth block */
+  if(!hasPolicy('block-legacy')){
+    gaps.push({sev:'CRITICAL',title:'No Legacy Authentication Block Policy',
+      desc:'Legacy protocols (IMAP, POP3, SMTP AUTH, Exchange ActiveSync with Basic Auth) cannot support MFA. Without a block policy, any user with a valid password can authenticate via these protocols completely bypassing all MFA and CA controls.',
+      fix:'Create a CA policy: Users = All, Client apps = Exchange ActiveSync clients + Other clients, Grant = Block access. Run in Report-only for 2 weeks first.',
+      ref:'Your CA article: Gap 01 — Legacy Authentication MFA Blind Spot'});
+  } else if(!hasPolicyEnforced('block-legacy')){
+    gaps.push({sev:'HIGH',title:'Legacy Auth Block Exists But is Report-Only',
+      desc:'You have a legacy authentication block policy but it is in Report-only mode. It is logging attempts but not blocking them. Legacy auth bypass is active.',
+      fix:'Move the Block Legacy Authentication policy from Report-only to Enabled. Review the report-only logs first to identify any remaining legacy auth users.',
+      ref:''});
+  }
+
+  /* GAP 2: No MFA for all users */
+  if(!hasPolicy('mfa')&&!hasPolicy('pr-mfa')){
+    gaps.push({sev:'CRITICAL',title:'No MFA Policy for Standard Users',
+      desc:'No policy requires MFA for standard user sign-ins. A stolen password provides immediate full access to all Microsoft 365 resources.',
+      fix:'Create a CA policy requiring MFA for all users on all resources. Ensure all users have Authenticator registered before enforcing.',
+      ref:''});
+  }
+
+  /* GAP 3: No phishing-resistant MFA for admins */
+  var prMfaPolicy=enabled.find(function(p){return p.purpose==='pr-mfa';});
+  if(!prMfaPolicy){
+    gaps.push({sev:'CRITICAL',title:'No Phishing-Resistant MFA for Privileged Roles',
+      desc:'Admins are not required to use phishing-resistant MFA (FIDO2/WHfB). Standard MFA (Authenticator push, SMS, TOTP) is bypassable via AiTM proxy attacks. A compromised admin account gives full tenant control.',
+      fix:'Create a CA policy targeting all privileged roles requiring Authentication Strength = Phishing-resistant MFA. Set sign-in frequency to 1 hour.',
+      ref:'Your CA article: Gap 03 — OIDC Scope Bypass'});
+  } else if(!prMfaPolicy.usersInc.includes('admins')){
+    gaps.push({sev:'HIGH',title:'Phishing-Resistant MFA Policy Does Not Target Admin Roles',
+      desc:'A phishing-resistant MFA policy exists but does not target privileged role members. Admin accounts are still using standard MFA.',
+      fix:'Update the policy to include admin roles: Global Admin, Privileged Role Admin, Exchange Admin, SharePoint Admin, Conditional Access Admin.',
+      ref:''});
+  }
+
+  /* GAP 4: No device compliance */
+  if(!hasPolicy('compliant-device')){
+    gaps.push({sev:'HIGH',title:'No Device Compliance Requirement',
+      desc:'No policy requires a compliant or managed device. Unmanaged personal devices — with no security baseline, no encryption, no antivirus enforcement — can access corporate data freely.',
+      fix:'Create a CA policy requiring compliant or hybrid-joined device for Exchange, SharePoint, and Teams. Ensure Intune compliance policies are configured first.',
+      ref:''});
+  }
+
+  /* GAP 5: No MFA registration protection */
+  if(!hasPolicy('mfa-register')){
+    gaps.push({sev:'HIGH',title:'No MFA Registration Protection Policy',
+      desc:'Without a policy controlling security info registration, an attacker who obtains credentials can register their own MFA method from any location — locking the legitimate user out and establishing persistent access.',
+      fix:'Create a CA policy: User Action = Register security info, Location = Outside trusted locations, Grant = Require MFA.',
+      ref:''});
+  }
+
+  /* GAP 6: Report-only policies not enforced */
+  var reportOnly=policies.filter(function(p){return p.state==='report';});
+  if(reportOnly.length>0){
+    gaps.push({sev:'HIGH',title:reportOnly.length+' Polic'+(reportOnly.length===1?'y':'ies')+' in Report-Only Mode',
+      desc:'Report-only policies log what would happen but enforce nothing. '+reportOnly.map(function(p){return p.name;}).join(', ')+'. These provide zero security protection.',
+      fix:'Review sign-in logs for each report-only policy. Once impact is understood, move to Enabled. Set a 30-day deadline for each policy.',
+      ref:'Your CA article: Gap 06 — Report-Only Policies Never Enforced'});
+  }
+
+  /* GAP 7: No risk-based policy */
+  if(!hasPolicy('risk-block')){
+    gaps.push({sev:'MEDIUM',title:'No Risk-Based Sign-in Block Policy (P2)',
+      desc:'No policy automatically blocks high-risk sign-ins. Identity Protection can detect compromised credentials, anonymous IPs, and impossible travel — but without a CA policy to act on these signals, the risk is detected but not blocked.',
+      fix:'Create a CA policy: Sign-in risk = High, Grant = Block access. Requires Entra ID P2. This automates blocking of confirmed malicious sign-ins.',
+      ref:''});
+  }
+
+  /* GAP 8: Broad exclusions */
+  var broadExclusions=policies.filter(function(p){
+    return p.usersExc.includes('specific-group')&&p.usersInc.includes('all');
+  });
+  if(broadExclusions.length>0){
+    gaps.push({sev:'MEDIUM',title:'Policies with Broad Exclusion Groups',
+      desc:broadExclusions.length+' polic'+(broadExclusions.length===1?'y':'ies')+' use a specific group exclusion. Exclusion groups are a common attack vector — an attacker with sufficient privilege can add a controlled account to bypass all CA policies.',
+      fix:'Enable Entra ID Access Reviews on all CA exclusion groups. Set a Sentinel alert on group membership changes to exclusion groups. Document and review every exclusion quarterly.',
+      ref:'Your CA article: Gap 02 — Exclusion Groups Unmaintained Backdoor'});
+  }
+
+  /* GAP 9: No session controls for admins */
+  var adminPolicies=enabled.filter(function(p){return p.usersInc.includes('admins');});
+  var hasAdminSession=adminPolicies.some(function(p){return p.session==='1h'||p.session==='4h';});
+  if(adminPolicies.length>0&&!hasAdminSession){
+    gaps.push({sev:'MEDIUM',title:'No Short Sign-in Frequency for Admin Accounts',
+      desc:'Admin policies do not enforce a short sign-in frequency. Stolen admin tokens remain valid for the full token lifetime (up to 90 minutes) after a compromise is detected.',
+      fix:'Set sign-in frequency to 1 hour on your admin CA policy. This forces re-authentication and limits the useful window for stolen tokens.',
+      ref:''});
+  }
+
+  /* GAP 10: Token Protection missing for admins */
+  var adminPoliciesAll=enabled.filter(function(p){return p.usersInc.includes('admins');});
+  if(adminPoliciesAll.length===0){
+    gaps.push({sev:'HIGH',title:'No CA Policies Targeting Admin Roles Specifically',
+      desc:'No Conditional Access policy specifically targets admin roles. Admins should have stricter controls than standard users — phishing-resistant MFA, shorter sign-in frequency, and ideally token protection.',
+      fix:'Create a dedicated CA policy targeting all privileged roles with: Authentication Strength = Phishing-resistant MFA, Sign-in frequency = 1 hour, and Token Protection enabled (preview).',
+      ref:'CA baseline: Policy 3 — Phishing-Resistant MFA for Admin Roles'});
+  }
+
+  /* GAP 11: No CAE-aware policy (session too long) */
+  var longSessions=enabled.filter(function(p){
+    return p.session==='none'&&p.usersInc.includes('admins')&&p.state==='on';
+  });
+  if(longSessions.length>0&&!hasAdminSession){
+    gaps.push({sev:'MEDIUM',title:'CAE Not Reinforced — Admin Sessions Have No Frequency Limit',
+      desc:'Continuous Access Evaluation (CAE) forces near-real-time token re-evaluation but defaults to 60–90 minute token lifetimes. Without a Sign-in frequency session control on admin policies, compromised admin tokens remain valid for up to 90 minutes after revocation.',
+      fix:'Add Sign-in frequency = 1 hour to all admin CA policies. This works alongside CAE to minimise the window for token replay after a compromise is detected. Update your IR runbooks: use Revoke Sessions (Feb 2026 change) to trigger immediate CAE revocation.',
+      ref:'CA article: Gap 05 — Token Lifetime and Session Control Gaps'});
+  }
+
+  /* GOOD PRACTICES */
+  if(hasPolicy('block-legacy')&&hasPolicyEnforced('block-legacy')){
+    gaps.push({sev:'OK',title:'Legacy Authentication is Blocked',desc:'A policy is enforced that blocks legacy authentication protocols. MFA bypass via IMAP/POP3/SMTP is prevented.',fix:'',ref:''});
+  }
+  if(hasPolicyEnforced('mfa')||hasPolicyEnforced('pr-mfa')){
+    gaps.push({sev:'OK',title:'MFA is Enforced for User Sign-ins',desc:'At least one enforced policy requires MFA for user authentication.',fix:'',ref:''});
+  }
+
+  gapResults=gaps;
+  renderAdvisor(gaps);
+  document.getElementById('tn-gaps').textContent=gaps.filter(function(g){return g.sev!=='OK';}).length;
+}
+
+function renderAdvisor(gaps){
+  if(policies.length===0){
+    document.getElementById('advisorResult').innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);font-family:\'JetBrains Mono\',monospace;font-size:11px;border:1px dashed var(--border)">Add policies in the Policy Builder tab first.</div>';
+    return;
+  }
+
+  var critical=gaps.filter(function(g){return g.sev==='CRITICAL';});
+  var high=gaps.filter(function(g){return g.sev==='HIGH';});
+  var medium=gaps.filter(function(g){return g.sev==='MEDIUM';});
+  var ok=gaps.filter(function(g){return g.sev==='OK';});
+
+  /* Score */
+  var total=critical.length+high.length+medium.length+ok.length;
+  var issues=critical.length+high.length+medium.length;
+  var pct=total?Math.round(ok.length/total*100):0;
+  var grade=pct>=80?'Strong':pct>=60?'Moderate':pct>=40?'Weak':'Critical';
+  var gradeCol=pct>=80?'var(--green)':pct>=60?'var(--teal)':pct>=40?'var(--orange)':'var(--red)';
+
+  var html='<div class="posture-bar">'
+    +'<div class="pb-cell"><div class="pb-num" style="color:'+gradeCol+'">'+pct+'%</div><div class="pb-lbl">CA Posture Score</div></div>'
+    +'<div class="pb-cell"><div class="pb-num" style="color:var(--red)">'+critical.length+'</div><div class="pb-lbl">Critical Gaps</div></div>'
+    +'<div class="pb-cell"><div class="pb-num" style="color:var(--orange)">'+high.length+'</div><div class="pb-lbl">High Gaps</div></div>'
+    +'<div class="pb-cell"><div class="pb-num" style="color:var(--yellow)">'+medium.length+'</div><div class="pb-lbl">Medium Gaps</div></div>'
+    +'<div class="pb-cell"><div class="pb-num" style="color:var(--green)">'+ok.length+'</div><div class="pb-lbl">Controls OK</div></div>'
+    +'</div>';
+
+  if(critical.length===0&&high.length===0){
+    html+='<div class="alert-box alert-info" style="margin-bottom:14px"><span>✅</span><span><strong>No critical or high gaps detected.</strong> Your CA policy set covers the essential enterprise controls. Review medium findings and continue to monitor for configuration drift.</span></div>';
+  } else {
+    html+='<div class="alert-box alert-danger" style="margin-bottom:14px"><span>🚨</span><span><strong>'+critical.length+' critical and '+high.length+' high severity gaps require immediate attention.</strong> These represent active attack surfaces in your CA architecture. Remediate in priority order below.</span></div>';
+  }
+
+  function gapHtml(g){
+    var cls=g.sev==='CRITICAL'?'gap-crit':g.sev==='HIGH'?'gap-high':g.sev==='MEDIUM'?'gap-med':'gap-ok';
+    var sevCls=g.sev==='CRITICAL'?'gap-sev-c':g.sev==='HIGH'?'gap-sev-h':g.sev==='MEDIUM'?'gap-sev-m':'gap-sev-ok';
+    return '<div class="gap-card '+cls+'">'
+      +'<div class="gap-header"><span class="gap-sev '+sevCls+'">'+g.sev+'</span><span class="gap-title">'+g.title+'</span></div>'
+      +'<div class="gap-desc">'+g.desc+'</div>'
+      +(g.fix?'<div class="gap-fix">'+g.fix+'</div>':'')
+      +(g.ref?'<div style="font-size:11px;color:var(--muted);margin-top:6px;font-family:\'JetBrains Mono\',monospace">'+g.ref+'</div>':'')
+      +'</div>';
+  }
+
+  if(critical.length) html+='<div class="sec-title">Critical — Immediate Action Required</div>'+critical.map(gapHtml).join('');
+  if(high.length) html+='<div class="sec-title" style="margin-top:16px">High — Remediate Within 30 Days</div>'+high.map(gapHtml).join('');
+  if(medium.length) html+='<div class="sec-title" style="margin-top:16px">Medium — Next Review Cycle</div>'+medium.map(gapHtml).join('');
+  if(ok.length) html+='<div class="sec-title" style="margin-top:16px">Controls Confirmed</div>'+ok.map(gapHtml).join('');
+
+  document.getElementById('advisorResult').innerHTML=html;
+  try{document.getElementById('advisorResult').scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}
+  caToast('Gap analysis complete','success');
+}
+
+/* ══════════════════════════════════════════
+   REPORT GENERATOR
+══════════════════════════════════════════ */
+document.getElementById('generateReportBtn').addEventListener('click',function(){caBusy(this,'Generating report…',function(){generateReport();caToast('Report generated — opening print dialog…','success');});});
+
+function generateReport(){
+  runAdvisor();
+  var org=document.getElementById('rpt-org').value||'[Organisation]';
+  var author=document.getElementById('rpt-author').value||'Timothy James Eusebio';
+  var tenant=document.getElementById('rpt-tenant').value||'[Tenant]';
+  var classification=document.getElementById('rpt-class').value;
+  var dateStr=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
+
+  var enabled=policies.filter(function(p){return p.state!=='off';});
+  var enforced=policies.filter(function(p){return p.state==='on';});
+  var reportOnly=policies.filter(function(p){return p.state==='report';});
+  var critical=gapResults.filter(function(g){return g.sev==='CRITICAL';});
+  var high=gapResults.filter(function(g){return g.sev==='HIGH';});
+  var medium=gapResults.filter(function(g){return g.sev==='MEDIUM';});
+  var ok=gapResults.filter(function(g){return g.sev==='OK';});
+  var totalGaps=critical.length+high.length+medium.length;
+  var pct=gapResults.length?Math.round(ok.length/gapResults.length*100):0;
+  var grade=pct>=80?'Strong':pct>=60?'Moderate':pct>=40?'Weak':'Critical Risk';
+  var gHex=pct>=80?'#00c853':pct>=60?'#00bcd4':pct>=40?'#ff8f00':'#c62828';
+
+  function stateLabel(s){return s==='on'?'ENABLED':s==='report'?'REPORT-ONLY':'DISABLED';}
+  function stateClass(s){return s==='on'?'cpd-state-on':s==='report'?'cpd-state-rpt':'cpd-state-off';}
+  function sevClass(s){return{CRITICAL:'cpd-sev-c',HIGH:'cpd-sev-h',MEDIUM:'cpd-sev-m',OK:'cpd-sev-ok'}[s]||'';}
+  function gapRowClass(s){return{CRITICAL:'cpd-gap-c',HIGH:'cpd-gap-h',MEDIUM:'cpd-gap-m',OK:'cpd-gap-ok'}[s]||'';}
+
+  var execSummary='<p>This report presents a Conditional Access policy assessment for <strong>'+org+'</strong> ('+tenant+'). The assessment evaluated '+policies.length+' CA policies: '+enforced.length+' enforced and '+reportOnly.length+' in report-only mode.</p>';
+  execSummary+='<p>The CA posture score of <strong style="color:'+gHex+'">'+pct+'% ('+grade+')</strong> reflects '+totalGaps+' identified gap'+(totalGaps!==1?'s':'')+' across the policy architecture. '+critical.length+' critical and '+high.length+' high severity findings require remediation.</p>';
+  if(critical.length>0) execSummary+='<p><strong>Immediate attention required:</strong> Critical findings represent active bypass conditions — sign-in scenarios where MFA or device controls are not enforced. These should be remediated within 7 days.</p>';
+  if(enforced.length===0) execSummary+='<p><strong>⚠️ No policies are in enforced mode.</strong> All existing policies are in Report-only or Disabled state. The tenant currently has no active Conditional Access enforcement.</p>';
+
+  var policiesHtml=policies.map(function(p){
+    var grantLabel={block:'Block Access',mfa:'Require MFA','pr-mfa':'Phishing-Resistant MFA',compliant:'Require Compliant Device','compliant-or-hybrid':'Compliant or Hybrid Device','mfa-compliant':'MFA + Compliant Device',grant:'Grant Access (no controls)'}[p.grant]||p.grant;
+    return '<div class="cpd-policy-row">'
+      +'<div class="cpd-policy-head">'
+      +'<span class="cpd-state '+stateClass(p.state)+'">'+stateLabel(p.state)+'</span>'
+      +'<span class="cpd-pname">'+escHtml(p.name)+'</span>'
+      +'</div>'
+      +'<div class="cpd-policy-body">'
+      +'<strong>Users:</strong> '+p.usersInc.join(', ')+(p.usersExc.length?' | Exclude: '+p.usersExc.join(', '):'')+'<br>'
+      +'<strong>Apps:</strong> '+p.apps.join(', ')+' | <strong>Clients:</strong> '+p.clients.join(', ')+'<br>'
+      +'<strong>Location:</strong> '+p.location+' | <strong>Sign-in Risk:</strong> '+p.signinRisk+'<br>'
+      +'<strong>Grant Control:</strong> '+grantLabel+(p.session!=='none'?' | <strong>Session:</strong> '+p.session:'')+'<br>'
+      +(p.notes?'<em style="color:#666">'+escHtml(p.notes)+'</em>':'')
+      +'</div></div>';
+  }).join('');
+
+  var gapsHtml=gapResults.map(function(g){
+    return '<div class="cpd-gap-row '+gapRowClass(g.sev)+'">'
+      +'<div class="cpd-gap-head"><span class="cpd-sev '+sevClass(g.sev)+'">'+g.sev+'</span><span class="cpd-gap-title">'+g.title+'</span></div>'
+      +'<div class="cpd-gap-body"><div class="cpd-gap-desc">'+g.desc+'</div>'+(g.fix?'<div class="cpd-gap-fix">'+g.fix+'</div>':'')+'</div>'
+      +'</div>';
+  }).join('');
+
+  var simHtml='';
+  if(simResults){
+    var sLabels={member:'Standard Employee',admin:'Global Administrator','priv-admin':'Privileged Role Admin',guest:'Guest User',service:'Service Account'};
+    var aLabels={exchange:'Exchange Online',sharepoint:'SharePoint / OneDrive',teams:'Microsoft Teams','azure-portal':'Azure Portal','all-apps':'All M365 Apps','third-party':'Third-Party SaaS','graph':'Microsoft Graph'};
+    var dLabels={compliant:'Intune Compliant',hybrid:'Hybrid Azure AD Joined',registered:'Azure AD Registered',unmanaged:'Unmanaged Device','mobile-managed':'Mobile (Intune)','mobile-unmanaged':'Mobile (Personal)'};
+    simHtml='<div class="cpd-pg-break"><div class="cpd-sec">Appendix — Scenario Simulation Results</div>'
+      +'<div class="cpd-sim-row">'
+      +'<div class="cpd-sim-detail"><strong>Scenario:</strong> '+(sLabels[simResults.scenario.userType]||simResults.scenario.userType)+' accessing '+(aLabels[simResults.scenario.app]||simResults.scenario.app)+' from '+(dLabels[simResults.scenario.device]||simResults.scenario.device)+', location: '+simResults.scenario.location+', client: '+simResults.scenario.client+'</div>'
+      +'<div class="cpd-sim-outcome" style="color:'+(simResults.overallBlock?'#cc2222':simResults.requiredControls.length?'#0050aa':'#007733')+';">'
+      +(simResults.overallBlock?'ACCESS BLOCKED':simResults.requiredControls.length?'CONTROLS REQUIRED: '+simResults.requiredControls.join(', '):'ACCESS GRANTED')
+      +'</div>'
+      +'<table style="width:100%;border-collapse:collapse;font-size:8.5pt;margin-top:3mm">'
+      +'<thead><tr style="background:#f0f0f0"><th style="padding:2mm 3mm;text-align:left;border-bottom:1pt solid #ddd">Policy</th><th style="padding:2mm 3mm;text-align:left;border-bottom:1pt solid #ddd">Status</th><th style="padding:2mm 3mm;text-align:left;border-bottom:1pt solid #ddd">Outcome</th></tr></thead>'
+      +'<tbody>'
+      +simResults.results.map(function(r){
+        return '<tr style="border-bottom:0.5pt solid #eee">'
+          +'<td style="padding:2mm 3mm">'+escHtml(r.policy.name)+(r.reportOnly?' <em>(report-only)</em>':'')+'</td>'
+          +'<td style="padding:2mm 3mm">'+(r.applies?'Applied':'Not Applicable')+'</td>'
+          +'<td style="padding:2mm 3mm">'+(r.applies?(r.outcome==='block'?'BLOCK':r.outcome==='satisfied'?'Satisfied':'Requires: '+r.reasons.join(', ')):r.reasons.join('; '))+'</td>'
+          +'</tr>';
+      }).join('')
+      +'</tbody></table></div></div>';
+  }
+
+  var printDoc='<div class="cpd-cover">'
+    +'<div class="cpd-band">'
+    +'<div class="cpd-tag">'+classification+'</div>'
+    +'<div class="cpd-title">Conditional Access<br><span>Policy Assessment</span><br>Report</div>'
+    +'<div class="cpd-sub">'+org+' &middot; '+tenant+' &middot; eusebio@it-sec</div>'
+    +'<div class="cpd-kpi-row">'
+    +'<div class="cpd-kpi"><div class="cpd-kpi-num" style="color:'+gHex+'">'+pct+'%</div><div class="cpd-kpi-lbl">CA Score</div></div>'
+    +'<div class="cpd-kpi"><div class="cpd-kpi-num" style="color:#c62828">'+critical.length+'</div><div class="cpd-kpi-lbl">Critical</div></div>'
+    +'<div class="cpd-kpi"><div class="cpd-kpi-num" style="color:#c05000">'+high.length+'</div><div class="cpd-kpi-lbl">High</div></div>'
+    +'<div class="cpd-kpi"><div class="cpd-kpi-num" style="color:#007733">'+ok.length+'</div><div class="cpd-kpi-lbl">Controls OK</div></div>'
+    +'</div></div>'
+    +'<div class="cpd-white">'
+    +'<div class="cpd-meta"><div class="cpd-meta-lbl">Assessment Date</div><div class="cpd-meta-val">'+dateStr+'</div></div>'
+    +'<div class="cpd-meta"><div class="cpd-meta-lbl">Prepared By</div><div class="cpd-meta-val">'+escHtml(author)+'</div></div>'
+    +'<div class="cpd-meta"><div class="cpd-meta-lbl">Total Policies</div><div class="cpd-meta-val">'+policies.length+' ('+enforced.length+' enforced)</div></div>'
+    +'<div class="cpd-meta"><div class="cpd-meta-lbl">Overall Grade</div><div class="cpd-meta-val" style="color:'+gHex+'">'+grade+'</div></div>'
+    +'</div></div>'
+    +'<div class="cpd-pg-break"><div class="cpd-sec">Executive Summary</div><div class="cpd-exec"><h3>Assessment Overview</h3>'+execSummary+'</div>'
+    +'<div class="cpd-sec">Policy Architecture ('+policies.length+' policies)</div>'+policiesHtml+'</div>'
+    +'<div class="cpd-pg-break"><div class="cpd-sec">Gap Analysis &amp; Recommendations</div>'+gapsHtml+'</div>'
+    +simHtml
+    +'<div class="cpd-sec">Methodology &amp; Standards</div>'+'<div class="cpd-exec"><p>This assessment is structured around Microsoft Zero Trust principles (verify explicitly, least-privilege access, assume breach) and Microsoft Entra Conditional Access best practices. Policies are evaluated for coverage across identity, device, location, sign-in risk and session controls; gap findings and remediation follow Microsoft\'s recommended Conditional Access baseline, including phishing-resistant MFA, legacy-authentication blocking, and break-glass account exclusions.</p></div>'+'<div class="cpd-disclaimer">This report was prepared by <strong>'+escHtml(author)+'</strong> using the CA Policy Advisor tool (eusebio@it-sec). Findings are based on policy configuration inputs and represent the assessed state at the time of report generation ('+new Date().toUTCString()+'). Results should be validated against the live Microsoft Entra ID tenant. Classification: '+classification+'.</div>';
+
+  document.getElementById('caPrintDoc').innerHTML=printDoc;
+
+  document.getElementById('reportPreview').innerHTML='<div class="alert-box alert-info"><span>✅</span><span>Report generated. Click <strong>Generate &amp; Export PDF</strong> to open the print dialog and save as PDF. The report includes your full policy architecture, gap analysis with remediation steps, and (if you ran a simulation) scenario results.</span></div>';
+
+  setTimeout(function(){window.print();},400);
+}
+
+/* ══════════
+   HELPERS
+══════════ */
+function escHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function updateTabCount(){
+  document.getElementById('tn-builder').textContent=policies.length;
+}
+
+/* ══════════════════════════════════════════
+   PERSISTENCE — localStorage
+══════════════════════════════════════════ */
+var STORAGE_KEY='ca-advisor-policies-v1';
+
+function savePolicies(){
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(policies));}
+  catch(e){console.warn('Save failed:',e);}
+}
+
+function loadPolicies(){
+  try{
+    var saved=localStorage.getItem(STORAGE_KEY);
+    if(saved){
+      var parsed=JSON.parse(saved);
+      if(Array.isArray(parsed)&&parsed.length>0){policies=parsed;return true;}
+    }
+  }catch(e){console.warn('Load failed:',e);}
+  return false;
+}
+
+/* Auto-save on every policy change */
+var _origSave=renderPolicies;
+renderPolicies=function(){_origSave();savePolicies();};
+
+/* ══════════════════════════════════════════
+   JSON EXPORT / IMPORT
+══════════════════════════════════════════ */
+function exportPoliciesJSON(){
+  if(policies.length===0){caToast('No policies to export — add policies first.','warn');return;}
+  var data=JSON.stringify({version:1,exported:new Date().toISOString(),policies:policies},null,2);
+  var blob=new Blob([data],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;a.download='ca-policies-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();URL.revokeObjectURL(url);
+  caToast('Exported '+policies.length+' policies to JSON','success');
+}
+
+function importPoliciesJSON(){
+  var inp=document.createElement('input');
+  inp.type='file';inp.accept='.json';
+  inp.onchange=function(e){
+    var file=e.target.files[0];if(!file)return;
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      try{
+        var data=JSON.parse(ev.target.result);
+        var imported=data.policies||data;
+        if(!Array.isArray(imported)||imported.length===0){caToast('No valid policies found in the file.','warn');return;}
+        var _bk=policies.slice();
+        policies=imported.map(function(p){return Object.assign({},p,{id:uid()});});
+        renderPolicies();updateTabCount();
+        caToast('Imported '+policies.length+' polic'+(policies.length===1?'y':'ies'),'success', _bk.length?'Undo':null, _bk.length?function(){policies=_bk;renderPolicies();updateTabCount();caToast('Import reverted','info');}:null);
+      }catch(err){caToast('Invalid JSON file \u2014 export from this tool and try again.','danger');}
+    };
+    reader.readAsText(file);
+  };
+  inp.click();
+}
+
+/* ══════════════════════════════════════════
+   TOAST NOTIFICATION
+══════════════════════════════════════════ */
+function showToast(msg,type){
+  var t=document.createElement('div');
+  t.textContent=msg;
+  t.style.position='fixed';t.style.bottom='24px';t.style.right='24px';
+  t.style.background=type==='error'?'var(--red)':'var(--teal)';
+  t.style.color=type==='error'?'#fff':'#000';
+  t.style.fontFamily='monospace';t.style.fontSize='11px';
+  t.style.letterSpacing='.08em';t.style.padding='10px 18px';
+  t.style.zIndex='999';t.style.animation='fadeIn .2s ease';
+  document.body.appendChild(t);
+  setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(function(){t.remove();},300);},2500);
+}
+
+/* ══════════════════════════════════════════
+   WELCOME / HOW TO USE MODAL
+══════════════════════════════════════════ */
+function showWelcome(){
+  welcomeStep=0;
+  renderWelcomeStep(0);
+  document.getElementById('welcomeModal').style.display='flex';
+}
+
+var welcomeStep=0;
+var welcomeSteps=[
+  {icon:'🏗️',tab:'builder',title:'Step 1 — Policy Builder',
+   desc:'Start here. Build your CA policy architecture visually. Each policy has a name, state, user scope, apps, conditions, and grant controls.',
+   tip:'Click <strong style="color:var(--teal)">Load Enterprise Baseline</strong> to instantly load a proven 6-policy enterprise set — all in Report-only mode so nothing is enforced until you review.',
+   action:'Go to Policy Builder'},
+  {icon:'▶️',tab:'simulator',title:'Step 2 — Scenario Simulator',
+   desc:'Describe a real sign-in scenario — user type, device state, location, app, and client. The simulator evaluates all your policies against that scenario.',
+   tip:'Use this to <strong style="color:var(--teal)">test before enforcing</strong>. Try: Admin user, unmanaged device, outside office, modern auth — then see which policies apply.',
+   action:'Go to Simulator'},
+  {icon:'🔍',tab:'advisor',title:'Step 3 — Gap Advisor',
+   desc:'The Gap Advisor analyses your policy set as an expert consultant. It checks for 9 common CA gaps and tells you exactly what to fix and why.',
+   tip:'Run this <strong style="color:var(--teal)">after building your policies</strong>. It shows critical gaps, high-severity issues, and confirms what is already correctly configured.',
+   action:'Go to Gap Advisor'},
+  {icon:'📄',tab:'report',title:'Step 4 — Export Report',
+   desc:'Generate a professional PDF report of your CA architecture, gap analysis with remediation steps, and simulation results. Ready for a CISO or client.',
+   tip:'Fill in the <strong style="color:var(--teal)">organisation name and your name</strong> in the Report tab before exporting. The report includes a cover page, executive summary, and full findings.',
+   action:'Go to Report'}
+];
+
+function renderWelcomeStep(i){
+  var s=welcomeSteps[i];
+  document.getElementById('wm-icon').textContent=s.icon;
+  document.getElementById('wm-title').textContent=s.title;
+  document.getElementById('wm-desc').textContent=s.desc;
+  document.getElementById('wm-tip').innerHTML=s.tip;
+  document.getElementById('wm-action').textContent=s.action;
+  document.getElementById('wm-action').dataset.tab=s.tab;
+  document.getElementById('wm-prev').style.visibility=i===0?'hidden':'visible';
+  document.getElementById('wm-next').textContent=i===welcomeSteps.length-1?'Get Started →':'Next →';
+  /* Step dots */
+  document.querySelectorAll('.wm-dot').forEach(function(d,di){
+    d.classList.toggle('active',di===i);
+  });
+}
+
+document.getElementById('wm-next').addEventListener('click',function(){
+  if(welcomeStep<welcomeSteps.length-1){
+    welcomeStep++;renderWelcomeStep(welcomeStep);
+  } else {
+    document.getElementById('welcomeModal').style.display='none';
+    localStorage.setItem('ca-advisor-welcome-seen','1');
+  }
+});
+
+document.getElementById('wm-prev').addEventListener('click',function(){
+  if(welcomeStep>0){welcomeStep--;renderWelcomeStep(welcomeStep);}
+});
+
+document.getElementById('wm-action').addEventListener('click',function(){
+  var tab=this.dataset.tab;
+  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
+  document.querySelectorAll('.tab-content').forEach(function(c){c.classList.remove('active');});
+  document.querySelector('.tab-btn[data-tab="'+tab+'"]').classList.add('active');
+  document.querySelector('.tab-content[data-tab="'+tab+'"]').classList.add('active');
+  document.getElementById('welcomeModal').style.display='none';
+  localStorage.setItem('ca-advisor-welcome-seen','1');
+  if(tab==='advisor') runAdvisor();
+});
+
+document.getElementById('wm-skip').addEventListener('click',function(){
+  document.getElementById('welcomeModal').style.display='none';
+  localStorage.setItem('ca-advisor-welcome-seen','1');
+});
+
+/* Init */
+var loaded=loadPolicies();
+renderPolicies();
+if(!loaded&&!localStorage.getItem('ca-advisor-welcome-seen')){
+  showWelcome();
+} else {
+  renderPolicies();
+}
+
+/* How to use button */
+document.getElementById('helpBtn').addEventListener('click',function(){
+  welcomeStep=0;renderWelcomeStep(0);showWelcome();
+});
+
+})();
+</script>
+</body>
+</html>

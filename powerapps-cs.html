@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Power Apps Developer Reference — eusebio@it-sec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=JetBrains+Mono:wght@300;400;500;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+
+
+:root{
+  --void:#070809;--bg:#070809;--bg2:#0d0f13;--card:#13161d;--card2:#191d26;
+  --border:rgba(255,255,255,.07);--border-h:rgba(255,255,255,.14);
+  --accent:#b98aff;--blue:#2f81f7;--cyan:#00e5ff;--red:#ff3b4e;--green:#22e584;--orange:#ffb454;--yellow:#ffd166;--purple:#b98aff;--lime:#a3e635;--teal:#2dd4bf;--pink:#f472b6;
+  --text:#e7ebf2;--soft:#8a93a3;--muted:#525c6b;--dim:#2a303a;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+body{background:var(--void);color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;line-height:1.65;overflow:hidden;height:100vh}
+::selection{background:var(--accent);color:#1a0f2e}
+#bg-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.45}
+#bg-glow{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(55% 45% at 14% 6%,rgba(185,138,255,.06),transparent 70%),radial-gradient(50% 45% at 90% 94%,rgba(0,229,255,.05),transparent 70%)}
+a:focus-visible,button:focus-visible,input:focus-visible,[tabindex]:focus-visible,.cc:focus-visible,.sbc:focus-visible,.sb-all:focus-visible,.tf:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms !important;transition-duration:.001ms !important}}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 18px;height:44px;background:rgba(7,8,9,.78);backdrop-filter:blur(18px);border-bottom:1px solid var(--border)}
+.nav-brand{font-family:'JetBrains Mono',monospace;font-size:13px;display:flex;align-items:center;text-decoration:none;color:var(--text)}
+.nu{color:#79c0ff}.na{color:var(--muted)}.nh{color:var(--cyan)}.nt{color:var(--orange)}.nd{color:var(--accent);margin-left:4px}
+.nc{display:inline-block;width:7px;height:13px;background:var(--accent);margin-left:3px;vertical-align:middle;animation:blink .9s steps(1) infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.nav-center{display:flex;align-items:center;gap:8px}
+.nav-ver{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim)}
+.nav-badge{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 9px;border-radius:100px;background:rgba(185,138,255,.1);color:var(--accent);border:1px solid rgba(185,138,255,.25)}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-back{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);text-decoration:none;letter-spacing:.08em;text-transform:uppercase;transition:color .2s}
+.nav-back:hover{color:var(--cyan)}
+.nav-btn{padding:5px 12px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border:1px solid var(--border-h);background:transparent;color:var(--soft);transition:border-color .2s,color .2s;border-radius:7px}
+.nav-btn:hover{border-color:var(--accent);color:var(--accent)}
+.nav-btn.clr{color:var(--soft)}
+.nav-btn.clr:hover{border-color:var(--red);color:var(--red)}
+
+.vbar{position:fixed;top:44px;left:0;right:0;z-index:150;background:rgba(13,15,19,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);display:flex;align-items:center;min-height:36px;gap:10px;padding:9px clamp(10px,2vw,16px)}.vbar-chips{display:flex;flex-wrap:wrap;align-items:center;gap:7px;flex:1 1 auto;min-width:0}
+.vbar::-webkit-scrollbar{height:6px}.vbar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.28);border-radius:3px}.vbar::-webkit-scrollbar-track{background:transparent}
+.vi{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:8px;padding:5px 11px;min-height:32px;flex-shrink:0;transition:border-color .2s,background .2s}
+.vl{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);padding:0 7px 0 12px;white-space:nowrap}
+.vinp{background:transparent;border:none;outline:none;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11.5px;padding:0}.vinp::placeholder{color:var(--dim)}
+.vinp::placeholder{color:var(--dim)}.vinp:focus{color:var(--text)}
+.vbar-r{display:inline-flex;align-items:center;gap:7px;min-height:32px;flex:0 0 auto}
+.vbtn{padding:6px 12px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:rgba(255,255,255,.025);border:1px solid var(--border);cursor:pointer;color:var(--muted);transition:color .2s,background .2s,border-color .2s}
+.vbtn:hover{color:var(--text);background:rgba(255,255,255,.03)}
+.vbtn.ld{color:var(--accent);background:rgba(185,138,255,.06)}.vbtn.ld:hover{background:rgba(185,138,255,.12)}
+.vbtn.cl:hover{color:var(--accent)}
+
+.app{display:grid;grid-template-columns:220px 1fr 430px;height:calc(100vh - 80px);margin-top:80px;position:relative;z-index:2}
+.sb{border-right:1px solid var(--border);background:rgba(13,15,19,.7);backdrop-filter:blur(8px);overflow-y:auto;display:flex;flex-direction:column}
+.sb::-webkit-scrollbar{width:4px}.sb::-webkit-scrollbar-thumb{background:var(--dim);border-radius:3px}
+.sb-s{padding:10px 11px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg2);z-index:5}
+.sb-si{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;padding:7px 10px;outline:none;transition:border-color .2s,box-shadow .2s;border-radius:8px;-webkit-appearance:none}
+.sb-si:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(185,138,255,.1)}.sb-si::placeholder{color:var(--dim)}
+.sb-all{display:flex;align-items:center;justify-content:space-between;padding:8px 12px 6px;cursor:pointer;transition:background .15s;border-bottom:1px solid var(--border)}
+.sb-all:hover,.sb-all.act{background:rgba(185,138,255,.07)}.sb-all.act .sb-al{color:var(--accent)}
+.sb-al{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;color:var(--text)}
+.sb-ac{font-family:'JetBrains Mono',monospace;font-size:10px;padding:1px 6px;background:rgba(255,255,255,.05);color:var(--muted);border-radius:100px}
+.sbc{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;cursor:pointer;transition:background .15s;gap:7px}
+.sbc:hover{background:rgba(255,255,255,.03)}.sbc.act{background:rgba(185,138,255,.07)}.sbc.act .sc-l{color:var(--accent)}.sbc.act .sc-d{opacity:1}
+.sc-lf{display:flex;align-items:center;gap:7px;min-width:0}
+.sc-d{width:6px;height:6px;border-radius:50%;flex-shrink:0;opacity:.5;transition:opacity .2s}
+.sc-l{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc-n{font-family:'JetBrains Mono',monospace;font-size:10px;padding:1px 6px;background:rgba(255,255,255,.04);color:var(--muted);flex-shrink:0;border-radius:100px}
+
+.ctr{overflow-y:auto;background:transparent;display:flex;flex-direction:column}
+.ctr::-webkit-scrollbar{width:4px}.ctr::-webkit-scrollbar-thumb{background:var(--dim);border-radius:3px}
+.ch{padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;position:sticky;top:0;background:rgba(7,8,9,.86);backdrop-filter:blur(10px);z-index:5}
+.ch-t{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);letter-spacing:.04em}
+.ch-c{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)}
+.ch-f{display:flex;gap:5px;margin-left:auto;flex-wrap:wrap}
+.tf{font-family:'JetBrains Mono',monospace;font-size:9px;padding:3px 9px;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:border-color .15s,color .15s,background .15s;border-radius:100px}
+.tf:hover{border-color:var(--soft);color:var(--text)}.tf.act{border-color:var(--accent);color:var(--accent);background:rgba(185,138,255,.08)}
+.cw{padding:12px 14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr));gap:8px;align-content:start}
+.cc{background:var(--card);border:1px solid var(--border);padding:12px 13px;cursor:pointer;transition:border-color .15s,background .15s;position:relative;overflow:hidden;border-radius:11px}
+.cc:hover{background:var(--card2);border-color:var(--border-h)}.cc.sel{border-color:var(--accent);background:rgba(185,138,255,.05)}
+.cc.sel::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
+.cc-t{display:flex;align-items:flex-start;gap:8px;margin-bottom:5px}
+.cc-i{font-size:14px;flex-shrink:0;line-height:1.2}
+.cc-n{font-size:13px;font-weight:600;color:var(--text);flex:1;line-height:1.3}
+.cc-d{font-size:11.5px;color:var(--muted);line-height:1.55;margin-bottom:7px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cc-tg{display:flex;gap:4px;flex-wrap:wrap}
+.tg{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 7px;letter-spacing:.03em;border-radius:100px}
+.tg-m{background:rgba(45,212,191,.08);color:var(--teal);border:1px solid rgba(45,212,191,.2)}
+.tg-w{background:rgba(255,209,102,.08);color:var(--yellow);border:1px solid rgba(255,209,102,.2)}
+.tg-e{background:rgba(255,59,78,.08);color:var(--red);border:1px solid rgba(255,59,78,.2)}
+.tg-a{background:rgba(185,138,255,.08);color:var(--purple);border:1px solid rgba(185,138,255,.2)}
+.tg-p{background:rgba(255,180,84,.1);color:var(--orange);border:1px solid rgba(255,180,84,.25)}
+.tg-l{background:rgba(163,230,53,.08);color:var(--lime);border:1px solid rgba(163,230,53,.2)}
+.tg-s{background:rgba(244,114,182,.08);color:var(--pink);border:1px solid rgba(244,114,182,.2)}
+.tg-v{background:rgba(0,229,255,.08);color:var(--cyan);border:1px solid rgba(0,229,255,.2)}
+.tg-x{background:rgba(47,129,247,.08);color:var(--blue);border:1px solid rgba(47,129,247,.2)}
+.tg-y{background:rgba(255,209,102,.08);color:var(--yellow);border:1px solid rgba(255,209,102,.2)}
+.tg-r{background:rgba(138,147,163,.08);color:var(--soft);border:1px solid rgba(138,147,163,.2)}
+
+.rp{border-left:1px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;overflow:hidden}
+.rp-h{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:rgba(13,15,19,.96);flex-shrink:0}
+.rp-h h3{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;letter-spacing:-.01em;flex:1}.rp-h h3 span{color:var(--accent)}
+.rp-x{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:16px;line-height:1;transition:color .2s;border-radius:6px;padding:2px 6px}.rp-x:hover{color:var(--red)}
+.rp-i{padding:13px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
+.ri-t{font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px}
+.ri-d{font-size:12px;color:var(--soft);line-height:1.65}
+.ri-tg{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;align-items:center}
+.ri-rf{margin-top:9px;display:flex;flex-direction:column;gap:4px}
+.rf-a{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cyan);text-decoration:none;transition:color .2s;word-break:break-all}
+.rf-a::before{content:'↗ '}.rf-a:hover{color:var(--text)}
+.vw{flex:1;overflow-y:auto;padding:12px 14px}
+.vw::-webkit-scrollbar{width:4px}.vw::-webkit-scrollbar-thumb{background:var(--dim);border-radius:3px}
+.vb{margin-bottom:14px}
+.vb-r{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;gap:8px}
+.vb-n{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--soft);letter-spacing:.06em;text-transform:uppercase}
+.vb-a{display:flex;gap:5px;flex-shrink:0}
+.cp{padding:3px 10px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;background:transparent;border:1px solid var(--border-h);color:var(--soft);cursor:pointer;transition:border-color .15s,color .15s;border-radius:6px}
+.cp:hover{border-color:var(--accent);color:var(--accent)}.cp.ok{border-color:var(--green);color:var(--green)}
+.ce{padding:3px 10px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;background:rgba(185,138,255,.08);border:1px solid rgba(185,138,255,.3);color:var(--accent);cursor:pointer;transition:background .15s;border-radius:6px}
+.ce:hover{background:rgba(185,138,255,.16)}
+.cb{background:#0a0c10;border:1px solid var(--border);padding:11px 13px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.8;color:var(--text);white-space:pre-wrap;word-break:break-word;cursor:pointer;transition:border-color .15s;border-radius:9px}
+.cb:hover{border-color:rgba(185,138,255,.3)}.cb .vh{color:#ff8a80;font-weight:500}.cb .vc{color:var(--muted)}.cb .vf{color:var(--cyan)}
+.rp-e{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;opacity:.45}
+.re-b{font-family:'Syne',sans-serif;font-weight:800;font-size:42px;color:var(--dim);line-height:1;letter-spacing:.02em}
+.re-m{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.06em;text-align:center}
+
+.mb-g{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(5px);padding:20px}
+.mb-g.show{display:flex}
+.mb-g .m{background:var(--bg2);border:1px solid rgba(185,138,255,.22);max-width:660px;width:100%;max-height:82vh;overflow-y:auto;border-radius:14px}
+.m::-webkit-scrollbar{width:4px}.m::-webkit-scrollbar-thumb{background:var(--dim);border-radius:3px}
+.m-h{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg2);z-index:1}
+.m-h h2{font-family:'Syne',sans-serif;font-weight:800;font-size:19px;letter-spacing:-.01em}.m-h h2 span{color:var(--accent)}
+.m-x{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;transition:color .2s}.m-x:hover{color:var(--red)}
+.m-b{padding:18px}
+.m-b h3{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:16px 0 7px;display:flex;align-items:center;gap:6px}
+.m-b h3::before{content:'//';color:var(--dim);font-size:9px}.m-b h3:first-child{margin-top:0}
+.m-b p,.m-b li{font-size:12px;color:var(--soft);line-height:1.8}
+.m-b ul{padding-left:15px;margin-bottom:8px}.m-b li::marker{color:var(--accent)}
+.m-b strong{color:var(--text);font-weight:500}
+kbd{font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--card);border:1px solid var(--border-h);padding:2px 7px;color:var(--text);border-radius:5px}
+.vt{width:100%;border-collapse:collapse;font-size:11px;margin-top:6px}
+.vt th{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:6px 8px;text-align:left;border-bottom:1px solid var(--border)}
+.vt td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--soft)}
+.vt td:first-child{font-family:'JetBrains Mono',monospace;color:#ff8a80}
+
+.toast{position:fixed;bottom:18px;right:18px;z-index:999;background:var(--card2);border:1px solid rgba(185,138,255,.3);border-left:3px solid var(--accent);padding:9px 15px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);transform:translateY(50px);opacity:0;transition:transform .22s,opacity .22s;pointer-events:none;border-radius:9px;box-shadow:0 12px 32px rgba(0,0,0,.45)}
+.toast.show{transform:translateY(0);opacity:1}
+
+@media(max-width:1100px){.app{grid-template-columns:190px 1fr 380px}}
+@media(max-width:980px){
+  .app{grid-template-columns:180px 1fr}
+  .rp{position:fixed;top:80px;right:0;bottom:0;width:min(460px,100vw);transform:translateX(101%);transition:transform .28s cubic-bezier(.16,1,.3,1);z-index:300;box-shadow:-24px 0 60px rgba(0,0,0,.55)}
+  .rp.open{transform:none}
+}
+@media(max-width:620px){
+  nav{padding:0 12px}
+  .nav-center{display:none}
+  .app{grid-template-columns:132px 1fr}
+  .vl{display:inline-block;font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:0;white-space:nowrap}.vi:focus-within{border-color:var(--accent);background:rgba(255,255,255,.05)}
+  .rp{width:100vw}
+}
+
+@media print{
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}
+  html,body{background:#fff !important;height:auto !important;overflow:visible !important}
+  #bg-canvas,#bg-glow,nav,.vbar,.sb,.ctr,.toast,.mb-g{display:none !important}
+  .app{display:block !important;height:auto !important;margin:0 !important;grid-template-columns:none !important}
+  .rp{position:static !important;width:100% !important;transform:none !important;border:none !important;box-shadow:none !important;background:#fff !important;display:block !important;overflow:visible !important}
+  .rp *{color:#111 !important}
+  .rp-h{background:#fff !important;border-bottom:1px solid #ccc !important}
+  .rp-h h3 span{color:#1a5fb4 !important}
+  .rf-a{color:#1a5fb4 !important}
+  .cb{background:#f6f7f9 !important;border:1px solid #ddd !important}
+  .cb .vh{color:#b00020 !important}.cb .vf{color:#06c !important}.cb .vc{color:#777 !important}
+  .cp,.ce,.rp-x{display:none !important}
+  @page{margin:1.4cm;size:A4}
+}
+
+.fx-local{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#8a93a3;border:1px solid rgba(255,255,255,.12);padding:3px 9px;border-radius:100px;white-space:nowrap}
+.fx-local::before{content:'';width:6px;height:6px;border-radius:50%;background:#22e584;box-shadow:0 0 6px rgba(34,229,132,.6)}
+@media(max-width:620px){.fx-local{display:none}}
+@media(max-width:1700px){.vbar{flex-direction:column;align-items:stretch}.vbar-chips{flex:0 0 auto}.vbar-r{display:flex;width:100%;justify-content:flex-end}}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div id="bg-glow"></div>
+
+
+<div class="mb-g" id="modal">
+  <div class="m">
+    <div class="m-h"><h2>HOW TO <span>USE</span></h2><button class="m-x" id="mClose">&#10005;</button></div>
+    <div class="m-b">
+      <h3>Overview</h3>
+      <p>Power Apps canvas app developer reference — formulas, delegation rules, UI patterns, data source operations, performance best practices, and reusable component design.</p>
+      <h3>Variable Bar</h3>
+      <ul>
+        <li><strong>app name</strong> &mdash; your canvas app display name</li>
+        <li><strong>sharepoint site</strong> &mdash; SharePoint site URL for data sources</li>
+        <li><strong>dataverse env</strong> &mdash; Dataverse environment URL</li>
+        <li><strong>admin email</strong> &mdash; App owner / admin email</li>
+        <li><strong>app id</strong> &mdash; Canvas app GUID (from maker portal URL)</li>
+      </ul>
+      <h3>Navigation</h3>
+      <ul>
+        <li>Left sidebar &mdash; filter by category</li>
+        <li>Tag pills &mdash; filter by type</li>
+        <li>Search &mdash; find by formula name or keyword</li>
+        <li>Click any card &mdash; full pattern in right panel</li>
+        <li><strong>Copy</strong> &nbsp;|&nbsp; <strong>Copy+Enter</strong> for quick paste</li>
+      </ul>
+      <h3>Sample Data</h3>
+      <p>Click <strong>Load Sample</strong> to pre-fill with Contoso IT Helpdesk app context.</p>
+      <h3>Keyboard</h3>
+      <ul><li><kbd>Ctrl+K</kbd> search &nbsp;|&nbsp; <kbd>?</kbd> help &nbsp;|&nbsp; <kbd>Esc</kbd> close</li></ul>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<nav>
+  <a href="index.html" class="nav-brand"><span class="nu">eusebio</span><span class="na">@</span><span class="nh">it-sec</span><span class="na">:</span><span class="nt">~</span><span class="nd">$</span><span class="nc"></span></a>
+  <div class="nav-center"><span class="nav-ver">v1.0</span><span class="nav-badge">powerapps-cs</span></div>
+  <div class="nav-right">
+    <button class="nav-btn" id="helpBtn">? Help</button>
+    <button class="nav-btn clr" id="clrVars">&#10005; Clear Vars</button>
+    <span class="fx-local" title="Runs entirely in your browser — no data is uploaded or sent anywhere">Local-only</span>
+    <a href="projects.html" class="nav-back">&#8592; Projects</a>
+  </div>
+</nav>
+<div class="vbar">
+  <div class="vbar-chips">
+  <div class="vi"><span class="vl">app name</span><input class="vinp" id="v_AppName" placeholder="IT Helpdesk App" style="width:130px"/></div>
+  <div class="vi"><span class="vl">sharepoint site</span><input class="vinp" id="v_SharePointSite" placeholder="https://contoso.sharepoint.com/sites/IT" style="width:240px"/></div>
+  <div class="vi"><span class="vl">dataverse env</span><input class="vinp" id="v_DataversEnv" placeholder="contoso.crm.dynamics.com" style="width:170px"/></div>
+  <div class="vi"><span class="vl">admin email</span><input class="vinp" id="v_AdminEmail" placeholder="admin@contoso.com" style="width:155px"/></div>
+  <div class="vi"><span class="vl">app id</span><input class="vinp" id="v_AppID" placeholder="12345678-abcd-..." style="width:145px"/></div>
+  </div>
+  <div class="vbar-r">
+    <button class="vbtn ld" id="sampleBtn">&#9654; Load Sample</button>
+    <button class="vbtn cl" id="clrBtn2">Clear</button>
+  </div>
+</div>
+<div class="app">
+  <div class="sb">
+    <div class="sb-s"><input class="sb-si" id="srch" type="search" placeholder="Search formulas…" autocomplete="off" aria-label="Search formulas"/></div>
+    <div class="sb-all act" id="cat-all" role="button" tabindex="0" aria-label="Show all formulas"><span class="sb-al">All</span><span class="sb-ac" id="cnt-all">0</span></div>
+    <div id="catList"></div>
+  </div>
+  <div class="ctr">
+    <div class="ch">
+      <span class="ch-t" id="actLbl">All Formulas</span>
+      <span class="ch-c" id="visCnt"></span>
+      <div class="ch-f" id="tagF"></div>
+    </div>
+    <div class="cw" id="cw"></div>
+  </div>
+  <div class="rp" id="rp">
+    <div class="rp-e" id="rpE"><div class="re-b">BUILD</div><p class="re-m">select a formula</p></div>
+    <div id="rpC" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+      <div class="rp-h"><h3 id="rpT">Title</h3><button class="rp-x" id="rpX">&#10005;</button></div>
+      <div class="rp-i" id="rpI"></div>
+      <div class="vw" id="rpV"></div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+'use strict';
+
+/* ── smooth 3D background: sparse drifting points (usability-first, no links) ── */
+(function(){
+  var canvas=document.getElementById('bg-canvas'); if(!canvas) return;
+  if(typeof THREE==='undefined'){canvas.style.display='none';return;}
+  var renderer; try{renderer=new THREE.WebGLRenderer({canvas:canvas,alpha:true,antialias:true});}catch(e){canvas.style.display='none';return;}
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){canvas.style.opacity='.18';}
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(innerWidth,innerHeight);
+  var scene=new THREE.Scene(), camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,1,400);
+  camera.position.z=60; var group=new THREE.Group(); scene.add(group);
+  var N=innerWidth<760?50:110, R=40, base=new Float32Array(N*3), pos=new Float32Array(N*3), col=new Float32Array(N*3);
+  var C=new THREE.Color(0xb98aff), C2=new THREE.Color(0x2f81f7), i;
+  for(i=0;i<N;i++){ base[i*3]=(Math.random()*2-1)*R*1.9; base[i*3+1]=(Math.random()*2-1)*R*1.2; base[i*3+2]=(Math.random()*2-1)*R*0.6; var c=Math.random()<0.35?C2:C; col[i*3]=c.r;col[i*3+1]=c.g;col[i*3+2]=c.b; }
+  var sc=document.createElement('canvas');sc.width=sc.height=64;var sx=sc.getContext('2d');var g=sx.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.4,'rgba(255,255,255,.5)');g.addColorStop(1,'rgba(255,255,255,0)');sx.fillStyle=g;sx.beginPath();sx.arc(32,32,32,0,7);sx.fill();
+  var geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(pos,3)); geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  var mat=new THREE.PointsMaterial({size:1.5,map:new THREE.CanvasTexture(sc),vertexColors:true,transparent:true,opacity:.85,depthWrite:false,blending:THREE.AdditiveBlending});
+  group.add(new THREE.Points(geo,mat));
+  var mx=0,my=0; window.addEventListener('mousemove',function(e){mx=(e.clientX/innerWidth)*2-1;my=-(e.clientY/innerHeight)*2+1;},{passive:true});
+  var t=0; function loop(){ t+=0.006; group.rotation.y+=0.0008; camera.position.x+=(mx*6-camera.position.x)*0.03; camera.position.y+=(my*4-camera.position.y)*0.03; camera.lookAt(0,0,0); for(i=0;i<N;i++){ pos[i*3]=base[i*3]+Math.sin(t*0.6+i)*1.3; pos[i*3+1]=base[i*3+1]+Math.cos(t*0.5+i*1.3)*1.3; pos[i*3+2]=base[i*3+2]+Math.sin(t*0.4+i)*1.0; } geo.attributes.position.needsUpdate=true; renderer.render(scene,camera); requestAnimationFrame(loop); }
+  loop();
+  window.addEventListener('resize',function(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+  var glow=document.getElementById('bg-glow');
+  function hideForPrint(){ try{ if(canvas.parentNode) canvas.parentNode.removeChild(canvas); if(glow) glow.style.display='none'; }catch(e){} }
+  function showAfterPrint(){ try{ if(!canvas.parentNode) document.body.insertBefore(canvas, document.body.firstChild); if(glow) glow.style.display=''; }catch(e){} }
+  window.addEventListener('beforeprint', hideForPrint);
+  window.addEventListener('afterprint', showAfterPrint);
+  if(window.matchMedia){ var mqp=window.matchMedia('print'); var mqh=function(e){ e.matches?hideForPrint():showAfterPrint(); }; if(mqp.addEventListener) mqp.addEventListener('change',mqh); else if(mqp.addListener) mqp.addListener(mqh); }
+})();
+function kbd(el,fn){ if(!el)return; el.setAttribute('tabindex','0'); if(!el.getAttribute('role')) el.setAttribute('role','button'); el.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); fn(e); } }); }
+
+
+var CATS=[
+  {id:'formulas',  label:'Core Formulas',           dot:'#00d4ff'},
+  {id:'data',      label:'Data Sources',             dot:'#a3e635'},
+  {id:'delegation',label:'Delegation',               dot:'#ff3d3d'},
+  {id:'ui',        label:'UI & Controls',            dot:'#ffa657'},
+  {id:'navigation',label:'Navigation & Screens',     dot:'#c084fc'},
+  {id:'variables', label:'Variables & Collections',  dot:'#ffd54f'},
+  {id:'components',label:'Components & Reuse',       dot:'#2dd4bf'},
+  {id:'media',     label:'Media & Files',            dot:'#f472b6'},
+  {id:'perf',      label:'Performance',              dot:'#1a8cff'},
+  {id:'patterns',  label:'Common Patterns',          dot:'#8a9fb5'},
+];
+
+var CHEATS=[
+{id:'f01',cat:'formulas',icon:'📐',title:'If, Switch, and Coalesce',
+ desc:'Conditional logic, multi-branch switch, and null-safe defaults',tags:['form'],
+ variants:[{name:'If and nested If',cmd:'# Basic If\nIf(condition, trueResult, falseResult)\n\n# Example\nIf(varStatus = "Active", Green, Red)\n\n# Nested If (use Switch instead when >2 branches)\nIf(\n  varPriority = 1, "Critical",\n  varPriority = 2, "High",\n  varPriority = 3, "Medium",\n  "Low"\n)\n\n# If with multiple conditions\nIf(\n  And(varIsActive, varScore > 80),\n  "Pass",\n  "Fail"\n)\n\n# Ternary-style (inline)\nIf(IsBlank(txtInput.Text), "Empty", txtInput.Text)'},{name:'Switch statement',cmd:'# Switch - cleaner than nested If\nSwitch(\n  varDepartment,\n  "IT",      Color.Blue,\n  "HR",      Color.Green,\n  "Finance", Color.Orange,\n  Color.Gray   // default\n)\n\n# Switch with string output\nSwitch(\n  drpStatus.Selected.Value,\n  "Open",     "This ticket is open",\n  "Closed",   "Resolved",\n  "Pending",  "Awaiting response",\n  "Unknown status"\n)\n\n# Switch on number\nSwitch(\n  Value(lblCount.Text),\n  0, "No items",\n  1, "One item",\n  "Multiple items"\n)'},{name:'Coalesce and IsBlank',cmd:'# Coalesce - first non-blank value\nCoalesce(txtInput.Text, varDefault, "Fallback")\n\n# IsBlank check\nIsBlank(txtEmail.Text)\n\n# IsEmpty check (for tables/collections)\nIsEmpty(colItems)\n\n# Null-safe property access\nFirst(colUsers).Email\n# If colUsers empty, returns blank (no error)\n\n# Blank() function\nIf(varCount = 0, Blank(), varCount)\n\n# IsError check\nIsError(Patch(DataSource, ...))\n\n# IfError - handle formula errors\nIfError(\n  Value(txtInput.Text),\n  0  // default if parse fails\n)'}],refs:[{t:'Power Apps formula reference',u:'https://learn.microsoft.com/en-us/power-platform/power-fx/formula-reference'}]},
+{id:'f02',cat:'formulas',icon:'📐',title:'Text and String Formulas',
+ desc:'Concatenate, Text(), Mid, Find, Replace, and string operations',tags:['form'],
+ variants:[{name:'Core string functions',cmd:'# Concatenate (& operator)\n"Hello " & txtName.Text & "!"\n\n# Concatenate function\nConcatenate("Hello ", First(colUsers).Name)\n\n# Text() - format numbers and dates\nText(varAmount, "[$-en-AU]#,##0.00")   // 1,234.56\nText(Today(), "dd/MM/yyyy")             // 18/04/2025\nText(Now(), "dd MMM yyyy h:mm AM/PM")   // 18 Apr 2025 2:30 PM\n\n# Len - string length\nLen(txtInput.Text)\n\n# Left, Right, Mid\nLeft(txtCode.Text, 3)          // first 3 chars\nRight(txtCode.Text, 4)         // last 4 chars\nMid(txtCode.Text, 4, 5)        // start 4, length 5'},{name:'Search and replace',cmd:'# Find (returns position, 0 if not found)\nFind("@", txtEmail.Text)\n\n# Contains check\nFind("urgent", Lower(txtTitle.Text)) > 0\n\n# Replace by position\nReplace(txtCode.Text, 1, 3, "NEW")\n// replaces chars 1-3 with "NEW"\n\n# Substitute (replace all occurrences)\nSubstitute(txtBody.Text, "\\n", " ")\nSubstitute(txtPath.Text, "/", "\\\\")\n\n# Trim whitespace\nTrim(txtInput.Text)\n\n# Upper / Lower\nUpper(txtCode.Text)\nLower(txtEmail.Text)\n\n# StartsWith / EndsWith\nStartsWith(txtEmail.Text, "admin")\nEndsWith(txtEmail.Text, ".com")'},{name:'Split and parse',cmd:'# Split string to table\nSplit("a,b,c,d", ",")\n// Returns single-column table: {Result}\n\n// Access values\nFirst(Split(txtTags.Text, ",")).Result\n\n// Use in ForAll\nForAll(\n  Split(txtEmails.Text, ";"),\n  Notify(Trim(Result))\n)\n\n# Value() - string to number\nValue(txtQuantity.Text)\n\n# DateValue() - string to date\nDateValue("18/04/2025", "en-AU")\n\n# Guid() - generate unique ID\nGuid()'}]},
+{id:'f03',cat:'formulas',icon:'📐',title:'Date and Time Formulas',
+ desc:'Today, Now, DateAdd, DateDiff, and calendar calculations',tags:['form'],
+ variants:[{name:'Date functions',cmd:'# Current date and time\nToday()           // date only\nNow()             // date + time\n\n# DateAdd - add periods\nDateAdd(Today(), 7, Days)        // 7 days from now\nDateAdd(Today(), 1, Months)      // next month\nDateAdd(Today(), -30, Days)      // 30 days ago\n\n# DateDiff - difference between dates\nDateDiff(Today(), dateDue, Days)\nDateDiff(dateStart, dateEnd, Hours)\nDateDiff(dateStart, Today(), Months)\n\n# Date() - create from parts\nDate(Year(Today()), Month(Today()), 1)  // first of current month\nDate(2025, 12, 25)                       // Christmas 2025\n\n# Year, Month, Day, Hour, Minute\nYear(Today())     // 2025\nMonth(Today())    // 4\nDay(Today())      // 18\nWeekday(Today())  // 1=Sun 2=Mon ... 7=Sat'},{name:'Date formatting',cmd:'# Display as string\nText(Today(), "dd/MM/yyyy")\nText(Now(), "dd MMM yyyy h:mm AM/PM")\nText(Today(), "ddd, dd MMMM yyyy")  // Mon, 18 April 2025\n\n# Timezone display (for label)\nText(\n  DateAdd(Now(), 10, Hours),  // AEST UTC+10\n  "dd/MM/yyyy HH:mm"\n) & " AEST"\n\n# Due date colour coding\nIf(\n  DateDiff(Today(), datRecord.DueDate, Days) < 0, Red,  // overdue\n  DateDiff(Today(), datRecord.DueDate, Days) <= 3, Orange,  // due soon\n  Black  // fine\n)'}]},
+{id:'f04',cat:'formulas',icon:'📐',title:'Math and Aggregation',
+ desc:'Sum, Average, Count, Min, Max, and numeric calculations',tags:['form'],
+ variants:[{name:'Aggregation on tables',cmd:'# Sum a column\nSum(colOrders, Quantity)\nSum(Filter(colOrders, Status="Open"), Amount)\n\n# Average\nAverage(colScores, Score)\n\n# Count rows\nCountRows(colItems)\nCountRows(Filter(colItems, IsActive))\n\n# Count with condition\nCountIf(colTickets, Priority = 1)\n\n# Min / Max\nMin(colItems, Price)\nMax(colScores, Score)\n\n# Distinct count\nCountRows(Distinct(colItems, Category))\n\n# Earliest / Latest date\nMin(colTasks, DueDate)\nMax(colTasks, CompletedDate)'},{name:'Math operations',cmd:'# Round\nRound(varAmount, 2)      // 2 decimal places\nRoundUp(varAmount, 0)    // ceiling\nRoundDown(varAmount, 0)  // floor\n\n# Abs (absolute value)\nAbs(varDifference)\n\n# Mod (remainder)\nMod(varCount, 5)  // 0 = divisible by 5\n\n# Int (truncate to integer)\nInt(3.9)  // returns 3\n\n# Power and Sqrt\nPower(2, 10)  // 1024\nSqrt(144)     // 12\n\n# Sequence (generate table of numbers)\nSequence(10)           // 1 to 10\nSequence(10, 0, 1)     // 0 to 9\nSequence(5, 1, 2)      // 1,3,5,7,9'}]},
+{id:'d01',cat:'data',icon:'🗄️',title:'SharePoint Data Operations',
+ desc:'Patch, Collect, Remove, and filter SharePoint lists',tags:['data'],
+ variants:[{name:'Read and filter data',cmd:'# Simple gallery - set Items property\nFilter(\n  SharePointList,\n  Status = "Active"\n)\n\n# Filter with multiple conditions\nFilter(\n  TicketList,\n  And(\n    Status = "Open",\n    AssignedTo.Email = varCurrentUser\n  )\n)\n\n# Search function\nSearch(\n  CustomerList,\n  txtSearch.Text,\n  "Name", "Email", "Company"\n)\n\n# Sort\nSortByColumns(\n  Filter(TicketList, Status = "Open"),\n  "Priority", Ascending,\n  "Created", Descending\n)\n\n# LookUp - get single record\nLookUp(UserList, Email = varUserEmail)\nLookUp(UserList, ID = galTickets.Selected.AssignedToId)'},{name:'Patch - create and update',cmd:'# Create new record\nPatch(\n  TicketList,\n  Defaults(TicketList),\n  {\n    Title: txtTitle.Text,\n    Status: "Open",\n    Priority: Value(drpPriority.Selected.Value),\n    AssignedTo: {Email: varCurrentUser},\n    DueDate: DateAdd(Today(), 3, Days)\n  }\n)\n\n# Update existing record\nPatch(\n  TicketList,\n  galTickets.Selected,\n  {\n    Status: "Closed",\n    Resolution: txtResolution.Text,\n    ClosedDate: Today()\n  }\n)\n\n# Patch with error handling\nIfError(\n  Patch(TicketList, Defaults(TicketList), {Title: txtTitle.Text}),\n  Notify("Save failed: " & FirstError.Message, NotificationType.Error),\n  Notify("Saved successfully!", NotificationType.Success)\n)'},{name:'Bulk operations',cmd:'# Collect - add all SP records to collection\nCollect(colItems, SharePointList)\n\n# ClearCollect - refresh\nClearCollect(colItems, Filter(SharePointList, IsActive = true))\n\n# Patch multiple records at once\nPatch(\n  TicketList,\n  Table(\n    {ID: 1, Status: "Closed"},\n    {ID: 2, Status: "Closed"},\n    {ID: 3, Status: "Closed"}\n  )\n)\n\n# Remove record\nRemove(TicketList, galItems.Selected)\n\n# Remove with confirm\nIf(\n  Confirm("Delete this record?"),\n  Remove(TicketList, galItems.Selected)\n)\n\n# RemoveIf - delete matching records\nRemoveIf(TicketList, Status = "Archived")'}],refs:[{t:'SharePoint connector',u:'https://learn.microsoft.com/en-us/connectors/sharepointonline/'}]},
+{id:'d02',cat:'data',icon:'🗄️',title:'Dataverse Operations',
+ desc:'Read, create, update Dataverse tables with relationships',tags:['data'],
+ variants:[{name:'Dataverse CRUD',cmd:'# Set gallery Items to Dataverse table\ncr123_tickets\n\n# Filter Dataverse\nFilter(\n  cr123_tickets,\n  statuscode = 1,\n  cr123_priority >= 2\n)\n\n# LookUp single record\nLookUp(cr123_tickets, cr123_ticketid = varTicketID)\n\n# Patch create\nPatch(\n  cr123_tickets,\n  Defaults(cr123_tickets),\n  {\n    cr123_title: txtTitle.Text,\n    statuscode: 1,\n    cr123_email: txtEmail.Text\n  }\n)\n\n# Patch update\nPatch(\n  cr123_tickets,\n  galTickets.Selected,\n  {statuscode: 2}\n)\n\n# Remove\nRemove(cr123_tickets, galTickets.Selected)\n\n# Relate records (lookup field)\nPatch(\n  cr123_tickets,\n  Defaults(cr123_tickets),\n  {\n    cr123_accountid: LookUp(accounts, accountid = varAccountID)\n  }\n)'}]},
+{id:'d03',cat:'data',icon:'🗄️',title:'Power Automate from Canvas Apps',
+ desc:'Call flows from Power Apps, pass parameters, receive results',tags:['data'],
+ variants:[{name:'Call flow from app',cmd:'# Add flow to app\nPower Automate pane > Add flow > select flow\n# Flow must have PowerApps trigger\n\n# Call flow in button OnSelect\nSet(varResult, FlowName.Run(txtEmail.Text, txtTitle.Text, varPriority))\n\n# Flow input order matches Power Apps parameters\n# In flow: PowerApps trigger > Ask in PowerApps\n# In app: FlowName.Run(param1, param2, param3)\n\n# Access flow return value\n# Flow must end with: Respond to PowerApps\n# With output: ticketNumber (text), success (boolean)\nSet(varTicketNum, varResult.ticketnumber)\nSet(varSuccess, varResult.success)\n\n# Show result to user\nIf(\n  varSuccess,\n  Notify("Ticket " & varTicketNum & " created!", NotificationType.Success),\n  Notify("Failed to create ticket", NotificationType.Error)\n)\n\n# Async flow (no wait)\nFlowName.Run(txtEmail.Text)  // fire and forget'}]},
+{id:'dg01',cat:'delegation',icon:'⚠️',title:'Delegation Rules',
+ desc:'What is delegable and what forces local processing - critical for production apps',tags:['del'],
+ variants:[{name:'Delegation explained',cmd:'# DELEGATION = query runs on server (scales to any size)\n# NO DELEGATION = Power Apps downloads 500 records, filters locally\n\n# Non-delegable triggers yellow warning triangle\n# Default record limit: 500 rows (change in Settings)\n# Max non-delegable limit: 2000 rows\n\n# FULLY DELEGABLE (SharePoint)\n# Filter with: =, <>, <, >, <=, >=\n# And, Or, Not\n# Len (SharePoint only)\n# IsBlank\n# Single value lookups: Email, Claim\n# StartsWith\n\n# NOT DELEGABLE\n# EndsWith\n# Contains (text columns)\n# Search() - always local\n# First() after Filter\n# CountRows(Filter(...))\n# Any formula operations in filter\n# (e.g. Year(DateColumn) = 2025 - NOT delegable)'},{name:'Delegation workarounds',cmd:'# Problem: CountRows(Filter(List, Status="Open"))\n# Returns wrong count if >500 records\n\n# Solution 1: Use a calculated column in SP\n# Create "IsOpen" Yes/No column\n# Filter on IsOpen = true (delegable)\n\n# Solution 2: Store counts in a separate list\n# Flow updates count on item create/update\n\n# Problem: Filter by year\n# NOT delegable: Year(DueDate) = 2025\n# DELEGABLE: DueDate >= Date(2025,1,1) And DueDate < Date(2026,1,1)\n\n# Problem: Contains search\n# NOT delegable: "urgent" in Title\n# WORKAROUND: StartsWith() IS delegable in SharePoint\n# Or: use SharePoint search via Power Automate\n\n# Problem: Complex joins across tables\n# Solution: Pre-join data in a view or flow\n# Collect both tables, join in memory (if <500 rows total)\n\n# Increase data row limit (for non-critical apps)\n# Settings > Data row limit: up to 2000'},{name:'Delegable SharePoint filters',cmd:'# SAFE (delegable) patterns\n\n// Status check\nFilter(TicketList, Status = "Open")\n\n// Assigned to current user\nFilter(TicketList, AssignedTo.Email = varUserEmail)\n\n// Date range (use Date() not Year())\nFilter(TicketList,\n  DueDate >= Today(),\n  DueDate <= DateAdd(Today(), 30, Days)\n)\n\n// Boolean column\nFilter(TicketList, IsActive = true)\n\n// Number comparison\nFilter(TicketList, Priority >= 2)\n\n// StartsWith (SharePoint) - case insensitive\nFilter(TicketList, StartsWith(Title, txtSearch.Text))\n\n// UNSAFE (not delegable)\n// Search(TicketList, txtSearch.Text, "Title")  <- always local\n// Filter(TicketList, Len(Title) > 50)          <- not delegable SP\n// Filter(TicketList, Year(Created) = 2025)     <- not delegable'}],refs:[{t:'Delegation overview',u:'https://learn.microsoft.com/en-us/power-apps/maker/canvas-apps/delegation-overview'}]},
+{id:'ui01',cat:'ui',icon:'🎨',title:'Gallery Best Practices',
+ desc:'Configure galleries for performance, selection, and flexible layouts',tags:['ui'],
+ variants:[{name:'Gallery setup',cmd:'# Gallery Items property\nFilter(SortByColumns(TicketList, "Priority", Ascending), Status = "Open")\n\n# Selected item access\ngalTickets.Selected           // entire record\ngalTickets.Selected.Title     // specific field\ngalTickets.Selected.ID        // SharePoint ID\n\n# Gallery template size\nTemplateSize: 80  // pixels per row\n\n# Gallery reset\nReset(galTickets)\n\n# Highlight selected row\n// In gallery Template Fill property:\nIf(ThisItem.IsSelected, ColorValue("#E8F4FD"), White)\n\n// Or use RGBA\nIf(ThisItem.IsSelected, RGBA(0, 120, 212, 0.1), Transparent)\n\n# Control visibility inside gallery\n// Label Visible property:\nThisItem.Status = "Urgent"\n\n# Click to set variable\n// Gallery OnSelect:\nSet(varSelected, ThisItem)'},{name:'Flexible height gallery',cmd:'# Flexible height gallery\n# Gallery > Layout: Flexible height\n# Template Height: Max(80, lblDescription.Height + 40)\n\n# Show/hide elements that affect height\n// Control Visible: determines if space is taken\n\n# WrapCount (horizontal gallery)\n// Gallery.WrapCount = 3  // 3 columns\n// Auto-wraps when screen too narrow\n\n# Gallery with empty state\n// Add label over gallery:\nVisible: IsEmpty(galItems.AllItems)\nText: "No records found"\n\n# AllItems (all records in gallery)\nCountRows(galItems.AllItems)\nSum(galItems.AllItems, Amount)'}]},
+{id:'ui02',cat:'ui',icon:'🎨',title:'Forms and Data Entry',
+ desc:'Edit forms, validation, and submit patterns',tags:['ui'],
+ variants:[{name:'Form configuration',cmd:'# Add Form control\nData source: TicketList\nItem: galTickets.Selected  // for edit\nItem: Defaults(TicketList)  // for new\nMode: FormMode.Edit or FormMode.New\n\n# Reset form (clear all fields)\nNewForm(frmTicket)\n// or\nResetForm(frmTicket)\n\n# Submit form\nSubmitForm(frmTicket)\n\n# Form OnSuccess (after successful submit)\nNavigate(scrList, ScreenTransition.None)\nNotify("Saved!", NotificationType.Success)\nRefresh(TicketList)\n\n# Form OnFailure\nNotify("Save failed: " & frmTicket.Error, NotificationType.Error)\n\n# Patch from form fields (without submit)\nPatch(\n  TicketList,\n  frmTicket.LastSubmit,\n  {Status: "Submitted"}\n)'},{name:'Input validation',cmd:'# Enable submit only when valid\n// Button DisplayMode property:\nIf(\n  IsBlank(txtTitle.Text) Or IsBlank(txtEmail.Text),\n  DisplayMode.Disabled,\n  DisplayMode.Edit\n)\n\n# Visual validation feedback\n// Label Visible property (shows error):\nAnd(\n  !IsBlank(txtEmail.Text),\n  !IsMatch(txtEmail.Text, Match.Email)\n)\n\n// IsMatch patterns\nIsMatch(txtEmail.Text, Match.Email)\nIsMatch(txtPhone.Text, Match.Phone)\nIsMatch(txtPostcode.Text, "\\\\d{4}")\nIsMatch(txtID.Text, "INC\\\\d{7}")\n\n# Required field indicator\n// Label Text property:\nIf(IsBlank(DataCardValue.Text), "*", "")\n\n# Character counter\nText(Len(txtDescription.Text)) & "/500"'}]},
+{id:'ui03',cat:'ui',icon:'🎨',title:'Theming and Responsive Design',
+ desc:'App themes, responsive layouts, and screen sizing',tags:['ui'],
+ variants:[{name:'App-wide theme variables',cmd:'# Define in App.OnStart:\nSet(varTheme, {\n  Primary:     ColorValue("#0078D4"),\n  Secondary:   ColorValue("#106EBE"),\n  Background:  ColorValue("#F5F5F5"),\n  Surface:     White,\n  Error:       ColorValue("#D13438"),\n  Success:     ColorValue("#107C10"),\n  Warning:     ColorValue("#FF8C00"),\n  TextPrimary: ColorValue("#323130"),\n  TextMuted:   ColorValue("#605E5C"),\n  FontSize:    14,\n  Radius:      8\n})\n\n# Use in controls\n// Fill: varTheme.Primary\n// Color: varTheme.TextPrimary\n// BorderRadius: varTheme.Radius\n\n# Advantages\n// Change entire app theme in one place\n// Consistent styling across all screens'},{name:'Responsive layout',cmd:'# Responsive container\n// App > Display > Scale to fit: Off\n// Set Width: Parent.Width\n//     Height: Parent.Height\n\n# Dynamic sizing formula\n// Width relative to screen:\nApp.Width * 0.8  // 80% of screen\n\n// Two-column layout:\n// Column 1 Width: App.Width / 2\n// Column 2 X:     App.Width / 2\n// Column 2 Width: App.Width / 2\n\n// Breakpoint-based layout:\nIf(App.Width < 640, "Mobile", "Desktop")\n\n// Mobile-first gallery columns\n// Gallery WrapCount:\nIf(App.Width < 640, 1, If(App.Width < 1024, 2, 3))\n\n# Sticky header pattern\n// Header Height: 60\n// Content Y: 60\n// Content Height: App.Height - 60\n// Footer Y: App.Height - 50'}]},
+{id:'nav01',cat:'navigation',icon:'🔀',title:'Screen Navigation',
+ desc:'Navigate, Back, and pass context between screens',tags:['nav'],
+ variants:[{name:'Navigate patterns',cmd:'# Basic navigate\nNavigate(scrDetail, ScreenTransition.Fade)\n\n# Navigate with context\nNavigate(\n  scrDetail,\n  ScreenTransition.None,\n  {selectedItem: galTickets.Selected, mode: "edit"}\n)\n\n# Access context on target screen\n// scrDetail.OnVisible:\nSet(varCurrentItem, Param("selectedItem"))\n// or via context:\nParam("mode")\n\n# Back navigation\nBack()\nNavigate(scrList, ScreenTransition.None)\n\n# Screen transitions\nScreenTransition.None     // instant\nScreenTransition.Fade     // fade in/out\nScreenTransition.Cover    // slides from right\nScreenTransition.CoverRight // slides from left\nScreenTransition.Reveal   // reveals from left\nScreenTransition.UnCover  // uncovers to right\n\n# Conditional navigate (check if dirty)\nIf(\n  varFormDirty,\n  Set(varShowConfirmDialog, true),\n  Navigate(scrList)\n)'},{name:'Deep linking and launch',cmd:'# Launch URL (open link)\nLaunch("https://contoso.sharepoint.com/sites/IT/" & varTicketID)\n\n# Open email client\nLaunch("mailto:" & varEmail & "?subject=" & EncodeUrl(varSubject))\n\n# Open Teams chat\nLaunch("https://teams.microsoft.com/l/chat/0/0?users=" & varEmail)\n\n# Launch another app\nLaunch("ms-powerApps:///providers/Microsoft.PowerApps/apps/APP_ID")\n\n# App deep link with parameters\nLaunch(\n  "https://apps.powerapps.com/play/APP_ID",\n  {},\n  "itemId", galTickets.Selected.ID\n)\n\n# On target app, access parameter\nParam("itemId")'}]},
+{id:'v01',cat:'variables',icon:'📦',title:'Variables Deep Dive',
+ desc:'Global, context, and environment variables - when to use each',tags:['var'],
+ variants:[{name:'Variable types',cmd:'# GLOBAL VARIABLES - Set()\n// Available on ALL screens\n// Persist for app session\nSet(varUserEmail, User().Email)\nSet(varIsAdmin, varUserEmail in AdminList.Email)\nSet(varCurrentRecord, galItems.Selected)\n\n# CONTEXT VARIABLES - UpdateContext()\n// Available on CURRENT screen only\n// Pass via Navigate context\nUpdateContext({locIsLoading: true, locErrorMsg: ""})\n\n// Access: locIsLoading, locErrorMsg (no prefix needed)\n\n// Clear context variable\nUpdateContext({locIsLoading: false})\n\n# Naming convention\nvarGlobal     // global: var prefix\nlocScreen     // local:  loc prefix\n\n# When to use each\n// Global:  user info, config, shared state across screens\n// Local:   loading spinners, error messages, form state'},{name:'Collections',cmd:'# Create collection from data source\nClearCollect(colTickets, Filter(TicketList, Status = "Open"))\n\n# Add item to collection\nCollect(colSelectedIDs, {ID: galItems.Selected.ID})\n\n# Remove item from collection\nRemoveIf(colSelectedIDs, ID = varItemID)\n\n# Clear collection\nClear(colSelectedIDs)\n\n# Update item in collection\nPatch(colTickets, LookUp(colTickets, ID = varID), {Status: "Closed"})\n\n# Sort collection\nClearCollect(\n  colSorted,\n  SortByColumns(colTickets, "Priority", Ascending)\n)\n\n# Check if ID is in collection\nCountRows(Filter(colSelectedIDs, ID = galItems.ThisItem.ID)) > 0\n\n# ForAll - loop through collection\nForAll(\n  colSelectedIDs,\n  Patch(TicketList, LookUp(TicketList, ID = ThisRecord.ID), {Status: "Closed"})\n)'}]},
+{id:'c01',cat:'components',icon:'🧩',title:'Component Creation',
+ desc:'Build reusable components with custom properties',tags:['comp'],
+ variants:[{name:'Create a component',cmd:'# Components panel > New component\n\n# Custom input property\nNew custom property:\n  Name: Title\n  Type: Input\n  Data type: Text\n  Default: "Default Title"\n\n# Custom output property\nNew custom property:\n  Name: SelectedValue\n  Type: Output\n  Data type: Text\n  Formula: drpInternal.Selected.Value\n\n# Custom behavior property (event)\nNew custom property:\n  Name: OnSave\n  Type: Event\n  Parameters: none\n\n# Use component in screen\nInsert > Custom > ComponentName\n\n# Set component properties\nCompMyCard.Title = galItems.Selected.Title\nCompMyCard.OnSave = Notify("Saved!")\n\n# Access component output\nSet(varResult, CompMyCard.SelectedValue)'},{name:'Component best practices',cmd:'# Component naming: Comp + PascalCase\nCompTicketCard, CompSearchBar, CompHeader\n\n# One component file per logical UI unit\n# Components should NOT access global data directly\n# Pass data IN via input properties\n# Pass data OUT via output or event properties\n\n# Master header component\nInput props: Title (text), ShowBack (boolean)\nEvent props: OnBack\n\n// Usage:\nCompHeader.Title = "Ticket Details"\nCompHeader.ShowBack = true\nCompHeader.OnBack = Navigate(scrList)\n\n# Reuse across multiple screens\n// All screens get same header automatically\n// Change styling in one place\n\n# Component limitations\n// Cannot contain galleries with data sources\n// No Navigate() inside components\n// No Set() global variables inside components\n// Use event properties to bubble actions up'}]},
+{id:'m01',cat:'media',icon:'📎',title:'Attachments and Files',
+ desc:'Handle file uploads, attachments control, and SharePoint file operations',tags:['med'],
+ variants:[{name:'Attachment control',cmd:'# Add Attachment control\n# DataField: Attachments (for SharePoint forms)\n# Works automatically in Edit/View form\n\n# Stand-alone attachment control\nInsert > Input > Attachments\n\n# Patch file to SharePoint (new item with attachment)\nPatch(\n  DocLibrary,\n  Defaults(DocLibrary),\n  {\n    Name: txtFileName.Text,\n    Attachments: Attachments1.Attachments\n  }\n)\n\n# Access attachment in collection\nFirst(galItems.Selected.Attachments).Name\nFirst(galItems.Selected.Attachments).Value\n\n# Upload limit\n// Default max file size: 50MB per file\n// Set in SharePoint list settings\n\n# Supported in patch\n// Text files, PDFs, images, Office docs'},{name:'Camera and image',cmd:'# Camera control\nInsert > Media > Camera\n\n# Capture photo to variable\n// Button OnSelect:\nSet(varPhoto, Camera1.Photo)\n\n# Patch image to SharePoint\nPatch(\n  PhotoList,\n  Defaults(PhotoList),\n  {\n    Title: txtTitle.Text,\n    Photo: {Name: "photo.jpg", Value: Camera1.Photo}\n  }\n)\n\n# Display captured image\n// Image control > Image property:\nvarPhoto\n// or\nCamera1.Photo\n\n# Barcode scanner\nInsert > Media > Barcode scanner\n// BarcodeScanner1.Value  -- scanned value\n// BarcodeScanner1.OnScan: Set(varBarcode, BarcodeScanner1.Value)'}]},
+{id:'p01',cat:'perf',icon:'⚡',title:'App Loading Performance',
+ desc:'OnStart optimisation, startup time, and ClearCollect strategies',tags:['perf'],
+ variants:[{name:'OnStart optimisation',cmd:'# App.OnStart runs ONCE when app loads\n# Keep it fast - users see loading screen\n\n# DO: Load all needed data upfront\n// App.OnStart:\nConcurrent(\n  ClearCollect(colUsers, UserList),\n  ClearCollect(colDepts, DepartmentList),\n  Set(varCurrentUser, User().Email),\n  Set(varConfig, First(ConfigList))\n)\n\n# Concurrent() runs all at same time\n# Faster than sequential loading\n\n# DO NOT: Load large tables in OnStart\n# Load only what first screen needs\n# Load other data on screen OnVisible\n\n# Screen OnVisible - lazy loading\n// scrTickets.OnVisible:\nIf(\n  IsEmpty(colTickets),  // only load if not already loaded\n  ClearCollect(colTickets, Filter(TicketList, Status = "Open"))\n)\n\n# Loading indicator\n// Set varIsLoading = true before\n// Set varIsLoading = false after\n// Overlay rectangle Visible: varIsLoading'},{name:'Formula optimisation',cmd:'# AVOID calling same data source multiple times\n// Bad:\nCountRows(Filter(TicketList, Status = "Open"))\nFilter(TicketList, Status = "Open")\n\n// Good:\nSet(varOpenTickets, Filter(TicketList, Status = "Open"))\nCountRows(varOpenTickets)\n// use varOpenTickets everywhere\n\n# AVOID complex formulas in gallery properties\n// Bad gallery Items:\nSortByColumns(Filter(Search(TicketList, txt.Text, "Title"), IsActive=true), "Created", Descending)\n\n// Good: pre-process in variable\n// Button OnSelect or txt.OnChange:\nClearCollect(colFiltered,\n  SortByColumns(\n    Filter(colTickets, StartsWith(Title, txtSearch.Text) And IsActive),\n    "Created", Descending\n  )\n)\n// Gallery Items: colFiltered\n\n# Reduce data row limit\n// Settings > Data row limit: 100 (not 500)\n// Load only what is needed\n\n# Use Explicit Column Selection\n// Settings > Upcoming features > Explicit column selection\n// Only loads columns you reference (faster)'}]},
+{id:'p02',cat:'perf',icon:'⚡',title:'Connection and Formula Patterns',
+ desc:'Avoid delegation warnings, reduce connections, and batch calls',tags:['perf'],
+ variants:[{name:'Network call reduction',cmd:'# Each data source call = network round trip\n# Minimise calls, especially in loops\n\n# AVOID: Patch inside ForAll (N calls)\nForAll(\n  colItems,\n  Patch(TicketList, LookUp(TicketList, ID = ThisRecord.ID), {Status: "Closed"})\n)\n\n# BETTER: Collect changes, patch all at once\nClearCollect(\n  colToUpdate,\n  AddColumns(colItems, "Status", "Closed")\n)\nPatch(TicketList, colToUpdate)\n\n# AVOID: LookUp inside gallery formula\n// Gallery template label:\nLookUp(UserList, Email = ThisItem.Email).DisplayName\n// This calls UserList once per gallery row!\n\n// BETTER: Join before gallery\nClearCollect(\n  colTicketsWithUser,\n  AddColumns(\n    colTickets,\n    "UserName",\n    LookUp(colUsers, Email = ThisRecord.AssignedEmail).DisplayName\n  )\n)\n// Gallery Items: colTicketsWithUser'},{name:'AddColumns and join patterns',cmd:'# AddColumns - enrich collection with computed fields\nAddColumns(\n  colTickets,\n  "DaysOpen",    DateDiff(ThisRecord.Created, Today(), Days),\n  "IsOverdue",   ThisRecord.DueDate < Today(),\n  "PriorityLabel", Switch(ThisRecord.Priority, 1,"Critical", 2,"High", "Normal")\n)\n\n# Join two collections (manual join)\nClearCollect(\n  colJoined,\n  AddColumns(\n    colTickets,\n    "DeptName",\n    LookUp(colDepartments, ID = ThisRecord.DeptID).Name\n  )\n)\n\n# DropColumns - remove unwanted columns\nDropColumns(colItems, "InternalID", "DebugField")\n\n# RenameColumns\nRenameColumns(colItems, "OldName", "NewName")\n\n# ShowColumns - keep only specific columns\nShowColumns(colItems, "ID", "Title", "Status")'}]},
+{id:'pt01',cat:'patterns',icon:'🎨',title:'Master-Detail Pattern',
+ desc:'Classic list-detail navigation with selected item tracking',tags:['pat'],
+ variants:[{name:'Master-detail implementation',cmd:'# Screen: scrList (master)\n# Screen: scrDetail (detail)\n\n// scrList - Gallery setup:\nGallery Items: colTickets\nGallery OnSelect: Navigate(scrDetail, ScreenTransition.None)\n\n// Store selected before navigating:\n// Gallery OnSelect:\nSet(varSelectedTicket, ThisItem)\nNavigate(scrDetail)\n\n// OR use gallery selection directly:\n// On scrDetail, reference: varSelectedTicket\n// Access fields: varSelectedTicket.Title\n\n# In-screen master-detail (split view)\n// Left panel: Gallery\n// Right panel: Detail view driven by galItems.Selected\n// No navigation needed\n// Right panel labels:\nText: galItems.Selected.Title\nText: galItems.Selected.Status\n\n// Edit button in detail:\nSet(varMode, "edit")\nNewForm(frmDetail) or EditForm(frmDetail)\n\n// frmDetail Item property:\ngalItems.Selected'}]},
+{id:'pt02',cat:'patterns',icon:'🎨',title:'Search and Filter Pattern',
+ desc:'Combine live search, dropdown filters, and date range filters',tags:['pat'],
+ variants:[{name:'Combined filter pattern',cmd:'# Multiple filters on same collection\n\n// Gallery Items property:\nFilter(\n  colTickets,\n  // Text search\n  (IsBlank(txtSearch.Text) Or StartsWith(Title, txtSearch.Text)),\n  // Status dropdown\n  (drpStatus.Selected.Value = "All" Or Status = drpStatus.Selected.Value),\n  // Priority dropdown\n  (drpPriority.Selected.Value = "All" Or Text(Priority) = drpPriority.Selected.Value),\n  // Date range\n  (IsBlank(datFrom.SelectedDate) Or Created >= datFrom.SelectedDate),\n  (IsBlank(datTo.SelectedDate) Or Created <= datTo.SelectedDate)\n)\n\n// drpStatus Items property:\n["All", "Open", "Closed", "Pending"]\n\n// Clear all filters button:\nReset(txtSearch)\nReset(drpStatus)\nReset(drpPriority)\nReset(datFrom)\nReset(datTo)\n\n# Show active filter count\nCountIf(\n  [!IsBlank(txtSearch.Text), drpStatus.Selected.Value <> "All", drpPriority.Selected.Value <> "All"],\n  Value\n)'}]},
+{id:'pt03',cat:'patterns',icon:'🎨',title:'Confirm Dialog Pattern',
+ desc:'Reusable confirmation dialog using a container overlay',tags:['pat'],
+ variants:[{name:'Confirm dialog implementation',cmd:'# Create overlay dialog using Rectangle + Container\n\n// 1. Full-screen overlay Rectangle\nFill: RGBA(0, 0, 0, 0.5)\nVisible: varShowConfirm\nOnSelect: false  // block clicks\n\n// 2. Dialog container (centered)\nX: (App.Width - 360) / 2\nY: (App.Height - 200) / 2\nWidth: 360, Height: 200\nFill: White\nVisible: varShowConfirm\n\n// 3. Dialog labels and buttons inside container\nLabel: varConfirmMessage  // e.g. "Delete this ticket?"\n\nButton "Confirm" OnSelect:\nSet(varShowConfirm, false)\nRemove(TicketList, varItemToDelete)\nNotify("Deleted", NotificationType.Success)\n\nButton "Cancel" OnSelect:\nSet(varShowConfirm, false)\n\n// 4. Trigger dialog from delete button:\nSet(varItemToDelete, galItems.Selected)\nSet(varConfirmMessage, "Delete ticket " & galItems.Selected.Title & "?")\nSet(varShowConfirm, true)\n\n# Z-order: overlay must be on top in tree view'}]},
+{id:'pt04',cat:'patterns',icon:'🎨',title:'Offline and Error Handling',
+ desc:'Handle network errors, loading states, and offline scenarios',tags:['pat'],
+ variants:[{name:'Error handling pattern',cmd:'# Wrap data operations with IfError\n\n// Safe Patch with full error handling:\nIfError(\n  Patch(\n    TicketList,\n    Defaults(TicketList),\n    {\n      Title: txtTitle.Text,\n      Status: "Open"\n    }\n  ),\n  // Error branch:\n  Notify(\n    "Save failed. Please try again. (" & FirstError.Message & ")",\n    NotificationType.Error\n  ),\n  // Success branch:\n  Notify("Ticket created!", NotificationType.Success);\n  Navigate(scrList)\n)\n\n# Loading state pattern\n// Button OnSelect:\nUpdateContext({locIsLoading: true, locError: ""})\nClearCollect(colData, DataSource)\nUpdateContext({locIsLoading: false})\n\n// Spinner overlay:\nVisible: locIsLoading\n\n// Error display label:\nVisible: !IsBlank(locError)\nText: locError\n\n# Connection check\n// Check before data call:\nIf(\n  Connection.Connected,\n  ClearCollect(colData, DataSource),\n  Notify("No internet connection", NotificationType.Warning)\n)'}]}
+];
+
+var SAMPLE={AppName:'IT Helpdesk App',SharePointSite:'https://contoso.sharepoint.com/sites/IT',DataversEnv:'contoso.crm.dynamics.com',AdminEmail:'admin@contoso.com',AppID:'12345678-abcd-1234-abcd-123456789012'};
+
+var TM={form:'tg-l',data:'tg-v',del:'tg-e',ui:'tg-p',nav:'tg-a',var:'tg-m',comp:'tg-x',med:'tg-w',perf:'tg-s',pat:'tg-r'};
+var TL={form:'formulas',data:'data',del:'delegation',ui:'ui',nav:'navigation',var:'variables',comp:'components',med:'media',perf:'performance',pat:'patterns'};
+
+var aCat='all',aTag=null,aSrch='',sel=null;
+var V={AppName:'',SharePointSite:'',DataversEnv:'',AdminEmail:'',AppID:''};
+
+Object.keys(V).forEach(function(k){
+  var el=document.getElementById('v_'+k);
+  if(!el)return;
+  el.addEventListener('input',function(){V[k]=el.value.trim();if(sel)renderR(sel);});
+});
+
+function sv(cmd){return cmd.replace(/\{([A-Z_]+)\}/g,function(m,k){return V[k]||m;});}
+
+function hl(raw){
+  var s=sv(raw).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  s=s.replace(/\{([A-Z_]+)\}/g,'<span class="vh">{$1}</span>');
+  s=s.replace(/((?:^|\s)-{1,2}[a-zA-Z][a-zA-Z0-9_-]*)/gm,'<span class="vf">$1</span>');
+  s=s.replace(/(#[^\n]*)/g,'<span class="vc">$1</span>');
+  return s;
+}
+
+function buildSB(){
+  var el=document.getElementById('catList');el.innerHTML='';
+  CATS.forEach(function(c){
+    var n=CHEATS.filter(function(x){return x.cat===c.id;}).length;
+    var d=document.createElement('div');d.className='sbc';d.dataset.cat=c.id;
+    d.innerHTML='<div class="sc-lf"><div class="sc-d" style="background:'+c.dot+'"></div><span class="sc-l">'+c.label+'</span></div><span class="sc-n">'+n+'</span>';
+    var f=function(){setC(c.id,c.label);};d.addEventListener('click',f);kbd(d,f);
+    el.appendChild(d);
+  });
+  document.getElementById('cnt-all').textContent=CHEATS.length;
+}
+
+function setC(id,lbl){
+  aCat=id;
+  document.querySelectorAll('.sbc,.sb-all').forEach(function(e){e.classList.remove('act');});
+  if(id==='all'){document.getElementById('cat-all').classList.add('act');document.getElementById('actLbl').textContent='All Formulas';}
+  else{document.querySelectorAll('.sbc').forEach(function(e){if(e.dataset.cat===id)e.classList.add('act');});document.getElementById('actLbl').textContent=lbl;}
+  renderCards();
+}
+
+(function buildTF(){
+  var seen={},at=[];
+  CHEATS.forEach(function(c){c.tags.forEach(function(t){if(!seen[t]){seen[t]=true;at.push(t);}});});
+  var wrap=document.getElementById('tagF');
+  at.forEach(function(t){
+    var b=document.createElement('button');b.className='tf';b.textContent=TL[t]||t;b.dataset.tag=t;
+    b.addEventListener('click',function(){
+      if(aTag===t){aTag=null;b.classList.remove('act');}
+      else{document.querySelectorAll('.tf').forEach(function(x){x.classList.remove('act');});aTag=t;b.classList.add('act');}
+      renderCards();
+    });
+    wrap.appendChild(b);
+  });
+})();
+
+function renderCards(){
+  var wrap=document.getElementById('cw');
+  var f=CHEATS.filter(function(c){
+    if(aCat!=='all'&&c.cat!==aCat)return false;
+    if(aTag&&!c.tags.includes(aTag))return false;
+    if(aSrch){var s=aSrch.toLowerCase();return c.title.toLowerCase().includes(s)||c.desc.toLowerCase().includes(s)||c.tags.some(function(t){return(TL[t]||t).includes(s);})||c.variants.some(function(v){return v.cmd.toLowerCase().includes(s)||v.name.toLowerCase().includes(s);});}
+    return true;
+  });
+  document.getElementById('visCnt').textContent=f.length+' formulas';
+  wrap.innerHTML='';
+  f.forEach(function(ch){
+    var d=document.createElement('div');d.className='cc'+(sel&&sel.id===ch.id?' sel':'');
+    d.innerHTML='<div class="cc-t"><span class="cc-i">'+ch.icon+'</span><span class="cc-n">'+ch.title+'</span></div><div class="cc-d">'+ch.desc+'</div><div class="cc-tg">'+ch.tags.map(function(t){return '<span class="tg '+(TM[t]||'tg-r')+'">'+(TL[t]||t)+'</span>';}).join('')+'</div>';
+    var pick=function(){document.querySelectorAll('.cc').forEach(function(c){c.classList.remove('sel');});d.classList.add('sel');sel=ch;renderR(ch);var rp=document.getElementById('rp');if(rp)rp.classList.add('open');};d.addEventListener('click',pick);kbd(d,pick);
+    wrap.appendChild(d);
+  });
+}
+
+function renderR(ch){
+  document.getElementById('rpE').style.display='none';
+  var rc=document.getElementById('rpC');rc.style.display='flex';
+  var cat=CATS.find(function(c){return c.id===ch.cat;});
+  var w=ch.title.split(' ');
+  document.getElementById('rpT').innerHTML=w.slice(0,-1).join(' ')+' <span>'+w[w.length-1]+'</span>';
+  var rf=ch.refs?(ch.refs.map(function(r){return '<a class="rf-a" href="https://learn.microsoft.com/en-us/search/?terms='+encodeURIComponent(r.t)+'" target="_blank" rel="noopener">'+r.t+'</a>';}).join('')):'';
+  document.getElementById('rpI').innerHTML='<div class="ri-t">'+ch.title+'</div><div class="ri-d">'+ch.desc+'</div><div class="ri-tg"><span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;padding:1px 6px;background:rgba(255,255,255,.04);color:var(--muted);border:1px solid var(--border)">'+(cat?cat.label:ch.cat)+'</span>'+ch.tags.map(function(t){return '<span class="tg '+(TM[t]||'tg-r')+'">'+(TL[t]||t)+'</span>';}).join('')+'</div>'+(rf?'<div class="ri-rf">'+rf+'</div>':'');
+  var vw=document.getElementById('rpV');vw.innerHTML='';
+  ch.variants.forEach(function(v,vi){
+    var b=document.createElement('div');b.className='vb';
+    b.innerHTML='<div class="vb-r"><span class="vb-n">'+v.name+'</span><div class="vb-a"><button class="cp" data-vi="'+vi+'">Copy</button><button class="ce" data-vi="'+vi+'">Copy+Enter</button></div></div><div class="cb" data-vi="'+vi+'">'+hl(v.cmd)+'</div>';
+    vw.appendChild(b);
+    b.querySelectorAll('[data-vi]').forEach(function(btn){
+      btn.addEventListener('click',function(e){
+        e.stopPropagation();
+        var isE=btn.tagName==='BUTTON'&&btn.classList.contains('ce');
+        navigator.clipboard.writeText(sv(v.cmd)+(isE?'\n':'')).then(function(){
+          toast('Copied'+(isE?' + Enter':'')+'!');
+          if(btn.tagName==='BUTTON'&&btn.classList.contains('cp')){btn.textContent='Copied!';btn.classList.add('ok');setTimeout(function(){btn.textContent='Copy';btn.classList.remove('ok');},1400);}
+        });
+      });
+    });
+  });
+}
+
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},1700);}
+function clearV(){Object.keys(V).forEach(function(k){V[k]='';var el=document.getElementById('v_'+k);if(el)el.value='';});if(sel)renderR(sel);toast('Variables cleared');}
+
+document.getElementById('srch').addEventListener('input',function(){aSrch=this.value.trim();renderCards();});
+document.getElementById('cat-all').addEventListener('click',function(){setC('all','All Formulas');});
+kbd(document.getElementById('cat-all'),function(){setC('all','All Formulas');});
+document.getElementById('clrVars').addEventListener('click',clearV);
+document.getElementById('clrBtn2').addEventListener('click',clearV);
+document.getElementById('sampleBtn').addEventListener('click',function(){
+  Object.keys(SAMPLE).forEach(function(k){V[k]=SAMPLE[k];var el=document.getElementById('v_'+k);if(el)el.value=SAMPLE[k];});
+  if(sel)renderR(sel);toast('Loaded — Contoso IT App sample');
+});
+document.getElementById('rpX').addEventListener('click',function(){sel=null;document.getElementById('rpC').style.display='none';document.getElementById('rpE').style.display='flex';document.querySelectorAll('.cc').forEach(function(c){c.classList.remove('sel');});var rp=document.getElementById('rp');if(rp)rp.classList.remove('open');});
+function openM(){document.getElementById('modal').classList.add('show');}
+function closeM(){document.getElementById('modal').classList.remove('show');}
+document.getElementById('helpBtn').addEventListener('click',openM);
+document.getElementById('mClose').addEventListener('click',closeM);
+document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeM();});
+document.addEventListener('keydown',function(e){
+  if(e.key==='?'&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName)){openM();return;}
+  if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();document.getElementById('srch').focus();}
+  if(e.key==='Escape'){closeM();var rp=document.getElementById('rp');if(rp)rp.classList.remove('open');}
+});
+
+buildSB();renderCards();
+if(!localStorage.getItem('pawcs1')){setTimeout(openM,500);localStorage.setItem('pawcs1','1');}
+})();
+</script>
+<script>(function(){function s(){var a=document.querySelector('.app'),v=document.querySelector('.vbar');if(!a)return;if(!v||getComputedStyle(v).display==='none'){a.style.marginTop='';a.style.height='';return;}var o=Math.round(v.getBoundingClientRect().bottom);a.style.marginTop=o+'px';a.style.height='calc(100vh - '+o+'px)';}window.addEventListener('resize',s);window.addEventListener('load',s);document.addEventListener('DOMContentLoaded',s);var vb=document.querySelector('.vbar');if(vb)vb.addEventListener('input',s);s();})();</script>
+</body>
+</html>

