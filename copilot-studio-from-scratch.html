@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Building a Copilot Studio HR Agent from Scratch — Enterprise Use Case</title>
+<meta name="description" content="End-to-end guide: knowledge sources, topics, authentication, and Power Automate integration in a production Copilot Studio HR agent.">
+<link rel="canonical" href="https://tjames-env.github.io/copilot-studio-from-scratch.html">
+<meta name="twitter:title" content="Building a Copilot Studio HR Agent from Scratch — Enterprise Use Case">
+<meta name="twitter:description" content="End-to-end guide: knowledge sources, topics, authentication, and Power Automate integration in a production Copilot Studio HR agent.">
+<meta name="author" content="Timothy James Eusebio">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Building a Copilot Studio HR Agent from Scratch — Enterprise Use Case">
+<meta property="og:description" content="End-to-end guide: knowledge sources, topics, authentication, and Power Automate integration in a production Copilot Studio HR agent.">
+<meta property="og:url" content="https://tjames-env.github.io/copilot-studio-from-scratch.html">
+<meta name="twitter:card" content="summary_large_image">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0f1117;
+    --ink-muted: #3d4250;
+    --ink-light: #8b92a5;
+    --bg: #f8f9fc;
+    --bg-card: #ffffff;
+    --accent: #5b4cf5;
+    --accent-light: #ede9fe;
+    --accent-2: #0ea5e9;
+    --accent-3: #10b981;
+    --accent-warn: #f59e0b;
+    --accent-danger: #ef4444;
+    --border: #e4e7f0;
+    --border-strong: #c8cdd8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.8;
+    font-size: 17px;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 3px;
+    background: linear-gradient(to right, var(--accent), var(--accent-2));
+    width: 0%;
+    z-index: 200;
+    transition: width 0.1s linear;
+  }
+
+  /* Topbar */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(248,249,252,0.93);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .topbar-brand {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-light);
+  }
+  .topbar-brand span { color: var(--accent); font-weight: 500; }
+  .topbar-links { display: flex; gap: 20px; align-items: center; }
+  .topbar-links a {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-light);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .topbar-links a:hover { color: var(--accent); }
+  .topbar-links .btn-medium {
+    background: var(--accent);
+    color: white !important;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+  .topbar-links .btn-medium:hover { background: #4a3bd4; }
+
+  /* Hero */
+  .hero {
+    background: var(--ink);
+    color: #fff;
+    padding: 90px 24px 70px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(91,76,245,0.25) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(14,165,233,0.2) 0%, transparent 50%),
+      radial-gradient(ellipse at 60% 80%, rgba(16,185,129,0.15) 0%, transparent 50%);
+  }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(91,76,245,0.2);
+    border: 1px solid rgba(91,76,245,0.4);
+    color: #a78bfa;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 20px;
+    margin-bottom: 28px;
+    position: relative;
+  }
+  .hero h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(28px, 5vw, 54px);
+    font-weight: 400;
+    line-height: 1.1;
+    max-width: 860px;
+    margin: 0 auto 20px;
+    position: relative;
+    letter-spacing: -0.5px;
+  }
+  .hero h1 em {
+    font-style: italic;
+    color: #a78bfa;
+  }
+  .hero-sub {
+    font-size: 16px;
+    color: rgba(255,255,255,0.55);
+    max-width: 580px;
+    margin: 0 auto 36px;
+    position: relative;
+    font-weight: 300;
+  }
+  .hero-meta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: rgba(255,255,255,0.35);
+    position: relative;
+  }
+  .hero-meta .dot { width: 3px; height: 3px; background: rgba(255,255,255,0.25); border-radius: 50%; }
+
+  /* Pill tags in hero */
+  .hero-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 28px;
+    position: relative;
+  }
+  .hero-pill {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.6);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+
+  /* Article */
+  .article {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 64px 24px 100px;
+  }
+
+  .intro {
+    font-size: 19px;
+    line-height: 1.75;
+    color: var(--ink-muted);
+    border-left: 3px solid var(--accent);
+    padding-left: 24px;
+    margin-bottom: 48px;
+    font-weight: 300;
+  }
+
+  /* Stat cards row */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 56px;
+  }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+  }
+  .stat-card .stat-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 32px;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .stat-card .stat-label {
+    font-size: 12px;
+    color: var(--ink-light);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* TOC */
+  .toc {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin-bottom: 60px;
+  }
+  .toc-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--ink-light);
+    margin-bottom: 16px;
+  }
+  .toc ol { list-style: none; counter-reset: toc; padding: 0; }
+  .toc li {
+    counter-increment: toc;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .toc li:last-child { border-bottom: none; }
+  .toc li::before {
+    content: counter(toc, decimal-leading-zero);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    flex-shrink: 0;
+    width: 20px;
+  }
+  .toc a { color: var(--ink); text-decoration: none; }
+  .toc a:hover { color: var(--accent); }
+  .toc-time {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-light);
+    flex-shrink: 0;
+  }
+
+  /* Architecture diagram */
+  .arch-diagram {
+    background: var(--ink);
+    border-radius: 12px;
+    padding: 32px;
+    margin: 32px 0;
+    overflow-x: auto;
+  }
+  .arch-flow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .arch-node {
+    background: rgba(91,76,245,0.15);
+    border: 1px solid rgba(91,76,245,0.35);
+    border-radius: 8px;
+    padding: 10px 16px;
+    text-align: center;
+    min-width: 110px;
+  }
+  .arch-node .node-icon { font-size: 20px; margin-bottom: 4px; }
+  .arch-node .node-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #a78bfa;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .arch-arrow {
+    color: rgba(255,255,255,0.25);
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .arch-node.node-green {
+    background: rgba(16,185,129,0.12);
+    border-color: rgba(16,185,129,0.3);
+  }
+  .arch-node.node-green .node-label { color: #6ee7b7; }
+  .arch-node.node-blue {
+    background: rgba(14,165,233,0.12);
+    border-color: rgba(14,165,233,0.3);
+  }
+  .arch-node.node-blue .node-label { color: #7dd3fc; }
+
+  /* Step sections */
+  .step {
+    margin-bottom: 72px;
+    scroll-margin-top: 60px;
+  }
+  .step-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+  .step-number {
+    font-family: 'DM Serif Display', serif;
+    font-size: 56px;
+    font-weight: 400;
+    color: var(--border);
+    line-height: 1;
+    flex-shrink: 0;
+    margin-top: -6px;
+    user-select: none;
+  }
+  .step-title-group { flex: 1; }
+  .step-category {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+  .step-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 26px;
+    font-weight: 400;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+  .step-divider {
+    height: 1px;
+    background: linear-gradient(to right, var(--accent), transparent);
+    margin-bottom: 24px;
+    opacity: 0.25;
+  }
+  .step p { color: var(--ink-muted); margin-bottom: 16px; font-weight: 300; }
+
+  /* Section tags */
+  .section-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+    margin-top: 8px;
+  }
+  .tag-prereq { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+  .tag-step { background: var(--accent-light); color: #4c1d95; border: 1px solid #ddd6fe; }
+  .tag-config { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+  .tag-test { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+  .tag-tip { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+  .tag-warn { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+  .tag-prompt { background: #fdf4ff; color: #6b21a8; border: 1px solid #e9d5ff; }
+  .tag-flow { background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; }
+
+  /* Code blocks */
+  .code-block {
+    background: #0d1117;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 20px 0;
+    font-size: 13px;
+    border: 1px solid #21262d;
+  }
+  .code-header {
+    background: #161b22;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #21262d;
+  }
+  .code-header span { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8b949e; }
+  .code-dots { display: flex; gap: 6px; }
+  .code-dots i { width: 10px; height: 10px; border-radius: 50%; display: block; }
+  .dot-red { background: #ff5f57; }
+  .dot-yellow { background: #febc2e; }
+  .dot-green { background: #28c840; }
+  .code-block pre {
+    padding: 16px 20px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    color: #c9d1d9;
+    line-height: 1.7;
+    white-space: pre;
+  }
+  .c { color: #8b949e; }
+  .k { color: #ff7b72; }
+  .s { color: #a5d6ff; }
+  .v { color: #79c0ff; }
+  .f { color: #d2a8ff; }
+  .n { color: #7ee787; }
+
+  /* Alert boxes */
+  .alert {
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 20px 0;
+    font-size: 15px;
+    line-height: 1.65;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    font-weight: 300;
+  }
+  .alert-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+  .alert-info { background: #eff6ff; border-left: 4px solid #3b82f6; }
+  .alert-warn { background: #fffbeb; border-left: 4px solid #f59e0b; }
+  .alert-success { background: #f0fdf4; border-left: 4px solid #22c55e; }
+  .alert-danger { background: #fef2f2; border-left: 4px solid #ef4444; }
+  .alert p { margin: 0; color: var(--ink); font-weight: 400; }
+
+  /* Checklist */
+  .checklist { list-style: none; margin: 12px 0 20px; }
+  .checklist li {
+    padding: 8px 0 8px 28px;
+    position: relative;
+    font-size: 15px;
+    color: var(--ink-muted);
+    border-bottom: 1px solid var(--border);
+    font-weight: 300;
+  }
+  .checklist li:last-child { border-bottom: none; }
+  .checklist li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--accent-3);
+    font-weight: 700;
+  }
+
+  /* Conversation flow */
+  .convo {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 20px 0;
+  }
+  .convo-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--ink-light);
+    margin-bottom: 16px;
+  }
+  .msg { display: flex; gap: 10px; margin-bottom: 12px; align-items: flex-start; }
+  .msg-bubble {
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 14px;
+    line-height: 1.5;
+    max-width: 85%;
+    font-weight: 300;
+  }
+  .msg-user .msg-bubble {
+    background: var(--accent);
+    color: white;
+    margin-left: auto;
+    border-bottom-right-radius: 4px;
+  }
+  .msg-agent .msg-bubble {
+    background: #f1f3f9;
+    color: var(--ink);
+    border-bottom-left-radius: 4px;
+  }
+  .msg-user { flex-direction: row-reverse; }
+  .msg-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .msg-user .msg-avatar { background: var(--accent); }
+  .msg-agent .msg-avatar { background: #e4e7f0; }
+
+  /* Prompt box */
+  .prompt-box {
+    background: #1a0a2e;
+    border: 1px solid rgba(167,139,250,0.2);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 16px 0;
+  }
+  .prompt-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #a78bfa;
+    margin-bottom: 12px;
+  }
+  .prompt-box p {
+    color: #e2d9f3 !important;
+    font-size: 14px;
+    line-height: 1.7;
+    font-style: italic;
+    font-weight: 300 !important;
+    margin: 0 !important;
+  }
+
+  /* Sep */
+  .section-sep {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 48px 0;
+  }
+  .section-sep hr { flex: 1; border: none; border-top: 1px solid var(--border); }
+  .section-sep span { font-size: 18px; }
+
+  /* Closing */
+  .closing {
+    background: var(--ink);
+    color: white;
+    border-radius: 16px;
+    padding: 44px 40px;
+    margin-top: 64px;
+    position: relative;
+    overflow: hidden;
+  }
+  .closing::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 0% 0%, rgba(91,76,245,0.3) 0%, transparent 60%);
+  }
+  .closing h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    font-weight: 400;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .closing p { color: rgba(255,255,255,0.65); margin-bottom: 14px; font-size: 16px; font-weight: 300; position: relative; }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 40px 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-light);
+    border-top: 1px solid var(--border);
+  }
+  .footer a { color: var(--accent); text-decoration: none; }
+
+  @media (max-width: 600px) {
+    body { font-size: 15px; }
+    .stat-row { grid-template-columns: 1fr; }
+    .step-number { font-size: 40px; }
+    .step-title { font-size: 21px; }
+    .topbar-links .hide-mobile { display: none; }
+    .arch-flow { flex-direction: column; }
+  }
+  .topbar-links .btn-writeups{border:1px solid currentColor;border-radius:6px;padding:6px 12px;text-decoration:none;font-weight:500;opacity:.8;transition:opacity .2s,background .2s;white-space:nowrap}
+  .topbar-links .btn-writeups:hover{opacity:1;background:rgba(128,128,128,.14)}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<nav class="topbar">
+  <div class="topbar-brand">// <span>Agentic AI</span> · Copilot Studio</div>
+  <div class="topbar-links">
+    <a href="#prerequisites" class="hide-mobile">Prerequisites</a>
+    <a href="#architecture" class="hide-mobile">Architecture</a>
+    <a href="#build" class="hide-mobile">Build</a>
+    <a href="#deploy" class="hide-mobile">Deploy</a>
+    <a href="https://medium.com/@timothy_jameseusebio" target="_blank" class="btn-medium">Read on Medium →</a>
+    <a href="https://tjames-env.github.io/projects.html#writeups" target="_blank" rel="noopener" class="btn-writeups">More Write-ups ↗</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-badge">🤖 Agentic AI · Enterprise Use Case</div>
+  <h1>Building a Copilot Studio<br><em>HR Agent</em> from Scratch</h1>
+  <p class="hero-sub">End-to-end guide: knowledge sources, topics, authentication, and Power Automate integration in a production-ready agent.</p>
+  <div class="hero-meta">
+    <span>May 2026</span>
+    <span class="dot"></span>
+    <span>~15 min read</span>
+    <span class="dot"></span>
+    <span>Intermediate · Enterprise</span>
+  </div>
+  <div class="hero-pills">
+    <span class="hero-pill">Copilot Studio</span>
+    <span class="hero-pill">SharePoint KB</span>
+    <span class="hero-pill">Power Automate</span>
+    <span class="hero-pill">Microsoft Teams</span>
+    <span class="hero-pill">Entra ID Auth</span>
+    <span class="hero-pill">HR Onboarding</span>
+  </div>
+</header>
+
+<article class="article">
+
+  <p class="intro">
+    Most Copilot Studio tutorials end at "Hello World." This one doesn't. We're building a production HR agent — connected to a real SharePoint knowledge base, triggering Power Automate flows for leave requests, authenticated via Entra ID, and deployed to Microsoft Teams. Every step is the way you'd actually do it in an enterprise environment.
+  </p>
+
+  <div class="stat-row">
+    <div class="stat-card">
+      <div class="stat-num">70%</div>
+      <div class="stat-label">HR ticket reduction in 90 days</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">4–6hrs</div>
+      <div class="stat-label">Saved per new hire onboarding</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">$200/mo</div>
+      <div class="stat-label">Starting cost · 25K messages</div>
+    </div>
+  </div>
+
+  <nav class="toc">
+    <div class="toc-title">What We're Building — Table of Contents</div>
+    <ol>
+      <li><a href="#prerequisites">Prerequisites & Licensing</a><span class="toc-time">2 min</span></li>
+      <li><a href="#architecture">Agent Architecture Overview</a><span class="toc-time">2 min</span></li>
+      <li><a href="#create-agent">Create the Agent in Copilot Studio</a><span class="toc-time">3 min</span></li>
+      <li><a href="#knowledge">Connect SharePoint Knowledge Base</a><span class="toc-time">3 min</span></li>
+      <li><a href="#topics">Build Topics & Conversation Flows</a><span class="toc-time">5 min</span></li>
+      <li><a href="#automate">Power Automate Integration</a><span class="toc-time">5 min</span></li>
+      <li><a href="#auth">Authentication with Entra ID</a><span class="toc-time">3 min</span></li>
+      <li><a href="#deploy">Deploy to Microsoft Teams</a><span class="toc-time">3 min</span></li>
+      <li><a href="#test">Test Scenarios & Sample Prompts</a><span class="toc-time">3 min</span></li>
+    </ol>
+  </nav>
+
+  <!-- STEP 01 -->
+  <section class="step" id="prerequisites">
+    <div class="step-header">
+      <div class="step-number">01</div>
+      <div class="step-title-group">
+        <div class="step-category">Before You Start</div>
+        <h2 class="step-title">Prerequisites & Licensing</h2>
+      </div>
+    </div>
+    <div class="step-divider"></div>
+
+    <div class="section-tag tag-prereq">✅ What You Need</div>
+    <p>Before opening Copilot Studio, make sure your environment has the following. Skipping this causes broken flows and auth failures later.</p>
+
+    <ul class="checklist">
+      <li><strong>Microsoft 365 license</strong> — E3 or E5 (Copilot Studio is included in M365 Copilot; otherwise $200/month per tenant for 25K messages)</li>
+      <li><strong>Power Platform environment</strong> — a dedicated non-default environment for production agents</li>
+      <li><strong>SharePoint Online</strong> — HR policies site already exists with at least one document library</li>
+      <li><strong>Power Automate</strong> — premium connectors enabled (required for SharePoint list writes and approval flows)</li>
+      <li><strong>Entra ID App Registration</strong> — you'll create this in Step 07, but note it requires Global Admin or Application Administrator role</li>
+      <li><strong>Microsoft Teams Admin access</strong> — to approve the agent for org-wide deployment</li>
+    </ul>
+
+    <div class="alert alert-warn">
+      <div class="alert-icon">⚠️</div>
+      <p><strong>Environment tip:</strong> Never build production agents in the Default environment. Create a dedicated Power Platform environment (e.g., "HR-Production") with its own DLP policies. This is the most common enterprise governance mistake.</p>
+    </div>
+
+    <div class="section-tag tag-config">⚙️ DLP Policy Check</div>
+    <p>Before building, verify your Power Platform DLP policy allows the connectors you'll use:</p>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><i class="dot-red"></i><i class="dot-yellow"></i><i class="dot-green"></i></div>
+        <span>Power Platform Admin Center · DLP Check</span>
+      </div>
+      <pre><span class="c"># Power Platform Admin Center → Policies → Data policies</span>
+<span class="c"># Verify these connectors are in "Business" data group:</span>
+
+<span class="n">✓ SharePoint</span>           <span class="c">← Knowledge base reads</span>
+<span class="n">✓ Microsoft Teams</span>      <span class="c">← Deployment channel</span>
+<span class="n">✓ Office 365 Users</span>     <span class="c">← User profile lookup</span>
+<span class="n">✓ Office 365 Outlook</span>   <span class="c">← Leave approval emails</span>
+<span class="n">✓ Approvals</span>            <span class="c">← Manager approval flow</span>
+
+<span class="c"># If any are in "Non-business" — move them before proceeding</span>
+<span class="c"># Cross-group connectors will block flow execution silently</span></pre>
+    </div>
+  </section>
+
+  <div class="section-sep"><hr/><span>✦</span><hr/></div>
+
+  <!-- STEP 02 -->
+  <section class="step" id="architecture">
+    <div class="step-header">
+      <div class="step-number">02</div>
+      <div class="step-title-group">
+        <div class="step-category">Design</div>
+        <h2 class="step-title">Agent Architecture Overview</h2>
+      </div>
+    </div>
+    <div class="step-divider"></div>
+
+    <p>Before writing a single topic, understand what you're building. Our HR agent has three layers: a <strong>conversation layer</strong> (Copilot Studio topics), a <strong>knowledge layer</strong> (SharePoint), and an <strong>action layer</strong> (Power Automate flows).</p>
+
+    <div class="arch-diagram">
+      <div class="arch-flow">
+        <div class="arch-node">
+          <div class="node-icon">👤</div>
+          <div class="node-label">Employee<br>via Teams</div>
+        </div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node">
+          <div class="node-icon">🤖</div>
+          <div class="node-label">Copilot Studio<br>Agent</div>
+        </div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node node-green">
+          <div class="node-icon">📚</div>
+          <div class="node-label">SharePoint<br>Knowledge</div>
+        </div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node node-blue">
+          <div class="node-icon">⚡</div>
+          <div class="node-label">Power Automate<br>Flow</div>
+        </div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node">
+          <div class="node-icon">✅</div>
+          <div class="node-label">Manager<br>Approval</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-tag tag-step">🗂️ Agent Scope — What It Handles</div>
+    <ul class="checklist">
+      <li><strong>Onboarding Questions</strong> — new hire checklist, IT setup steps, benefits enrollment deadlines (answered from SharePoint)</li>
+      <li><strong>Leave Requests</strong> — employee submits dates → agent triggers Power Automate → manager approval → HR SharePoint list updated</li>
+      <li><strong>Policy Q&A</strong> — generative AI answers from HR policy documents in SharePoint (no manual topic authoring required)</li>
+      <li><strong>Out of Scope (escalation)</strong> — payroll disputes, disciplinary matters → agent escalates to HR email or Teams channel</li>
+    </ul>
+
+    <div class="alert alert-info">
+      <div class="alert-icon">💡</div>
+      <p><strong>2026 update:</strong> Copilot Studio now supports <strong>autonomous triggers</strong> — agents that fire proactively on events (new employee record created in Dataverse, email received) rather than waiting for a user message. We'll show how to configure this for the onboarding flow.</p>
+    </div>
+  </section>
+
+  <div class="section-sep"><hr/><span>✦</span><hr/></div>
+
+  <!-- STEP 03 -->
+  <section class="step" id="create-agent">
+    <div class="step-header">
+      <div class="step-number">03</div>
+      <div class="step-title-group">
+        <div class="step-category">Setup</div>
+        <h2 class="step-title">Create the Agent in Copilot Studio</h2>
+      </div>
+    </div>
+    <div class="step-divider"></div>
+
+    <div class="section-tag tag-step">🚀 Create Your Agent</div>
+    <ul class="checklist">
+      <li>Go to <strong>copilotstudio.microsoft.com</strong> and sign in with your M365 account</li>
+      <li>Select your <strong>production environment</strong> (top-right dropdown — not Default)</li>
+      <li>Click <strong>Create</strong> → <strong>New agent</strong></li>
+      <li>Choose <strong>"Describe your agent"</strong> — type a natural language description to auto-generate the initial setup</li>
+    </ul>
+
+    <div class="section-tag tag-prompt">💬 Agent Description Prompt</div>
+    <div class="prompt-box">
+      <div class="prompt-label">Paste this in the "Describe your agent" field</div>
+      <p>You are an HR Assistant for a mid-size enterprise. You help employees with onboarding questions, leave requests, HR policy questions, and benefits information. You are professional, friendly, and concise. You have access to HR policy documents on SharePoint. For leave requests, you collect the employee's name, leave type, start date, and end date, then submit for manager approval. If you cannot answer a question, escalate to the HR team at hr-support@company.com. Never discuss payroll figures, disciplinary actions, or performance review details.</p>
+    </div>
+
+    <div class="section-tag tag-config">⚙️ Agent Settings to Configure</div>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><i class="dot-red"></i><i class="dot-yellow"></i><i class="dot-green"></i></div>
+        <span>Copilot Studio · Agent Settings</span>
+      </div>
+      <pre><span class="c"># Settings → General</span>
+Agent Name:        <span class="s">"HR Assistant"</span>
+Icon:              <span class="s">Upload your company HR logo or use 👥</span>
+Language:          <span class="s">English (United States)</span>  <span class="c">← set primary language</span>
+
+<span class="c"># Settings → AI capabilities</span>
+Generative AI:     <span class="n">Enabled</span>   <span class="c">← powers policy Q&A without manual topics</span>
+Orchestration:     <span class="n">Generative</span> <span class="c">← agent dynamically routes intent (2026 default)</span>
+
+<span class="c"># Settings → Security</span>
+Authentication:    <span class="n">Azure Active Directory</span>  <span class="c">← configure in Step 07</span>
+Require sign-in:   <span class="n">Yes</span>  <span class="c">← essential for leave requests (identity verification)</span></pre>
+    </div>
+
+    <div class="alert alert-success">
+      <div class="alert-icon">✅</div>
+      <p><strong>Pro tip:</strong> Enable <strong>Generative Orchestration</strong> (now default in 2026). This lets the agent dynamically decide which topic or knowledge source to use based on intent — you don't need to manually map every possible phrase to a trigger.</p>
+    </div>
+  </section>
+
+  <div class="section-sep"><hr/><span>✦</span><hr/></div>
+
+  <!-- STEP 04 -->
+  <section class="step" id="knowledge">
+    <div class="step-header">
+      <div class="step-number">04</div>
+      <div class="step-title-group">
+        <div class="step-category">Knowledge Sources</div>
+        <h2 class="step-title">Connect SharePoint Knowledge Base</h2>
+      </div>
+    </div>
+    <div class="step-divider"></div>
+
+    <p>This is where your agent gets its intelligence. Instead of manually authoring answers for every possible HR question, you point the agent at your SharePoint document library and it uses generative AI to answer naturally.</p>
+
+    <div class="section-tag tag-step">📚 Add SharePoint as Knowledge Source</div>
+    <ul class="checklist">
+      <li>In Copilot Studio → your agent → <strong>Knowledge</strong> tab → <strong>Add knowledge</strong></li>
+      <li>Select <strong>SharePoint</strong> from the source list</li>
+      <li>Paste your HR SharePoint site URL: <code>https://yourcompany.sharepoint.com/sites/HR</code></li>
+      <li>Select the specific document libraries to include (e.g., "HR Policies", "Benefits", "Onboarding")</li>
+      <li>Click <strong>Add</strong> — initial indexing takes 5–15 minutes</li>
+    </ul>
+
+    <div class="section-tag tag-config">📂 Recommended SharePoint Structure</div>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><i class="dot-red"></i><i class="dot-yellow"></i><i class="dot-green"></i></div>
+        <span>SharePoint · HR Site Structure</span>
+      </div>
+      <pre><span class="f">HR Site</span> (https://company.sharepoint.com/sites/HR)
+├── <span class="n">HR Policies</span>/
+│   ├── Leave-Policy-2026.pdf
+│   ├── Code-of-Conduct.pdf
+│   ├── Remote-Work-Policy.pdf
+│   └── Performance-Review-Process.pdf
+├── <span class="n">Benefits</span>/
+│   ├── Health-Insurance-Guide.pdf
+│   ├── Retirement-Plan-401k.pdf
+│   └── Benefits-Enrollment-Deadlines.pdf
+└── <span class="n">Onboarding</span>/
+    ├── New-Hire-Checklist.pdf
+    ├── IT-Setup-Guide.pdf
+    └── First-90-Days-Guide.pdf
+
+<span class="c"># Keep documents in PDF or Word format — best indexing quality</span>
+<span class="c"># Use descriptive filenames — they influence search relevance</span>
+<span class="c"># Update documents in SharePoint → agent automatically re-indexes</span></pre>
+    </div>
+
+    <div class="alert alert-warn">
+      <div class="alert-icon">⚠️</div>
+      <p><strong>Permissions note:</strong> The agent respects SharePoint permissions. If an employee doesn't have access to a document, the agent won't surface its content to them. For broad HR Q&A, ensure your HR Policies library grants read access to all employees.</p>
+    </div>
+
+    <div class="section-tag tag-tip">💡 Improve Answer Quality</div>
+    <ul class="checklist">
+      <li>Add a <strong>custom instructions</strong> block in Knowledge settings to tell the agent how to cite sources: "Always mention the document name when answering policy questions"</li>
+      <li>Use <strong>sensitivity labels</strong> on confidential documents — labeled content won't be surfaced by the agent</li>
+      <li>Remove outdated documents from the library — stale content causes incorrect answers</li>
+    </ul>
+  </section>
+
+  <div class="section-sep"><hr/><span>✦</span><hr/></div>
+
+  <!-- STEP 05 -->
+  <section class="step" id="topics">
+    <div class="step-header">
+      <div class="step-number">05</div>
+      <div class="step-title-group">
+        <div class="step-category">Conversation Design</div>
+        <h2 class="step-title">Build Topics & Conversation Flows</h2>
+      </div>
+    </div>
+    <div class="step-divider"></div>
+
+    <p>Topics are structured conversation paths for actions that need to collect specific data — like a leave request. Unlike policy Q&A (handled by generative AI from SharePoint), topics give you precise control over the flow.</p>
+
+    <div class="section-tag tag-step">🗂️ Topics to Create</div>
+    <ul class="checklist">
+      <li><strong>Leave Request</strong> — collects leave type, dates, and triggers approval flow</li>
+      <li><strong>Onboarding Checklist</strong> — guides new hires through Day 1 setup steps</li>
+      <li><strong>Escalate to HR</strong> — out-of-scope handler that collects question and emails HR team</li>
+      <li><strong>Greeting</strong> — personalized welcome using employee's name from Entra ID</li>
+    </ul>
+
+    <div class="section-tag tag-flow">⚡ Leave Request Topic — Full Flow</div>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><i class="dot-red"></i><i class="dot-yellow"></i><i class="dot-green"></i></div>
+        <span>Copilot Studio · Leave Request Topic</span>
+      </div>
+      <pre><span class="c"># Topic: Leave Request</span>
+<span class="c"># Trigger phrases (add at least 5 variations):</span>
+<span class="s">"I want to apply for leave"</span>
+<span class="s">"request time off"</span>
+<span class="s">"submit a leave request"</span>
+<span class="s">"I need to take leave"</span>
+<span class="s">"annual leave request"</span>
+<span class="s">"sick leave"</span>
+
+<span class="c"># Conversation nodes (in order):</span>
+
+<span class="k">Message:</span>
+  <span class="s">"I can help you submit a leave request. Let me collect a few details."</span>
+
+<span class="k">Question:</span> <span class="v">LeaveType</span>
+  <span class="s">"What type of leave are you requesting?"</span>
+  Options: <span class="n">Annual Leave | Sick Leave | Parental Leave | Unpaid Leave</span>
+
+<span class="k">Question:</span> <span class="v">StartDate</span>
+  <span class="s">"What is your leave start date?"</span>
+  Type: <span class="n">Date</span>
+
+<span class="k">Question:</span> <span class="v">EndDate</span>
+  <span class="s">"What is your leave end date?"</span>
+  Type: <span class="n">Date</span>
+
+<span class="k">Question:</span> <span class="v">LeaveReason</span>
+  <span class="s">"Would you like to add a reason? (Optional)"</span>
+  Type: <span class="n">Text</span>
+
+<span class="k">Confirm message:</span>
+  <span class="s">"You're requesting {LeaveType} from {StartDate} to {EndDate}.
+  Shall I submit this for manager approval?"</span>
+  Options: <span class="n">Yes, Submit | No, Cancel</span>
+
+<span class="k">Call flow:</span> <span class="f">Submit-Leave-Request</span>  <span class="c">← Power Automate (Step 06)</span>
+
+<span class="k">Message (on success):</span>
+  <span class="s">"Your leave request has been submitted. Your manager will receive
+  an approval request and you'll be notified via Teams."</span></pre>
+    </div>
+
+    <div class="section-tag tag-prompt">💬 Conversational Starters to Configure</div>
+    <p>Add these as <strong>conversation starters</strong> in your agent settings — they appear as quick-reply buttons when employees first open the agent in Teams:</p>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><i class="dot-red"></i><i class="dot-yellow"></i><i class="dot-green"></i></div>
+        <span>Copilot Studio · Conversation Starters</span>
+      </div>
+      <pre>🏖️  <span class="s">"I want to request leave"</span>
+📋  <span class="s">"Show me the new hire onboarding checklist"</span>
+❓  <span class="s">"What is our work from home policy?"</span>
+💊  <span class="s">"When is benefits enrollment?"</span>
+📞  <span class="s">"I need to speak to someone in HR"</span></pre>
+    </div>
+
+    <div class="section-tag tag-step">🎭 Sample Conversation — Policy Q&A</div>
+    <div class="convo">
+      <div class="convo-title">Live Preview · HR Agent · Policy Q&A via SharePoint</div>
+      <div class="msg msg-user">
+        <div class="msg-avatar">👤</div>
+        <div class="msg-bubble">How many days of annual leave do I get per year?</div>
+      </div>
+      <div class="msg msg-agent">
+        <div class="msg-avatar">🤖</div>
+        <div class="msg-bubble">According to the <strong>Leave Policy 2026</strong> document, full-time employees are entitled to <strong>20 days of annual leave</strong> per calendar year. This increases to 25 days after 5 years of service. Leave accrues monthly and unused days can be carried over up to a maximum of 10 days. Would you like to submit a leave request?</div>
+      </div>
+      <div class="msg msg-user">
+        <div class="msg-avatar">👤</div>
+        <div class="msg-bubble">Yes please</div>
+      </div>
+      <div class="msg msg-agent">
+        <div class="msg-avatar">🤖</div>
+        <div class="msg-bubble">I can help you submit a leave request. Let me collect a few details. What type of leave are you requesting?<br><br>🏖️ Annual Leave &nbsp;&nbsp; 🤒 Sick Leave &nbsp;&nbsp; 👶 Parental Leave &nbsp;&nbsp; 📋 Unpaid Leave</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-sep"><hr/><span>✦</span><hr/></div>
+
+  <!-- STEP 06 -->
+  <section class="step" id="automate">
+    <div class="step-header">
+      <div class="step-number">06</div>
+      <div class="step-title-group">
+        <div class="step-category">Automation</div>
+        <h2 class="step-title">Power Automate Integration</h2>
+      </div>
+    </div>
+    <div class="step-divider"></div>
+
+    <p>This is where the agent stops being a chatbot and becomes an actual business tool. The leave request flow collects data from the conversation, creates a SharePoint record, sends a manager approval, and notifies the employee — all automatically.</p>
+
+    <div class="section-tag tag-flow">⚡ Build the Leave Request Flow</div>
+    <ul class="checklist">
+      <li>In Copilot Studio → your topic → <strong>Call an action</strong> → <strong>Create a flow</strong></li>
+      <li>This opens Power Automate with a pre-wired trigger: <strong>"When Copilot Studio calls a flow"</strong></li>
+      <li>Add input parameters: <code>LeaveType</code>, <code>StartDate</code>, <code>EndDate</code>, <code>LeaveReason</code>, <code>EmployeeEmail</code></li>
+    </ul>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><i class="dot-red"></i><i class="dot-yellow"></i><i class="dot-green"></i></div>
+        <span>Power Automate · Leave Request Flow Steps</span>
+      </div>
+      <pre><span class="k">Trigger:</span>  When Copilot Studio calls a flow
+  Inputs: <span class="v">LeaveType</span>, <span class="v">StartDate</span>, <span class="v">EndDate</span>, <span class="v">LeaveReason</span>, <span class="v">EmployeeEmail</span>
+
+<span class="k">Step 1:</span>  Get user profile (Office 365 Users)
+  <span class="c"># Lookup employee's manager using EmployeeEmail</span>
+  Action: <span class="f">Get manager (V2)</span>
+  User: <span class="v">EmployeeEmail</span>
+
+<span class="k">Step 2:</span>  Create SharePoint list item
+  Site: <span class="s">https://company.sharepoint.com/sites/HR</span>
+  List: <span class="s">"Leave Requests"</span>
+  Fields:
+    Employee:    <span class="v">EmployeeEmail</span>
+    LeaveType:   <span class="v">LeaveType</span>
+    StartDate:   <span class="v">StartDate</span>
+    EndDate:     <span class="v">EndDate</span>
+    Reason:      <span class="v">LeaveReason</span>
+    Status:      <span class="s">"Pending"</span>
+    SubmittedOn: <span class="f">utcNow()</span>
+
+<span class="k">Step 3:</span>  Start approval (Approvals connector)
+  Title:    <span class="s">"Leave Request: {EmployeeEmail} — {LeaveType}"</span>
+  Assigned: <span class="v">Manager email from Step 1</span>
+  Details:  <span class="s">"{LeaveType} from {StartDate} to {EndDate}. Reason: {LeaveReason}"</span>
+
+<span class="k">Step 4:</span>  Condition — Approved or Rejected?
+  If <span class="n">Approved</span>:
+    → Update SharePoint item Status = <span class="s">"Approved"</span>
+    → Send Teams message to employee: <span class="s">"✅ Your leave was approved!"</span>
+  If <span class="n">Rejected</span>:
+    → Update SharePoint item Status = <span class="s">"Rejected"</span>
+    → Send Teams message to employee: <span class="s">"Your leave request was not approved. Please contact HR."</span>
+
+<span class="k">Return to Copilot Studio:</span>
+  Output: <span class="v">Status</span>  <span class="c"># "Submitted" — agent confirms to user</span></pre>
+    </div>
+
+    <div class="alert alert-info">
+      <div class="alert-icon">💡</div>
+      <p><strong>SharePoint Leave Requests list setup:</strong> Create a list at your HR SharePoint site with columns: Employee (Person), LeaveType (Choice), StartDate (Date), EndDate (Date), Reason (Text), Status (Choice: Pending/Approved/Rejected), SubmittedOn (Date). The flow writes to this list automatically.</p>
+    </div>
+  </section>
+
+  <div class="section-sep"><hr/><span>✦</span><hr/></div>
+
+  <!-- STEP 07 -->
+  <section class="step" id="auth">
+    <div class="step-header">
+      <div class="step-number">07</div>
+      <div class="step-title-group">
+        <div class="step-category">Security</div>
+        <h2 class="step-title">Authentication with Entra ID</h2>
+      </div>
+    </div>
+    <div class="step-divider"></div>
+
+    <p>Without authentication, any user could interact with the agent — and leave requests wouldn't know who's submitting them. We use Entra ID (Azure AD) so the agent knows exactly who it's talking to, automatically.</p>
+
+    <div class="section-tag tag-step">🔐 Create App Registration</div>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><i class="dot-red"></i><i class="dot-yellow"></i><i class="dot-green"></i></div>
+        <span>Entra ID · App Registration Setup</span>
+      </div>
+      <pre><span class="c"># Entra ID (portal.azure.com) → App registrations → New registration</span>
+
+Name:           <span class="s">"HR-Copilot-Agent"</span>
+Account type:   <span class="n">Accounts in this org directory only</span>
+Redirect URI:   <span class="n">Web</span> → <span class="s">https://token.botframework.com/.auth/web/redirect</span>
+
+<span class="c"># After creation — note these values (needed in Copilot Studio):</span>
+Application (client) ID:  <span class="v">xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</span>
+Directory (tenant) ID:    <span class="v">xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</span>
+
+<span class="c"># Certificates & secrets → New client secret</span>
+Description:  <span class="s">"Copilot Studio Auth"</span>
+Expires:      <span class="n">24 months</span>  <span class="c">← calendar a renewal reminder now</span>
+Value:        <span class="v">copy immediately — only shown once</span>
+
+<span class="c"># API permissions → Add permission → Microsoft Graph → Delegated:</span>
+<span class="n">✓ User.Read</span>           <span class="c">← employee profile</span>
+<span class="n">✓ People.Read</span>         <span class="c">← manager lookup</span>
+<span class="n">✓ offline_access</span>      <span class="c">← token refresh</span>
+<span class="c"># Grant admin consent for all permissions</span></pre>
+    </div>
+
+    <div class="section-tag tag-config">⚙️ Configure Auth in Copilot Studio</div>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><i class="dot-red"></i><i class="dot-yellow"></i><i class="dot-green"></i></div>
+        <span>Copilot Studio · Authentication Settings</span>
+      </div>
+      <pre><span class="c"># Settings → Security → Authentication</span>
+
+Authentication type:  <span class="n">Azure Active Directory v2</span>
+Client ID:            <span class="v">paste Application (client) ID from App Registration</span>
+Client secret:        <span class="v">paste the secret value</span>
+Tenant ID:            <span class="v">paste Directory (tenant) ID</span>
+Scopes:               <span class="s">User.Read People.Read offline_access</span>
+
+Require authentication: <span class="n">Yes</span>
+<span class="c"># This means the agent always knows who the employee is</span>
+<span class="c"># You can use System.User.DisplayName in messages:</span>
+<span class="c"># "Hello {System.User.DisplayName}, how can I help you today?"</span></pre>
+    </div>
+
+    <div class="alert alert-warn">
+      <div class="alert-icon">⚠️</div>
+      <p><strong>Secret expiry:</strong> Client secrets expire. Set a calendar reminder for 2 months before expiry to rotate the secret. An expired secret silently breaks authentication — employees see "sign-in failed" with no clear error.</p>
+    </div>
+  </section>
+
+  <div class="section-sep"><hr/><span>✦</span><hr/></div>
+
+  <!-- STEP 08 -->
+  <section class="step" id="deploy">
+    <div class="step-header">
+      <div class="step-number">08</div>
+      <div class="step-title-group">
+        <div class="step-category">Deployment</div>
+        <h2 class="step-title">Deploy to Microsoft Teams</h2>
+      </div>
+    </div>
+    <div class="step-divider"></div>
+
+    <p>Deploying to Teams is where your agent becomes a first-class citizen in the employee's daily workflow — available in the Teams sidebar like any other app, with zero friction to start a conversation.</p>
+
+    <div class="section-tag tag-step">📦 Publish & Deploy to Teams</div>
+    <ul class="checklist">
+      <li>In Copilot Studio → <strong>Publish</strong> button (top right) → <strong>Publish</strong> to save the latest version</li>
+      <li>Go to <strong>Channels</strong> tab → <strong>Microsoft Teams</strong> → <strong>Turn on Teams</strong></li>
+      <li>Click <strong>Open in Teams</strong> to test as yourself first before org-wide deployment</li>
+      <li>For org-wide rollout: download the <strong>Teams app manifest</strong> → submit to Teams Admin Center</li>
+    </ul>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><i class="dot-red"></i><i class="dot-yellow"></i><i class="dot-green"></i></div>
+        <span>Teams Admin Center · App Approval</span>
+      </div>
+      <pre><span class="c"># Teams Admin Center (admin.teams.microsoft.com)</span>
+<span class="c"># Teams apps → Manage apps → Upload new app</span>
+
+<span class="c"># Upload the manifest .zip from Copilot Studio</span>
+<span class="c"># Set these policies before approving:</span>
+
+App status:     <span class="n">Allowed</span>
+Permissions:    <span class="n">Review and accept on behalf of org</span>
+
+<span class="c"># App setup policy → Add to pinned apps for HR-related groups</span>
+<span class="c"># This pins the agent in the Teams left sidebar for all employees</span>
+<span class="c"># Consider a phased rollout: pilot group first → full org</span>
+
+<span class="c"># Recommended Teams app description:</span>
+<span class="s">"Your HR Assistant — ask policy questions, request leave,
+and get onboarding help. Available 24/7."</span></pre>
+    </div>
+
+    <div class="alert alert-success">
+      <div class="alert-icon">✅</div>
+      <p><strong>Phased rollout tip:</strong> Use Teams app setup policies to deploy to a pilot group (e.g., one department) for 2 weeks before org-wide rollout. Monitor the Analytics dashboard in Copilot Studio for unrecognized intents and missed topics — this tells you what to add before scaling.</p>
+    </div>
+  </section>
+
+  <div class="section-sep"><hr/><span>✦</span><hr/></div>
+
+  <!-- STEP 09 -->
+  <section class="step" id="test">
+    <div class="step-header">
+      <div class="step-number">09</div>
+      <div class="step-title-group">
+        <div class="step-category">Testing</div>
+        <h2 class="step-title">Test Scenarios & Sample Prompts</h2>
+      </div>
+    </div>
+    <div class="step-divider"></div>
+
+    <p>Before go-live, run through these test scenarios in Copilot Studio's test pane. Each one validates a different capability of the agent.</p>
+
+    <div class="section-tag tag-test">🧪 Test Scenario 1 — Policy Q&A (SharePoint)</div>
+    <div class="convo">
+      <div class="convo-title">Test · SharePoint Knowledge Retrieval</div>
+      <div class="msg msg-user">
+        <div class="msg-avatar">👤</div>
+        <div class="msg-bubble">Can I work from home every day?</div>
+      </div>
+      <div class="msg msg-agent">
+        <div class="msg-avatar">🤖</div>
+        <div class="msg-bubble">According to our <strong>Remote Work Policy</strong>, employees may work from home up to <strong>3 days per week</strong>, subject to manager approval. Fully remote arrangements require VP-level sign-off and are reviewed annually. Would you like me to send you a link to the full policy document?</div>
+      </div>
+    </div>
+
+    <div class="section-tag tag-test">🧪 Test Scenario 2 — Leave Request (Power Automate)</div>
+    <div class="convo">
+      <div class="convo-title">Test · Leave Request Flow + Approval Trigger</div>
+      <div class="msg msg-user">
+        <div class="msg-avatar">👤</div>
+        <div class="msg-bubble">I need to take annual leave next week</div>
+      </div>
+      <div class="msg msg-agent">
+        <div class="msg-avatar">🤖</div>
+        <div class="msg-bubble">I can help you submit a leave request. What type of leave are you requesting?<br><br>🏖️ Annual Leave &nbsp; 🤒 Sick Leave &nbsp; 👶 Parental Leave</div>
+      </div>
+      <div class="msg msg-user">
+        <div class="msg-avatar">👤</div>
+        <div class="msg-bubble">Annual leave</div>
+      </div>
+      <div class="msg msg-agent">
+        <div class="msg-avatar">🤖</div>
+        <div class="msg-bubble">What is your leave start date?</div>
+      </div>
+      <div class="msg msg-user">
+        <div class="msg-avatar">👤</div>
+        <div class="msg-bubble">May 20</div>
+      </div>
+      <div class="msg msg-agent">
+        <div class="msg-avatar">🤖</div>
+        <div class="msg-bubble">And your end date?</div>
+      </div>
+      <div class="msg msg-user">
+        <div class="msg-avatar">👤</div>
+        <div class="msg-bubble">May 23</div>
+      </div>
+      <div class="msg msg-agent">
+        <div class="msg-avatar">🤖</div>
+        <div class="msg-bubble">You're requesting <strong>Annual Leave from May 20 to May 23</strong> (4 days). Shall I submit this for manager approval?<br><br>✅ Yes, Submit &nbsp;&nbsp; ❌ Cancel</div>
+      </div>
+    </div>
+
+    <div class="section-tag tag-test">🧪 Test Scenario 3 — Escalation (Out of Scope)</div>
+    <div class="convo">
+      <div class="convo-title">Test · Graceful Escalation Handling</div>
+      <div class="msg msg-user">
+        <div class="msg-avatar">👤</div>
+        <div class="msg-bubble">I have a complaint about my manager</div>
+      </div>
+      <div class="msg msg-agent">
+        <div class="msg-avatar">🤖</div>
+        <div class="msg-bubble">I understand. This type of concern is best handled directly by our HR team to ensure confidentiality and proper process. I've noted your request and will send your details to <strong>hr-support@company.com</strong>. A member of the HR team will reach out within 1 business day. Is there anything else I can help you with?</div>
+      </div>
+    </div>
+
+    <div class="section-tag tag-prompt">💬 Additional Sample Prompts to Test</div>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><i class="dot-red"></i><i class="dot-yellow"></i><i class="dot-green"></i></div>
+        <span>Test Pane · Prompts to Validate</span>
+      </div>
+      <pre><span class="c"># Onboarding</span>
+<span class="s">"What do I need to do on my first day?"</span>
+<span class="s">"How do I set up my laptop?"</span>
+<span class="s">"Where do I find the IT setup guide?"</span>
+
+<span class="c"># Policy Q&A</span>
+<span class="s">"What is the dress code policy?"</span>
+<span class="s">"How many sick days do I get?"</span>
+<span class="s">"What happens to unused leave at year end?"</span>
+
+<span class="c"># Leave</span>
+<span class="s">"I need maternity leave"</span>
+<span class="s">"Can I check the status of my leave request?"</span>
+<span class="s">"I need to cancel my leave"</span>
+
+<span class="c"># Edge cases (make sure these escalate gracefully)</span>
+<span class="s">"What is my salary?"</span>           <span class="c">← should NOT answer</span>
+<span class="s">"Who got a bonus this year?"</span>    <span class="c">← should NOT answer</span>
+<span class="s">"I want to report harassment"</span>   <span class="c">← must escalate to HR team</span></pre>
+    </div>
+  </section>
+
+  <div class="closing">
+    <h2>You've Built a Production-Ready HR Agent</h2>
+    <p>What you've deployed isn't a demo. It's a fully authenticated, SharePoint-grounded, Teams-integrated agent that handles real HR workflows — with a Power Automate backbone and proper escalation handling for sensitive topics.</p>
+    <p>The same architecture scales to IT helpdesk (60% L1 auto-resolution), finance procurement Q&A, and compliance policy assistants. The pattern is identical — swap the knowledge source, redesign the topics, rewire the flows.</p>
+    <p>In 2026, the question isn't whether your organization should deploy Copilot Studio agents. It's how many are already running without governance. Build them right the first time.</p>
+  </div>
+
+</article>
+
+
+<section class="rn-wrap" aria-label="More write-ups">
+  <style>
+  .rn-wrap{max-width:760px;margin:8px auto 0;padding:38px 24px 10px;border-top:1px solid rgba(128,128,128,.25);font-family:inherit}
+  .rn-lbl{font-size:11px;letter-spacing:.16em;text-transform:uppercase;opacity:.55;margin-bottom:16px}
+  .rn-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .rn-card{display:block;border:1px solid rgba(128,128,128,.22);border-radius:12px;padding:15px 17px;color:inherit;text-decoration:none;transition:border-color .2s,transform .2s}
+  .rn-card:hover{border-color:rgba(128,128,128,.55);transform:translateY(-2px)}
+  .rn-t{font-weight:600;font-size:15px;line-height:1.35;margin-bottom:5px}
+  .rn-s{font-size:12.5px;line-height:1.55;opacity:.72;margin-bottom:8px}
+  .rn-m{font-size:11px;opacity:.5;letter-spacing:.04em;font-family:'JetBrains Mono',monospace}
+  .rn-all{display:inline-block;margin-top:18px;font-size:12px;letter-spacing:.05em;color:inherit;text-decoration:none;opacity:.7;border-bottom:1px solid currentColor;padding-bottom:1px}
+  .rn-all:hover{opacity:1}
+  @media(max-width:640px){.rn-grid{grid-template-columns:1fr}.rn-wrap{padding:28px 18px 10px}}
+  </style>
+  <div class="rn-lbl">Read next · More write-ups</div>
+  <div class="rn-grid">
+    <a class="rn-card" href="top-5-m365-misconfig.html"><div class="rn-t">Top 5 M365 Misconfigurations</div><div class="rn-s">Legacy auth, guest sprawl, missing DLP, over-privileged admins and email-auth gaps — each with detection and remediation.</div><div class="rn-m">12 min read</div></a>
+    <a class="rn-card" href="CLLMSP.html"><div class="rn-t">How I Passed the CLLMSP</div><div class="rn-s">A practitioner’s tour of the nine LLM-security domains, mapped to real enterprise AI and Copilot Studio deployments.</div><div class="rn-m">18 min read</div></a>
+    <a class="rn-card" href="entra-id-ca.html"><div class="rn-t">Entra ID Conditional Access Gaps</div><div class="rn-s">Common Conditional Access bypass conditions — and how to build policies that actually hold under pressure.</div><div class="rn-m">14 min read</div></a></div>
+  <a class="rn-all" href="https://tjames-env.github.io/projects.html#writeups">View all write-ups ↗</a>
+</section>
+
+<footer class="footer">
+  <p>Written by <a href="https://medium.com/@timothy_jameseusebio">Timothy James Eusebio</a> · <a href="https://medium.com/@timothy_jameseusebio">Also on Medium</a> · May 2026</p>
+</footer>
+
+<script>
+  window.addEventListener('scroll', () => {
+    const doc = document.documentElement;
+    const scrollTop = doc.scrollTop || document.body.scrollTop;
+    const scrollHeight = doc.scrollHeight - doc.clientHeight;
+    const progress = (scrollTop / scrollHeight) * 100;
+    document.getElementById('progressBar').style.width = progress + '%';
+  });
+</script>
+
+</body>
+</html>

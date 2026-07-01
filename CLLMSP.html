@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>How I Passed the CLLMSP — LLM Security for Enterprise Practitioners</title>
+<meta name="description" content="A practitioner's guide to the CLLMSP — how each of the 9 domains connects to real enterprise AI deployments, Copilot Studio agents, and MCP security."/>
+<meta property="og:type" content="article">
+<meta property="og:title" content="How I Passed the CLLMSP — LLM Security for Enterprise Practitioners">
+<meta property="og:description" content="A practitioner's guide to the CLLMSP — how each of the 9 domains connects to real enterprise AI deployments, Copilot Studio agents, and MCP security.">
+<meta property="og:url" content="https://tjames-env.github.io/CLLMSP.html">
+<link rel="canonical" href="https://tjames-env.github.io/CLLMSP.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="How I Passed the CLLMSP — LLM Security for Enterprise Practitioners">
+<meta name="twitter:description" content="A practitioner's guide to the CLLMSP — how each of the 9 domains connects to real enterprise AI deployments, Copilot Studio agents, and MCP security.">
+<meta name="author" content="Timothy James Eusebio"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --ink: #1a1a2e;
+    --ink-muted: #3a3a5c;
+    --ink-light: #888;
+    --bg: #f8f9fc;
+    --bg-card: #ffffff;
+    --accent: #1d4ed8;
+    --accent-light: #3b82f6;
+    --accent-ok: #16a34a;
+    --accent-warn: #d97706;
+    --accent-danger: #dc2626;
+    --accent-purple: #7c3aed;
+    --border: #e2e6f0;
+    --code-bg: #1e1e2e;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Source Serif 4', Georgia, serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.8;
+    font-size: 18px;
+  }
+
+  /* TOPBAR */
+  .topbar {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(248,249,252,0.95);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 32px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  }
+  .topbar-brand {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; color: var(--ink-light); letter-spacing: 1px;
+  }
+  .topbar-brand span { color: var(--accent); font-weight: 500; }
+  .topbar-links { display: flex; gap: 20px; align-items: center; }
+  .topbar-links a {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--ink-light);
+    text-decoration: none; letter-spacing: 0.5px; transition: color 0.2s;
+  }
+  .topbar-links a:hover { color: var(--accent); }
+  .topbar-links .btn-medium {
+    background: var(--accent); color: white !important;
+    padding: 6px 14px; border-radius: 4px; font-weight: 500;
+  }
+  .topbar-links .btn-medium:hover { background: #1e40af; }
+
+  /* PROGRESS */
+  .progress-bar {
+    position: fixed; top: 0; left: 0; height: 3px;
+    background: var(--accent); width: 0%; z-index: 200; transition: width 0.1s linear;
+  }
+
+  /* HERO */
+  .hero {
+    background: #0f172a;
+    color: #fff;
+    padding: 80px 24px 60px;
+    text-align: center;
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(
+      -45deg, transparent, transparent 40px,
+      rgba(29,78,216,0.08) 40px, rgba(29,78,216,0.08) 41px
+    );
+  }
+  .hero-label {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+    color: #60a5fa; border: 1px solid rgba(96,165,250,0.4);
+    padding: 5px 16px; border-radius: 2px; margin-bottom: 28px; position: relative;
+  }
+  .hero-label .passed-dot {
+    width: 6px; height: 6px; background: #4ade80; border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 5vw, 54px);
+    font-weight: 900; line-height: 1.1;
+    max-width: 860px; margin: 0 auto 20px;
+    position: relative; letter-spacing: -0.5px;
+  }
+  .hero h1 span { color: #60a5fa; }
+  .hero-sub {
+    font-size: 16px; color: rgba(255,255,255,0.6);
+    font-style: italic; max-width: 620px;
+    margin: 0 auto 32px; position: relative;
+  }
+  .hero-meta {
+    display: flex; align-items: center; justify-content: center;
+    gap: 16px; flex-wrap: wrap;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; color: rgba(255,255,255,0.4); position: relative;
+  }
+  .hero-meta .dot { width: 3px; height: 3px; background: rgba(255,255,255,0.25); border-radius: 50%; }
+  .hero-tags {
+    display: flex; flex-wrap: wrap; justify-content: center;
+    gap: 8px; margin-top: 28px; position: relative;
+  }
+  .hero-tag {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 0.5px; padding: 4px 12px;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.6); border-radius: 3px;
+  }
+
+  /* ARTICLE */
+  .article { max-width: 740px; margin: 0 auto; padding: 60px 24px 100px; }
+
+  .intro {
+    font-size: 20px; line-height: 1.75; color: var(--ink-muted);
+    border-left: 3px solid var(--accent);
+    padding-left: 24px; margin-bottom: 56px; font-style: italic;
+  }
+
+  /* EXAM STATS */
+  .exam-stats {
+    display: grid; grid-template-columns: repeat(4,1fr);
+    gap: 1px; background: var(--border); border: 1px solid var(--border);
+    margin-bottom: 48px; border-radius: 8px; overflow: hidden;
+  }
+  .es-cell { background: var(--bg-card); padding: 20px 16px; text-align: center; }
+  .es-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px; font-weight: 900; color: var(--accent); line-height: 1; margin-bottom: 4px;
+  }
+  .es-lbl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink-light);
+  }
+
+  /* DOMAIN MAP */
+  .domain-map {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 24px; margin-bottom: 56px;
+  }
+  .dm-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--ink-light); margin-bottom: 16px;
+  }
+  .dm-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 14px;
+  }
+  .dm-row:last-child { border-bottom: none; }
+  .dm-num { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent); flex-shrink: 0; width: 22px; }
+  .dm-name { flex: 1; color: var(--ink-muted); }
+  .dm-bar { width: 80px; height: 4px; background: var(--border); flex-shrink: 0; border-radius: 2px; overflow: hidden; }
+  .dm-bar-fill { height: 100%; border-radius: 2px; background: var(--accent); }
+  .dm-weight { font-family: 'JetBrains Mono', monospace; font-size: 11px; flex-shrink: 0; color: var(--ink-muted); }
+  .dm-weight.high { color: var(--accent); font-weight: 500; }
+
+  /* MODULE SECTIONS */
+  .module { margin-bottom: 80px; scroll-margin-top: 60px; }
+  .module-header { display: flex; align-items: flex-start; gap: 20px; margin-bottom: 24px; }
+  .module-number {
+    font-family: 'Playfair Display', serif; font-size: 64px;
+    font-weight: 900; color: var(--border); line-height: 1;
+    flex-shrink: 0; margin-top: -8px; user-select: none;
+  }
+  .module-meta { flex: 1; }
+  .module-domain {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 2px; text-transform: uppercase; color: var(--accent); margin-bottom: 5px;
+  }
+  .module-title {
+    font-family: 'Playfair Display', serif; font-size: 26px;
+    font-weight: 700; line-height: 1.2; color: var(--ink);
+  }
+  .module-weight {
+    display: inline-block; margin-top: 6px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    padding: 2px 10px; border: 1px solid var(--border);
+    border-radius: 3px; color: var(--ink-light);
+  }
+  .module-divider {
+    height: 1px; margin-bottom: 24px;
+    background: linear-gradient(to right, rgba(29,78,216,0.3), transparent);
+  }
+  .module p { color: var(--ink-muted); margin-bottom: 16px; }
+
+  /* SECTION TAGS */
+  .section-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 1px;
+    padding: 4px 12px; border-radius: 4px; margin-bottom: 10px; margin-top: 6px;
+  }
+  .tag-key   { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+  .tag-exam  { background: #fefce8; color: #854d0e; border: 1px solid #fde047; }
+  .tag-real  { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+  .tag-warn  { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+  .tag-conn  { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; }
+
+  /* ALERT BOXES */
+  .alert {
+    border-radius: 6px; padding: 16px 20px; margin: 18px 0;
+    font-size: 15px; line-height: 1.65;
+    display: flex; gap: 14px; align-items: flex-start;
+  }
+  .alert-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+  .alert-key     { background: #eff6ff; border-left: 4px solid #3b82f6; }
+  .alert-exam    { background: #fefce8; border-left: 4px solid #eab308; }
+  .alert-real    { background: #f0fdf4; border-left: 4px solid #22c55e; }
+  .alert-warn    { background: #fef2f2; border-left: 4px solid #ef4444; }
+  .alert-connect { background: #f5f3ff; border-left: 4px solid #8b5cf6; }
+  .alert p { margin: 0; color: var(--ink); }
+  .alert strong { display: block; margin-bottom: 4px; }
+
+  /* TERM LIST */
+  .terms { list-style: none; margin: 14px 0 20px; }
+  .terms li {
+    padding: 9px 0 9px 28px; position: relative;
+    font-size: 15px; color: var(--ink-muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .terms li:last-child { border-bottom: none; }
+  .terms li::before {
+    content: '→'; position: absolute; left: 0;
+    color: var(--accent); font-size: 14px; top: 10px;
+  }
+  .terms li strong { color: var(--ink); }
+
+  /* CODE BLOCK */
+  .code-block { background: var(--code-bg); border-radius: 8px; overflow: hidden; margin: 20px 0; }
+  .code-header {
+    background: #2d2d3f; padding: 8px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid #3d3d5c;
+  }
+  .code-header span { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #888; }
+  .code-dots { display: flex; gap: 6px; }
+  .code-dots i { width: 10px; height: 10px; border-radius: 50%; display: block; }
+  .dot-r { background: #ff5f57; } .dot-y { background: #febc2e; } .dot-g { background: #28c840; }
+  .code-block pre {
+    padding: 16px 20px; overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; color: #a6c8ff; line-height: 1.7;
+  }
+  .code-block .c  { color: #6a9955; }
+  .code-block .k  { color: #89d4ff; }
+  .code-block .v  { color: #ffd700; }
+
+  /* SECTION SEPARATOR */
+  .section-sep { display: flex; align-items: center; gap: 16px; margin: 48px 0; }
+  .section-sep hr { flex: 1; border: none; border-top: 1px solid var(--border); }
+  .section-sep span { font-size: 18px; }
+
+  /* CLOSING */
+  .closing {
+    background: #0f172a; color: white;
+    border-radius: 12px; padding: 40px 36px; margin-top: 64px;
+  }
+  .closing h2 {
+    font-family: 'Playfair Display', serif; font-size: 26px; margin-bottom: 16px; color: #fff;
+  }
+  .closing p { color: rgba(255,255,255,0.65); margin-bottom: 16px; font-size: 16px; }
+  .closing-badge {
+    display: inline-block;
+    background: rgba(29,78,216,0.25); border: 1px solid rgba(96,165,250,0.4);
+    color: #93c5fd; font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; padding: 4px 12px; border-radius: 3px; margin-bottom: 20px;
+  }
+  .closing a {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--accent); color: white;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    padding: 10px 20px; border-radius: 4px; text-decoration: none;
+    margin-top: 8px; transition: background 0.2s;
+  }
+  .closing a:hover { background: #1e40af; }
+
+  /* FOOTER */
+  .footer {
+    text-align: center; padding: 40px 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--ink-light);
+    border-top: 1px solid var(--border);
+  }
+  .footer a { color: var(--accent); text-decoration: none; }
+
+  @media (max-width: 600px) {
+    body { font-size: 16px; }
+    .module-number { font-size: 44px; }
+    .module-title { font-size: 21px; }
+    .hero h1 { font-size: 26px; }
+    .topbar { padding: 10px 16px; }
+    .exam-stats { grid-template-columns: repeat(2,1fr); }
+  }
+  .topbar-links .btn-writeups{border:1px solid currentColor;border-radius:6px;padding:6px 12px;text-decoration:none;font-weight:500;opacity:.8;transition:opacity .2s,background .2s;white-space:nowrap}
+  .topbar-links .btn-writeups:hover{opacity:1;background:rgba(128,128,128,.14)}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="prog"></div>
+
+<div class="topbar">
+  <div class="topbar-brand">
+    <span>eusebio</span>@it-sec · AI Security
+  </div>
+  <div class="topbar-links">
+    <a href="https://medium.com/@timothy_jameseusebio" target="_blank" rel="noopener" class="btn-medium">Read on Medium →</a>
+    <a href="https://tjames-env.github.io/projects.html#writeups" target="_blank" rel="noopener" class="btn-writeups">More Write-ups ↗</a>
+  </div>
+</div>
+
+<section class="hero">
+  <div class="hero-label">
+    <span class="passed-dot"></span>
+    CLLMSP · Certified · Red Team Leaders · 2026
+  </div>
+  <h1>LLM Security —<br><span>The Enterprise Practitioner's Guide</span></h1>
+  <p class="hero-sub">How I approached the CLLMSP and why every domain connects directly to the AI agents, M365 environments, and MCP integrations I work with every day.</p>
+  <div class="hero-meta">
+    <span>Timothy James Eusebio</span>
+    <span class="dot"></span>
+    <span>June 2026</span>
+    <span class="dot"></span>
+    <span>~18 min read</span>
+    <span class="dot"></span>
+    <span>9 Domains · 200 Questions</span>
+  </div>
+  <div class="hero-tags">
+    <span class="hero-tag">LLM Fundamentals</span>
+    <span class="hero-tag">OWASP Top 10 LLM</span>
+    <span class="hero-tag">Jailbreak Security</span>
+    <span class="hero-tag">Governance &amp; Risk</span>
+    <span class="hero-tag">Data Privacy</span>
+    <span class="hero-tag">MCP Security</span>
+    <span class="hero-tag">AI Agents</span>
+    <span class="hero-tag">AppSec for AI</span>
+    <span class="hero-tag">Identity &amp; Memory</span>
+  </div>
+</section>
+
+<article class="article">
+
+<p class="intro">I don't write about certifications I haven't used in the real world. The CLLMSP is different — I've been building Copilot Studio agents, working with MCP-connected systems, and securing Microsoft 365 environments before I sat the exam. What follows is a practitioner's take on how each of the nine domains maps to what actually happens in enterprise AI deployments — not just the way it appears on a 200-question test.</p>
+
+<!-- EXAM STATS -->
+<div class="exam-stats">
+  <div class="es-cell"><div class="es-num">200</div><div class="es-lbl">Total Questions</div></div>
+  <div class="es-cell"><div class="es-num">9</div><div class="es-lbl">Domains</div></div>
+  <div class="es-cell"><div class="es-num">154</div><div class="es-lbl">Multiple Choice</div></div>
+  <div class="es-cell"><div class="es-num">46</div><div class="es-lbl">Free Text</div></div>
+</div>
+
+<!-- DOMAIN MAP -->
+<div class="domain-map">
+  <div class="dm-title">Domain Weights — Where to Focus Your Study Time</div>
+  <div class="dm-row"><span class="dm-num">01</span><span class="dm-name">LLM Fundamentals &amp; Architecture</span><span class="dm-bar"><span class="dm-bar-fill" style="width:67%"></span></span><span class="dm-weight">10%</span></div>
+  <div class="dm-row"><span class="dm-num">02</span><span class="dm-name">OWASP Top 10 for LLMs</span><span class="dm-bar"><span class="dm-bar-fill" style="width:100%"></span></span><span class="dm-weight high">15% ★</span></div>
+  <div class="dm-row"><span class="dm-num">03</span><span class="dm-name">Prompt Engineering &amp; Jailbreak Security</span><span class="dm-bar"><span class="dm-bar-fill" style="width:83%"></span></span><span class="dm-weight">12.5%</span></div>
+  <div class="dm-row"><span class="dm-num">04</span><span class="dm-name">Governance &amp; Risk Management</span><span class="dm-bar"><span class="dm-bar-fill" style="width:83%"></span></span><span class="dm-weight">12.5%</span></div>
+  <div class="dm-row"><span class="dm-num">05</span><span class="dm-name">Data Privacy &amp; Treatment</span><span class="dm-bar"><span class="dm-bar-fill" style="width:67%"></span></span><span class="dm-weight">10%</span></div>
+  <div class="dm-row"><span class="dm-num">06</span><span class="dm-name">MCP Security</span><span class="dm-bar"><span class="dm-bar-fill" style="width:67%"></span></span><span class="dm-weight">10%</span></div>
+  <div class="dm-row"><span class="dm-num">07</span><span class="dm-name">AI Agents, Orchestration &amp; Vibe Coding</span><span class="dm-bar"><span class="dm-bar-fill" style="width:83%"></span></span><span class="dm-weight">12.5%</span></div>
+  <div class="dm-row"><span class="dm-num">08</span><span class="dm-name">Application Security for AI Products</span><span class="dm-bar"><span class="dm-bar-fill" style="width:67%"></span></span><span class="dm-weight">10%</span></div>
+  <div class="dm-row"><span class="dm-num">09</span><span class="dm-name">Identity, Access, Memory &amp; Advanced Topics</span><span class="dm-bar"><span class="dm-bar-fill" style="width:50%;background:#94a3b8"></span></span><span class="dm-weight">7.5%</span></div>
+</div>
+
+<!-- ══ MODULE 01 ══ -->
+<section class="module" id="m01">
+  <div class="module-header">
+    <div class="module-number">01</div>
+    <div class="module-meta">
+      <div class="module-domain">Domain 01</div>
+      <h2 class="module-title">LLM Fundamentals &amp; Architecture</h2>
+      <span class="module-weight">10% of exam</span>
+    </div>
+  </div>
+  <div class="module-divider"></div>
+  <p>This domain is about understanding <em>why</em> the security problems exist at all. Every attack in the remaining eight domains traces back to one architectural fact: the Transformer model treats all input tokens identically. There is no CPU ring, no kernel mode, no trust boundary between your system prompt and the user's input. They go through the same attention mechanism.</p>
+
+  <span class="section-tag tag-key">🔑 Core Insight</span>
+  <div class="alert alert-key">
+    <span class="alert-icon">🔑</span>
+    <div><p><strong>Why Prompt Injection is Architecturally Inevitable</strong>The Transformer attention mechanism processes system prompts, user inputs, and retrieved documents all identically — with no notion of trust level. When a user input says "ignore your instructions," there is no hardware or OS-level mechanism to reject this. The only defences are at training time (RLHF/Constitutional AI) or at inference time (guardrails). Both can be bypassed. This is the root cause of every prompt injection vulnerability.</p></div>
+  </div>
+
+  <span class="section-tag tag-exam">📋 Exam Focus Areas</span>
+  <ul class="terms">
+    <li><strong>Alignment Tax</strong> — Safety training (RLHF, CAI) reduces capability. Every jailbreak is an attempt to access pre-aligned capability without the safety constraints imposed during alignment.</li>
+    <li><strong>RAG security implications</strong> — Retrieved documents are untrusted input. Indirect prompt injection embeds malicious instructions in documents the model processes as context.</li>
+    <li><strong>Inference parameters</strong> — Temperature=0 gives deterministic outputs (easier to probe systematically). Max tokens prevents model DoS. Know these and their security implications.</li>
+    <li><strong>Quantization trade-off</strong> — Quantized models (INT8/INT4) may exhibit different safety behaviours than full-precision counterparts. Not just a quality issue — a security one.</li>
+    <li><strong>Constitutional AI vs RLHF</strong> — CAI uses the model to self-critique against a written constitution (Anthropic's approach). RLHF uses human raters to train a reward model. Both are safety alignment mechanisms.</li>
+  </ul>
+
+  <span class="section-tag tag-real">🏢 Real-World Application</span>
+  <div class="alert alert-real">
+    <span class="alert-icon">🏢</span>
+    <div><p>When deploying Copilot Studio agents with SharePoint as a knowledge source, the RAG retrieval pipeline is your indirect injection surface. Any document in that library could contain injected instructions the agent processes as legitimate context. Access controls in the retrieval layer and output validation are your defences — not the model itself.</p></div>
+  </div>
+</section>
+
+<div class="section-sep"><hr/><span>✦</span><hr/></div>
+
+<!-- ══ MODULE 02 ══ -->
+<section class="module" id="m02">
+  <div class="module-header">
+    <div class="module-number">02</div>
+    <div class="module-meta">
+      <div class="module-domain">Domain 02 — Highest Weight</div>
+      <h2 class="module-title">OWASP Top 10 for LLM Applications</h2>
+      <span class="module-weight">15% of exam · Study this domain most</span>
+    </div>
+  </div>
+  <div class="module-divider"></div>
+  <p>The exam's highest-weighted domain and the most directly applicable to enterprise AI deployments. Know all ten categories, their mitigations, and the distinctions between similar-sounding risks. The exam will test whether you can differentiate between them precisely.</p>
+
+  <span class="section-tag tag-exam">📋 All 10 — What You Must Know</span>
+  <ul class="terms">
+    <li><strong>LLM01 — Prompt Injection:</strong> Direct (attacker talks to model directly) vs Indirect (malicious content embedded in data the model processes). The Confused Deputy problem — model uses its legitimate permissions for attacker's purposes. Defence requires 5 independent layers.</li>
+    <li><strong>LLM02 — Insecure Output Handling:</strong> LLM output is untrusted data. XSS, SQLi, command injection, path traversal all occur when model output flows unvalidated into downstream systems. Context-appropriate encoding per destination.</li>
+    <li><strong>LLM03 — Training Data Poisoning:</strong> Embedding backdoors at training time. Poisoned models pass standard benchmarks while hiding malicious behaviour — extremely difficult to detect.</li>
+    <li><strong>LLM04 — Model DoS:</strong> Long prompts, recursive structures, max-output prompts. Rate limit by token consumption, not just request count.</li>
+    <li><strong>LLM05 — Supply Chain Vulnerabilities:</strong> Model weights, datasets, embeddings, vector DBs, MCP servers, plugins — all are supply chain components requiring SBOM and provenance verification.</li>
+    <li><strong>LLM06 — Sensitive Information Disclosure:</strong> Training data extraction, system prompt leaking, RAG returning unauthorised documents. Never put secrets in system prompts.</li>
+    <li><strong>LLM07 — Insecure Plugin Design:</strong> Plugins with excessive permissions, accepting unsanitised LLM output. Least-privilege, input validation, full audit logging per invocation.</li>
+    <li><strong>LLM08 — Excessive Agency:</strong> Most relevant to AI agents and MCP. Model takes irreversible high-impact actions without human approval. HITL for irreversible operations.</li>
+    <li><strong>LLM09 — Overreliance:</strong> Users blindly trusting hallucinated outputs. Mandatory human review for regulated decisions.</li>
+    <li><strong>LLM10 — Model Theft:</strong> Weight extraction via unauthorised storage access or systematic querying. Rate limiting and query anomaly detection.</li>
+  </ul>
+
+  <span class="section-tag tag-warn">⚠️ Common Exam Trap</span>
+  <div class="alert alert-warn">
+    <span class="alert-icon">⚠️</span>
+    <div><p><strong>LLM01 vs LLM07 vs LLM08 — These Are Different Layers</strong>Prompt Injection (LLM01) is the attack mechanism. Insecure Plugin Design (LLM07) is the plugin's vulnerability. Excessive Agency (LLM08) is about the scope of what the model is permitted to do. An attacker uses prompt injection to exploit insecure plugin design to trigger excessive agency. They are different layers of the same attack chain.</p></div>
+  </div>
+
+  <span class="section-tag tag-conn">🔗 Connects to Your Work</span>
+  <div class="alert alert-connect">
+    <span class="alert-icon">🔗</span>
+    <div><p>Every Power Automate flow your Copilot Studio agent can trigger is a potential LLM08 (Excessive Agency) surface. The agent approving leave requests, sending emails, creating SharePoint records — these are high-impact actions that need HITL controls. The Leave Request approval flow from the HR Agent article already implements this pattern correctly. That's the CLLMSP answer in practice.</p></div>
+  </div>
+</section>
+
+<div class="section-sep"><hr/><span>✦</span><hr/></div>
+
+<!-- ══ MODULE 03 ══ -->
+<section class="module" id="m03">
+  <div class="module-header">
+    <div class="module-number">03</div>
+    <div class="module-meta">
+      <div class="module-domain">Domain 03</div>
+      <h2 class="module-title">Prompt Engineering &amp; Jailbreak Security</h2>
+      <span class="module-weight">12.5% of exam</span>
+    </div>
+  </div>
+  <div class="module-divider"></div>
+  <p>The most technically interesting domain for anyone who builds production AI. Understanding the attack taxonomy helps you design better system prompts and guardrails — not just pass an exam.</p>
+
+  <span class="section-tag tag-exam">📋 Jailbreak Taxonomy — Know All Five</span>
+  <ul class="terms">
+    <li><strong>DAN (Do Anything Now)</strong> — Roleplay as an unrestricted AI persona. Exploits instruction-following training against safety training. Detection: persona-switching requests at the input guardrail.</li>
+    <li><strong>Crescendo</strong> — Multi-turn escalation from benign to harmful across many messages. Each turn appears innocent. Safety filters evaluating individual turns in isolation miss this entirely.</li>
+    <li><strong>Skeleton Key (Microsoft)</strong> — Convinces the model that safety rules are relaxed for an "authorised" research context. The exam specifically names and tests this attack.</li>
+    <li><strong>Many-Shot Jailbreak</strong> — Includes many examples of unsafe behaviour in the prompt, shifting output distribution via in-context learning. Exploits the model's pattern-matching capability.</li>
+    <li><strong>PAIR (Prompt Automatic Iterative Refinement)</strong> — An attacker LLM automatically refines jailbreaks against a target model. No human expertise required at scale. The most dangerous because it democratises sophisticated attacks.</li>
+  </ul>
+
+  <span class="section-tag tag-key">🔑 Guardrail Architecture</span>
+  <div class="alert alert-key">
+    <span class="alert-icon">🔑</span>
+    <div><p><strong>Three-Layer Guardrail Model</strong>Input guardrails inspect before the model sees the prompt. Output guardrails inspect before the response reaches the user or downstream systems. Classifier-based guardrails detect semantic intent and novel attacks — keyword matching is trivially bypassed by paraphrasing. Perplexity filtering is the emerging defence against adversarial suffixes — high perplexity indicates statistically unusual token sequences that are likely adversarial.</p></div>
+  </div>
+
+  <span class="section-tag tag-real">🏢 Real-World Application</span>
+  <div class="alert alert-real">
+    <span class="alert-icon">🏢</span>
+    <div><p><strong>System Prompt Design Principle</strong>Treat every system prompt as if it will be extracted. Never put API keys, connection strings, or sensitive business logic there. Store secrets in Azure Key Vault and reference them in PA flows — never in the agent's instruction text. The CLLMSP answer: assume extraction, design accordingly.</p></div>
+  </div>
+</section>
+
+<div class="section-sep"><hr/><span>✦</span><hr/></div>
+
+<!-- ══ MODULE 04 ══ -->
+<section class="module" id="m04">
+  <div class="module-header">
+    <div class="module-number">04</div>
+    <div class="module-meta">
+      <div class="module-domain">Domain 04</div>
+      <h2 class="module-title">Governance &amp; Risk Management</h2>
+      <span class="module-weight">12.5% of exam</span>
+    </div>
+  </div>
+  <div class="module-divider"></div>
+  <p>If you work in enterprise IT or security architecture, this domain is familiar territory in a new context. The frameworks are the same ones used for traditional IT risk — they now need to be applied to AI systems.</p>
+
+  <span class="section-tag tag-exam">📋 Frameworks to Know</span>
+  <ul class="terms">
+    <li><strong>NIST AI RMF</strong> — Four functions: Govern, Map, Measure, Manage. Govern establishes policies and accountability. Map identifies and contextualises risks. Measure quantifies them. Manage implements controls. The exam will test the function sequence.</li>
+    <li><strong>ISO/IEC 42001</strong> — Artificial Intelligence Management System standard. Establish, implement, maintain, continually improve. Structure mirrors ISO 27001.</li>
+    <li><strong>EU AI Act — Four Tiers:</strong> Unacceptable (banned), High Risk (conformity assessment required — most enterprise LLM deployments in consequential decisions land here), Limited Risk (transparency obligations), Minimal Risk (no requirements).</li>
+  </ul>
+
+  <span class="section-tag tag-warn">⚠️ Shadow AI — The Exam's Favourite Governance Topic</span>
+  <div class="alert alert-warn">
+    <span class="alert-icon">⚠️</span>
+    <div><p><strong>What Shadow AI Actually Is</strong>Employees using personal ChatGPT accounts to process confidential business documents. Pasting source code into public LLMs. Using unauthorised AI tools for regulated decisions. Shadow AI is the AI equivalent of shadow IT — but with greater risk because data leaks through prompts, often without any logging or audit trail on the employee's side.</p></div>
+  </div>
+</section>
+
+<div class="section-sep"><hr/><span>✦</span><hr/></div>
+
+<!-- ══ MODULE 05 ══ -->
+<section class="module" id="m05">
+  <div class="module-header">
+    <div class="module-number">05</div>
+    <div class="module-meta">
+      <div class="module-domain">Domain 05</div>
+      <h2 class="module-title">Data Privacy &amp; Treatment</h2>
+      <span class="module-weight">10% of exam</span>
+    </div>
+  </div>
+  <div class="module-divider"></div>
+  <p>This domain introduces AI-specific privacy challenges that do not exist in conventional software — particularly around data memorisation and the impossibility of true deletion from a trained model's parameters.</p>
+
+  <span class="section-tag tag-key">🔑 The Unlearning Problem</span>
+  <div class="alert alert-key">
+    <span class="alert-icon">🔑</span>
+    <div><p><strong>GDPR Right to Erasure vs LLM Reality</strong>GDPR Article 17 gives individuals the right to have their data deleted. For a trained LLM this is technically unsolvable — learned patterns are distributed across billions of parameters. You cannot surgically remove a specific individual's influence. Machine unlearning is active research, not production-ready. The practical answer: prevent regulated personal data from entering training pipelines before training begins.</p></div>
+  </div>
+
+  <span class="section-tag tag-exam">📋 Privacy-Enhancing Technologies</span>
+  <ul class="terms">
+    <li><strong>Differential Privacy</strong> — Adds calibrated noise to limit memorisation. Epsilon (ε) controls the privacy-utility trade-off. Lower ε = stronger privacy = worse model quality.</li>
+    <li><strong>Federated Learning</strong> — Model trains across distributed datasets without raw data leaving its source. Only gradients are shared and aggregated. Preserves data locality.</li>
+    <li><strong>Homomorphic Encryption</strong> — Would allow inference on encrypted data. Currently computationally prohibitive for full LLM inference. Know what it is; know why it is not yet practical.</li>
+  </ul>
+
+  <div class="alert alert-exam">
+    <span class="alert-icon">📋</span>
+    <div><p><strong>HIPAA + LLM</strong>Sending patient data to a third-party LLM API without a Business Associate Agreement (BAA) is a HIPAA violation. Many providers now offer HIPAA-compliant tiers, but the operator must verify the BAA exists before any PHI touches the API. This is a common exam scenario question.</p></div>
+  </div>
+</section>
+
+<div class="section-sep"><hr/><span>✦</span><hr/></div>
+
+<!-- ══ MODULE 06 ══ -->
+<section class="module" id="m06">
+  <div class="module-header">
+    <div class="module-number">06</div>
+    <div class="module-meta">
+      <div class="module-domain">Domain 06 — Newest Domain</div>
+      <h2 class="module-title">MCP Security</h2>
+      <span class="module-weight">10% of exam · Very little external study material exists</span>
+    </div>
+  </div>
+  <div class="module-divider"></div>
+  <p>Most candidates struggle here because MCP is new — most study guides don't cover it. If you work with Claude Code, Cursor, or any AI-powered development environment, you're already using MCP. Understanding the security model is now a genuine competitive advantage.</p>
+
+  <span class="section-tag tag-key">🔑 MCP Architecture in 30 Seconds</span>
+  <div class="alert alert-key">
+    <span class="alert-icon">🔑</span>
+    <div><p><strong>Client → Server Trust Model</strong>The MCP Client (Claude Code, your custom app) sits between the LLM and MCP Servers. The <em>client</em> is the trust boundary. Servers expose Tools (functions the LLM can call), Resources (data it can read), and Sampling (servers requesting LLM completions in the reverse direction). Transport is stdio for local servers, Streamable HTTP for remote servers — the latter requires TLS and OAuth 2.1 authentication.</p></div>
+  </div>
+
+  <span class="section-tag tag-warn">⚠️ The Rug Pull Attack — Exam Favourite</span>
+  <div class="alert alert-warn">
+    <span class="alert-icon">⚠️</span>
+    <div><p><strong>Approval Time vs Execution Time</strong>A server presents a benign tool description at approval time ("reads public weather data"), gets approved, then changes the tool's actual behaviour to exfiltrate data before execution. Defence: verify tool descriptions at execution time using content-addressed hashing — not just at initial approval. This is a distinctive MCP attack with no equivalent in traditional security. Know it precisely.</p></div>
+  </div>
+
+  <span class="section-tag tag-exam">📋 Key MCP Security Controls</span>
+  <ul class="terms">
+    <li><strong>Tool Poisoning</strong> — Malicious tool descriptions manipulate LLM decision-making about when and how to invoke tools. The description is an injection vector into the model's runtime behaviour.</li>
+    <li><strong>Cross-server exfiltration</strong> — Attacker uses one tool to read sensitive data, another to send it externally. The LLM orchestrates the attack without knowing.</li>
+    <li><strong>OAuth 2.1</strong> — Recommended auth for remote MCP servers. Token rotation, scope restrictions, secure storage. Never hardcoded API keys in tool descriptions.</li>
+    <li><strong>Minimal tool surface</strong> — "Get customer order by ID" is safer than "execute any SQL query." Purpose-specific narrow tools over broad general-purpose ones.</li>
+    <li><strong>Container isolation</strong> — Each MCP server in its own container with minimal network access. A compromised server cannot reach others or the host system.</li>
+  </ul>
+
+  <span class="section-tag tag-conn">🔗 Connects to Your Work</span>
+  <div class="alert alert-connect">
+    <span class="alert-icon">🔗</span>
+    <div><p>Every connector in your Copilot Studio agents — SharePoint, Approvals, Teams — follows the same security model as MCP. The agent orchestrates tool calls; the connectors are the "servers." Service accounts, DLP policies, and audit logging per flow run are the enterprise equivalents of MCP server hardening. The terminology is different; the principles are identical.</p></div>
+  </div>
+</section>
+
+<div class="section-sep"><hr/><span>✦</span><hr/></div>
+
+<!-- ══ MODULE 07 ══ -->
+<section class="module" id="m07">
+  <div class="module-header">
+    <div class="module-number">07</div>
+    <div class="module-meta">
+      <div class="module-domain">Domain 07</div>
+      <h2 class="module-title">AI Agents, Orchestration &amp; Vibe Coding</h2>
+      <span class="module-weight">12.5% of exam</span>
+    </div>
+  </div>
+  <div class="module-divider"></div>
+  <p>This is where the CLLMSP separates from older AI security certifications. It covers autonomous agents, multi-agent systems, and the emerging risk of AI-generated code reaching production without meaningful security review.</p>
+
+  <span class="section-tag tag-exam">📋 Agent Security Controls</span>
+  <ul class="terms">
+    <li><strong>ReAct pattern</strong> — Thought → Action → Observation loop. Transparent reasoning but the chain may reveal sensitive business logic. Consider hiding chain-of-thought from end users in production.</li>
+    <li><strong>Multi-agent injection</strong> — One agent's output becomes another agent's input. The injection vector is inter-agent data. Inconsistent safety boundaries between models (GPT orchestrating Claude) can be exploited.</li>
+    <li><strong>Circuit breakers</strong> — External mechanisms that halt agent execution on anomalous behaviour: excessive tool invocations, unusual data access, privilege escalation attempts. Not self-policing.</li>
+    <li><strong>HITL scope</strong> — Human-in-the-loop applies to irreversible, high-impact, or externally-communicating actions. Not every tool call. The key word is <em>irreversible</em>.</li>
+    <li><strong>Agent memory poisoning</strong> — Persistent memories influence future decisions. Encrypt at rest, access-control per session, periodically review for poisoned entries.</li>
+  </ul>
+
+  <span class="section-tag tag-key">🔑 Vibe Coding — The Enterprise Risk</span>
+  <div class="alert alert-key">
+    <span class="alert-icon">🔑</span>
+    <div><p><strong>Why AI-Generated Code Needs the Same Security Gates as Human Code</strong>Vibe coding means accepting AI-generated code based on appearance — it looks right, it compiles, tests pass — without understanding what it actually does. GitHub Copilot is trained on public repositories that include code with known vulnerabilities. It can suggest SQL injection patterns, hardcoded credentials, or insecure deserialisation — not maliciously, but because those patterns exist in its training data. Every AI-generated code change must go through the same SAST/DAST pipeline as human-written code. No exceptions for security-critical paths.</p></div>
+  </div>
+
+  <span class="section-tag tag-conn">🔗 Connects to Your Work</span>
+  <div class="alert alert-connect">
+    <span class="alert-icon">🔗</span>
+    <div><p>Your Copilot Studio HR Leave Agent is a planning agent — it collects inputs, calls a Power Automate flow, and produces a structured output. The security controls (HITL for leave approval, service account isolation, audit logging per run) map directly to the CLLMSP agent security framework. If you built that agent, you already understand this domain in practice. The exam tests whether you know the names for what you're already doing.</p></div>
+  </div>
+</section>
+
+<div class="section-sep"><hr/><span>✦</span><hr/></div>
+
+<!-- ══ MODULE 08 ══ -->
+<section class="module" id="m08">
+  <div class="module-header">
+    <div class="module-number">08</div>
+    <div class="module-meta">
+      <div class="module-domain">Domain 08</div>
+      <h2 class="module-title">Application Security for AI Products</h2>
+      <span class="module-weight">10% of exam</span>
+    </div>
+  </div>
+  <div class="module-divider"></div>
+  <p>LLM integration does not replace traditional AppSec — it adds to it. Every classic vulnerability still applies, now with an LLM in the middle of the request chain.</p>
+
+  <span class="section-tag tag-exam">📋 Traditional Vulns in AI Context</span>
+  <ul class="terms">
+    <li><strong>SSRF</strong> — Attacker makes the LLM fetch internal network resources via URL parameters or browsing tool abuse. The LLM becomes a confused deputy for network requests.</li>
+    <li><strong>XSS</strong> — LLM output rendered in a browser without encoding. Use Content-Security-Policy (CSP) as the primary header defence. Never trust model output as safe HTML.</li>
+    <li><strong>SQL Injection</strong> — LLM-generated queries passed to a database without parameterisation. Even a well-instructed model can be manipulated via prompt injection to generate malicious SQL.</li>
+    <li><strong>Rate Limiting</strong> — Must account for token consumption, not just request frequency. One request consuming 1M tokens is more impactful than 1,000 small requests.</li>
+    <li><strong>Streaming security</strong> — Guardrails must process partial streaming output in real-time, not just completed responses. Significant implementation complexity.</li>
+  </ul>
+
+  <div class="alert alert-exam">
+    <span class="alert-icon">📋</span>
+    <div><p><strong>AI-Specific CI/CD Additions</strong>Beyond SAST/DAST, add: prompt injection regression tests (verify safety behaviours are maintained after model updates), guardrail validation (confirm controls still block known attack patterns), and model behaviour baselines (detect drift in refusal rates or output distributions). These three additions define what makes a CI/CD pipeline "AI-specific" on the exam.</p></div>
+  </div>
+</section>
+
+<div class="section-sep"><hr/><span>✦</span><hr/></div>
+
+<!-- ══ MODULE 09 ══ -->
+<section class="module" id="m09">
+  <div class="module-header">
+    <div class="module-number">09</div>
+    <div class="module-meta">
+      <div class="module-domain">Domain 09 — Final Domain</div>
+      <h2 class="module-title">Identity, Access, Memory &amp; Advanced Topics</h2>
+      <span class="module-weight">7.5% of exam · Lowest weight, highest conceptual density</span>
+    </div>
+  </div>
+  <div class="module-divider"></div>
+  <p>The smallest domain by weight but the one that ties everything together. Identity and access control, vector database security, and incident response for AI events — cross-cutting concerns that apply across every other domain.</p>
+
+  <span class="section-tag tag-key">🔑 Defence in Depth — Correct Order</span>
+  <div class="alert alert-key">
+    <span class="alert-icon">🔑</span>
+    <div>
+      <p><strong>The Six Defensive Layers — Outermost to Innermost</strong></p>
+      <p>1. Network Security — firewalls, WAF, DDoS protection<br>
+      2. Authentication &amp; Authorisation — identity verification, RBAC/ABAC<br>
+      3. Input Guardrails — prompt injection detection, content filtering<br>
+      4. Model Behaviour Constraints — system prompts, safety training<br>
+      5. Output Validation — sanitisation, format enforcement, sensitive data filtering<br>
+      6. Monitoring &amp; Observability — behavioural baselines, anomaly detection, audit logging</p>
+      <p>The exam will test this ordering specifically. Network before identity, identity before guardrails, guardrails before model constraints.</p>
+    </div>
+  </div>
+
+  <span class="section-tag tag-exam">📋 RBAC vs ABAC vs Zero Trust</span>
+  <ul class="terms">
+    <li><strong>RBAC</strong> — Role-based. Suitable for simple access patterns. Sufficient for small single-tenant deployments with straightforward user roles.</li>
+    <li><strong>ABAC</strong> — Attribute-based. Preferred for multi-tenant LLM platforms. Can simultaneously enforce policies based on user department, data classification, clearance level, device state, and time. RBAC cannot express this efficiently.</li>
+    <li><strong>Agent Capability Tokens</strong> — Scoped, time-limited, non-transferable between agents. "Read customer data for 15 minutes" vs permanent full database access. The correct agentic access control pattern.</li>
+    <li><strong>Zero Trust</strong> — Verify every request regardless of network location. No implicit trust for internal requests. Every API call, tool invocation, and data access authenticated and authorised individually.</li>
+  </ul>
+
+  <span class="section-tag tag-exam">📋 AI Incident Response — What's Added</span>
+  <ul class="terms">
+    <li><strong>Model output forensics</strong> — Analyse what the model produced and reconstruct why, from inputs, context, and system prompt state at the time of the incident.</li>
+    <li><strong>Prompt analysis</strong> — Examine the full inputs that triggered the incident. Preserve the complete prompt context for forensic investigation.</li>
+    <li><strong>Guardrail effectiveness review</strong> — Which controls failed and why. Did the guardrail not fire? Was it bypassed? Was it not deployed at all?</li>
+    <li><strong>Behavioural baseline deviation</strong> — Sudden change in refusal rate may indicate a successful jailbreak. Spike in tool invocations may indicate agent manipulation.</li>
+  </ul>
+
+  <span class="section-tag tag-real">🏢 Vector Database Security</span>
+  <div class="alert alert-real">
+    <span class="alert-icon">🏢</span>
+    <div><p><strong>Embeddings Inherit Document Sensitivity</strong>Vector databases storing embeddings need the same access controls as the source documents. Embedding inversion attacks can partially reconstruct original text from embeddings. If a user is not authorised to read a document, they should not be able to retrieve its embedding. Access controls must be enforced at retrieval time — not just at indexing time.</p></div>
+  </div>
+</section>
+
+<div class="section-sep"><hr/><span>✦</span><hr/></div>
+
+<!-- CLOSING -->
+<div class="closing">
+  <div class="closing-badge">CLLMSP · Certified · June 2026</div>
+  <h2>What I Would Tell Someone Starting From Scratch</h2>
+  <p>Study the OWASP Top 10 for LLMs first and longest. Know all ten categories by number, name, mechanism, and mitigation. The exam tests distinctions between similar-sounding categories — LLM01 vs LLM07 vs LLM08 will appear together.</p>
+  <p>Know the jailbreak taxonomy by name: DAN, Crescendo, Skeleton Key, Many-Shot, PAIR. Know what makes each distinct from the others. These are tested precisely.</p>
+  <p>Read the MCP module carefully. It is the domain where being a practitioner gives you the most advantage and where theory-only candidates are most exposed. If you build with any AI tooling that uses tool calling, you're already familiar with the concepts — you just need to learn the names.</p>
+  <p>For the free-text questions: explain the <em>why</em>, not just the <em>what</em>. They want to see that you understand the underlying principle well enough to reason about novel scenarios, not just recite definitions.</p>
+  <p>The certification is worth taking — especially while it remains accessible. The framework it provides for thinking about AI security systematically is immediately applicable in the AI agents and M365 environments most of us are deploying today.</p>
+</div>
+
+</article>
+
+<div class="footer">
+  Written by <a href="https://medium.com/@timothy_jameseusebio">Timothy James Eusebio</a> &nbsp;·&nbsp;
+  M365 Engineer · Agentic AI Designer · Security Practitioner · CLLMSP &nbsp;·&nbsp;
+  <a href="https://medium.com/@timothy_jameseusebio">Also on Medium ↗</a>
+</div>
+
+<script>
+window.addEventListener('scroll', function(){
+  var d = document.documentElement;
+  var pct = ((d.scrollTop || document.body.scrollTop) / (d.scrollHeight - d.clientHeight)) * 100;
+  document.getElementById('prog').style.width = pct + '%';
+});
+</script>
+
+<section class="rn-wrap" aria-label="More write-ups">
+  <style>
+  .rn-wrap{max-width:760px;margin:8px auto 0;padding:38px 24px 10px;border-top:1px solid rgba(128,128,128,.25);font-family:inherit}
+  .rn-lbl{font-size:11px;letter-spacing:.16em;text-transform:uppercase;opacity:.55;margin-bottom:16px}
+  .rn-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .rn-card{display:block;border:1px solid rgba(128,128,128,.22);border-radius:12px;padding:15px 17px;color:inherit;text-decoration:none;transition:border-color .2s,transform .2s}
+  .rn-card:hover{border-color:rgba(128,128,128,.55);transform:translateY(-2px)}
+  .rn-t{font-weight:600;font-size:15px;line-height:1.35;margin-bottom:5px}
+  .rn-s{font-size:12.5px;line-height:1.55;opacity:.72;margin-bottom:8px}
+  .rn-m{font-size:11px;opacity:.5;letter-spacing:.04em;font-family:'JetBrains Mono',monospace}
+  .rn-all{display:inline-block;margin-top:18px;font-size:12px;letter-spacing:.05em;color:inherit;text-decoration:none;opacity:.7;border-bottom:1px solid currentColor;padding-bottom:1px}
+  .rn-all:hover{opacity:1}
+  @media(max-width:640px){.rn-grid{grid-template-columns:1fr}.rn-wrap{padding:28px 18px 10px}}
+  </style>
+  <div class="rn-lbl">Read next · More write-ups</div>
+  <div class="rn-grid">
+    <a class="rn-card" href="top-5-m365-misconfig.html"><div class="rn-t">Top 5 M365 Misconfigurations</div><div class="rn-s">Legacy auth, guest sprawl, missing DLP, over-privileged admins and email-auth gaps — each with detection and remediation.</div><div class="rn-m">12 min read</div></a>
+    <a class="rn-card" href="copilot-studio-from-scratch.html"><div class="rn-t">Copilot Studio HR Agent from Scratch</div><div class="rn-s">End-to-end build: knowledge sources, topics, authentication, and Power Automate integration in a production agent.</div><div class="rn-m">15 min read</div></a>
+    <a class="rn-card" href="entra-id-ca.html"><div class="rn-t">Entra ID Conditional Access Gaps</div><div class="rn-s">Common Conditional Access bypass conditions — and how to build policies that actually hold under pressure.</div><div class="rn-m">14 min read</div></a></div>
+  <a class="rn-all" href="https://tjames-env.github.io/projects.html#writeups">View all write-ups ↗</a>
+</section>
+
+</body>
+</html>
