@@ -76,6 +76,7 @@ Each tool is a single HTML file and runs **entirely client-side**.
 
 - **Top 5 M365 Misconfigurations I've Seen in Enterprise Environments** — `top-5-m365-misconfig.html`
 - **How I Passed the CLLMSP** — `CLLMSP.html`
+- **SMB Relay Attack** — `SMB-Relay.html`
 - **Building a Copilot Studio HR Agent from Scratch** — `copilot-studio-from-scratch.html`
 - **Entra ID Conditional Access — The Gaps Attackers Look For** — `entra-id-ca.html`
 
@@ -98,6 +99,7 @@ Each tool is a single HTML file and runs **entirely client-side**.
 ├── top-5-m365-misconfig.html        # Write-up
 ├── CLLMSP.html                      # Write-up
 ├── copilot-studio-from-scratch.html # Write-up
+├── SMB-Relay.html                   # Write-up
 └── entra-id-ca.html                 # Write-up
 ```
 
