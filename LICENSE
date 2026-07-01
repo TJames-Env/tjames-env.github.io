@@ -1,8 +1,12 @@
-Copyright (c) 2026 Timothy James Eusebio. All rights reserved.
+Copyright (c) 2026 Timothy James Eusebio ("eusebio@it-sec"). All rights reserved.
 
-This source code is published for portfolio and demonstration purposes only.
-No permission is granted to copy, modify, distribute, or reuse any part of it
-without prior written consent from the author.
+This source code and its contents are published for portfolio and demonstration
+purposes only. No part of this repository may be copied, modified, distributed,
+reused, or repurposed — in whole or in part — without the prior written consent
+of the author.
 
-Third-party assets loaded by this project (e.g., Three.js, Google Fonts)
-remain under their own respective licenses.
+Viewing the source in a browser (as required to render the site) does not grant
+any license or right of reuse.
+
+Third-party assets loaded by this project (e.g., Three.js, Google Fonts) remain
+under their own respective licenses.
