@@ -133,21 +133,13 @@ Long-form articles — hosted here and distributed on Medium.
 └── entra-id-ca.html                 # (eJPT write-up is on Medium)
 ```
 
-## Running locally
+## Explore
 
-No dependencies. Open `index.html` directly, or serve the folder so internal links resolve cleanly:
+Everything runs live at **https://tjames-env.github.io/** — no install needed.
 
-```bash
-git clone https://github.com/TJames-Env/tjames-env.github.io.git
-cd tjames-env.github.io
-
-# Option A — open directly
-open index.html        # macOS  (use "start" on Windows, "xdg-open" on Linux)
-
-# Option B — local web server (recommended)
-python3 -m http.server 8000
-# then visit http://localhost:8000
-```
+- **Homepage** — profile, skills, and experience
+- **Projects** — security & automation tools, cheatsheets, pentest work, and write-ups
+- **Tools** — open any tool directly in the browser; all run client-side
 
 ## Build approach
 
