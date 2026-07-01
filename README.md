@@ -133,14 +133,6 @@ Long-form articles — hosted here and distributed on Medium.
 └── entra-id-ca.html                 # (eJPT write-up is on Medium)
 ```
 
-## Explore
-
-Everything runs live at **https://tjames-env.github.io/** — no install needed.
-
-- **Homepage** — profile, skills, and experience
-- **Projects** — security & automation tools, cheatsheets, pentest work, and write-ups
-- **Tools** — open any tool directly in the browser; all run client-side
-
 ## Build approach
 
 Built iteratively and test-driven — each page validated against real device widths and print output, with recurring fixes (responsive overflow, print artifacts, accessible feedback) standardized across the suite.
