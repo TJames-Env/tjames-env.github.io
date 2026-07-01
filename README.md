@@ -2,7 +2,7 @@
 
 > **BUILD. AUTOMATE. EXPLOIT.**
 
-Personal portfolio and browser-based tool suite — built by an M365 & Power Platform engineer, agentic-AI builder, and offensive-security practitioner based in Toronto.
+Personal portfolio and browser-based tool suite — built by an M365 & Power Platform engineer, agentic-AI builder, and offensive-security practitioner.
 
 **Live site:** https://tjames-env.github.io/
 
