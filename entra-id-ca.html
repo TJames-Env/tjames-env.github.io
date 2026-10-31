@@ -351,11 +351,11 @@
     <span class="dot"></span>
     <span>~14 min read</span>
     <span class="dot"></span>
-    <span>Updated · March–May 2026 Changes</span>
+    <span>Updated · October 2026</span>
   </div>
   <div class="hero-banner">
     <span style="font-size:20px; flex-shrink:0;">⚠️</span>
-    <p><strong>Active change:</strong> Microsoft is closing a long-standing CA enforcement gap (March–June 2026). OIDC-only sign-ins on policies with resource exclusions now trigger full policy evaluation. If you have exclusions on your "All resources" policy, you are likely affected right now.</p>
+    <p><strong>Updated October 2026:</strong> Microsoft has finished closing the OIDC enforcement gap (Gap 03), but tenants that opted out are still exposed. Gap 01 now focuses on SMTP AUTH, where Basic auth is disabled by default at the end of December 2026. The baseline adds a user-risk policy, because the legacy Identity Protection risk policies retired on October 1, 2026.</p>
   </div>
 </header>
 
@@ -378,7 +378,7 @@
     </div>
     <div class="gap-card">
       <div class="gap-num">GAP 03</div>
-      <div class="gap-name">OIDC Scope Bypass (NEW 2026)</div>
+      <div class="gap-name">OIDC Scope Bypass (Fixed 2026)</div>
       <span class="gap-sev sev-critical">CRITICAL</span>
     </div>
     <div class="gap-card">
@@ -424,22 +424,24 @@
     <div class="gap-divider"></div>
 
     <div class="section-tag tag-what">🔍 What It Is</div>
-    <p>Legacy authentication protocols — SMTP, IMAP, POP3, Basic Auth, Exchange ActiveSync — authenticate with username and password only. They have no capability to process MFA challenges or honor Conditional Access policies. They are structurally incapable of being secured through CA alone.</p>
+    <p>Legacy authentication protocols — SMTP AUTH, IMAP, POP3, Exchange ActiveSync over Basic auth — authenticate with username and password only. They can't process an MFA challenge, so Conditional Access can only block them, never challenge them.</p>
+
+    <p>In Exchange Online, Microsoft turned off Basic auth for IMAP, POP, ActiveSync and EWS back in October 2022, so the classic IMAP password spray no longer works there. The big exception is <strong>SMTP AUTH (client submission)</strong>: Basic auth still works in tenants that haven't switched it off. Microsoft will disable it by default at the end of December 2026 and plans to announce final removal in the second half of 2027. Legacy auth also still matters for hybrid on-premises Exchange and third-party apps.</p>
 
     <div class="section-tag tag-attack">💀 How Attackers Exploit It</div>
     <div class="attack-path">
-      <div class="attack-path-title">⚔️ Attack Path — Password Spray via Legacy Auth</div>
+      <div class="attack-path-title">⚔️ Attack Path — Password Spray via SMTP AUTH</div>
       <div class="attack-steps">
-        <div class="attack-step"><span class="attack-step-num">01</span><div class="attack-step-text">Attacker enumerates valid accounts via Microsoft's public autodiscover endpoint</div></div>
-        <div class="attack-step"><span class="attack-step-num">02</span><div class="attack-step-text">Runs a <strong>password spray</strong> against IMAP endpoint (port 993) — one password attempt per account avoids lockout</div></div>
-        <div class="attack-step"><span class="attack-step-num">03</span><div class="attack-step-text">Successful authentication via IMAP <strong>bypasses MFA entirely</strong> — CA policy never evaluated</div></div>
-        <div class="attack-step"><span class="attack-step-num">04</span><div class="attack-step-text">Attacker reads mailbox, sets forwarding rules, exfiltrates data — all silently</div></div>
+        <div class="attack-step"><span class="attack-step-num">01</span><div class="attack-step-text">Attacker builds a list of valid usernames from LinkedIn and the company's email format</div></div>
+        <div class="attack-step"><span class="attack-step-num">02</span><div class="attack-step-text">Runs a <strong>password spray</strong> against SMTP AUTH (smtp.office365.com:587) — one password attempt per account avoids lockout</div></div>
+        <div class="attack-step"><span class="attack-step-num">03</span><div class="attack-step-text">A successful Basic auth login <strong>bypasses MFA entirely</strong> — unless a CA policy blocks legacy auth, nothing stops it</div></div>
+        <div class="attack-step"><span class="attack-step-num">04</span><div class="attack-step-text">Attacker sends phishing or BEC email from a real internal mailbox — it passes SPF, DKIM and DMARC because it genuinely is your domain</div></div>
       </div>
     </div>
 
-    <div class="alert alert-red">
-      <div class="alert-icon">🚨</div>
-      <p><strong>Real-world case:</strong> In 2024, a healthcare org experienced a breach through a forgotten SMTP relay using Basic Authentication. Attackers used stolen credentials to send 50,000 phishing emails before detection. No MFA prompt was ever triggered.</p>
+    <div class="alert alert-orange">
+      <div class="alert-icon">⚠️</div>
+      <p><strong>December 2026 deadline:</strong> When Microsoft disables SMTP AUTH Basic auth by default, anything still relying on it — printers, scanners, line-of-business apps — will stop sending mail. Find them now with the query below and move them to OAuth or a connector. Otherwise the quick fix under pressure will be to switch Basic auth back on.</p>
     </div>
 
     <div class="section-tag tag-detect">🔎 Detection — Who Is Still Using It</div>
@@ -469,7 +471,7 @@
         <div class="code-dots"><i class="dot-red"></i><i class="dot-yellow"></i><i class="dot-green"></i></div>
         <span>Entra Admin Center · CA Policy — Block Legacy Auth</span>
       </div>
-      <pre><span class="c"># Entra ID → Security → Conditional Access → New Policy</span>
+      <pre><span class="c"># Entra ID → Conditional Access → Policies → New policy</span>
 
 Name:          <span class="s">"BLOCK — Legacy Authentication"</span>
 Users:         <span class="n">All users</span>
@@ -557,13 +559,13 @@ State:         <span class="w">Report-only</span>  <span class="c">← run 2 wee
     <div class="gap-header">
       <div class="gap-number">03</div>
       <div class="gap-title-group">
-        <div class="gap-category">⚡ New · March–June 2026</div>
+        <div class="gap-category">✅ Closed · Mid-2026</div>
         <h2 class="gap-title">OIDC Scope Bypass — The Silent 2026 Fix</h2>
       </div>
     </div>
     <div class="gap-divider"></div>
 
-    <div class="section-tag tag-new">🆕 Active Rollout: March 27 – June 2026</div>
+    <div class="section-tag tag-new">✅ Rollout complete: enforcement began June 15, 2026</div>
     <div class="section-tag tag-what">🔍 What It Was</div>
     <p>This is the gap most enterprise admins didn't know existed. When a CA policy targets "All resources" with at least one resource exclusion, and an application requests only low-privilege OIDC or directory scopes (<code>openid</code>, <code>profile</code>, <code>email</code>, <code>User.Read</code>), the policy was <strong>silently skipped entirely</strong>. No MFA prompt. No device compliance check. Nothing.</p>
 
@@ -571,7 +573,7 @@ State:         <span class="w">Report-only</span>  <span class="c">← run 2 wee
 
     <div class="alert alert-red">
       <div class="alert-icon">🚨</div>
-      <p><strong>Who is affected:</strong> Any tenant with a CA policy targeting "All cloud apps" or "All resources" that has at least one resource exclusion configured. This includes almost every mature enterprise tenant. Azure CLI, developer tools, and vendor apps commonly request only OIDC scopes — these have been bypassing your policies silently.</p>
+      <p><strong>Who was affected:</strong> Any tenant with a CA policy targeting "All cloud apps" or "All resources" that had at least one resource exclusion configured — almost every mature enterprise tenant. Developer tools and vendor apps that request only OIDC scopes were bypassing those policies silently. Microsoft let tenants opt out of the fix, and <strong>tenants that opted out are still exposed</strong>.</p>
     </div>
 
     <div class="section-tag tag-attack">💀 Attack Scenario Before the Fix</div>
@@ -579,9 +581,9 @@ State:         <span class="w">Report-only</span>  <span class="c">← run 2 wee
       <div class="attack-path-title">⚔️ Attack Path — OIDC Scope Bypass</div>
       <div class="attack-steps">
         <div class="attack-step"><span class="attack-step-num">01</span><div class="attack-step-text">Attacker has valid credentials for a user in your tenant</div></div>
-        <div class="attack-step"><span class="attack-step-num">02</span><div class="attack-step-text">Authenticates using Azure CLI or a custom app requesting only <strong>openid + profile + User.Read</strong></div></div>
+        <div class="attack-step"><span class="attack-step-num">02</span><div class="attack-step-text">Signs in through a custom or third-party app requesting only <strong>openid + profile + User.Read</strong></div></div>
         <div class="attack-step"><span class="attack-step-num">03</span><div class="attack-step-text">Because your "All resources" policy has a resource exclusion (e.g., a legacy app), the OIDC sign-in <strong>bypasses the policy entirely</strong></div></div>
-        <div class="attack-step"><span class="attack-step-num">04</span><div class="attack-step-text">Attacker obtains a valid token without MFA or device compliance — uses it to access Microsoft Graph</div></div>
+        <div class="attack-step"><span class="attack-step-num">04</span><div class="attack-step-text">Attacker obtains a valid token without MFA or device compliance — confirming the password works and reading the user's profile through Microsoft Graph</div></div>
       </div>
     </div>
 
@@ -602,21 +604,21 @@ State:         <span class="w">Report-only</span>  <span class="c">← run 2 wee
 | <span class="k">order by</span> Count <span class="k">desc</span>
 
 <span class="c"># High count + singleFactor + notApplied = was bypassing your policy</span>
-<span class="c"># These applications will now be prompted for MFA after rollout</span></pre>
+<span class="c"># Since the rollout, these should show CA applied — if not, check for an opt-out</span></pre>
     </div>
 
-    <div class="section-tag tag-fix">✅ What To Do Right Now</div>
+    <div class="section-tag tag-fix">✅ What To Do Now</div>
     <ul class="checklist">
-      <li>Run the detection query above — identify apps with high sign-in volume that were bypassing CA</li>
-      <li>Test those apps now in your environment — some will break when MFA is suddenly required</li>
-      <li>For apps that legitimately need OIDC-only flows, <strong>explicitly exclude them</strong> from the policy (not silently)</li>
-      <li>Review and minimize resource exclusions — every exclusion you remove closes a scope bypass surface</li>
-      <li>Monitor sign-in logs for authentication failures after March 27 — these indicate apps broken by the enforcement change</li>
+      <li>Check whether your tenant <strong>opted out of or customized</strong> the change (Message Center: MC1223829 and MC1418116) — an opt-out leaves the bypass open</li>
+      <li>Run the detection query above for the period since rollout — single-factor, "notApplied" sign-ins into apps your "All resources" policy should cover need investigating</li>
+      <li>Review exclusions added since mid-June 2026 — apps that broke when enforcement arrived were often "fixed" with a quick new exclusion</li>
+      <li>For apps that legitimately need OIDC-only flows, <strong>explicitly exclude them</strong> from the policy and document why</li>
+      <li>Review and minimize resource exclusions — every exclusion is a surface you have to keep justifying</li>
     </ul>
 
     <div class="alert alert-blue">
       <div class="alert-icon">💡</div>
-      <p><strong>Silver lining:</strong> This enforcement change means your existing "All resources" CA policies now actually enforce what you intended. But the transition may break apps. Treat March–June 2026 as a mandatory CA policy audit window.</p>
+      <p><strong>Silver lining:</strong> Your existing "All resources" CA policies now actually enforce what you intended. Use the change as a prompt for a full CA audit — especially any exclusions added in a hurry to unbreak apps.</p>
     </div>
   </section>
 
@@ -634,10 +636,10 @@ State:         <span class="w">Report-only</span>  <span class="c">← run 2 wee
     <div class="gap-divider"></div>
 
     <div class="section-tag tag-what">🔍 What It Is</div>
-    <p>CA policies requiring "compliant device" rely on Intune reporting device health to Entra ID. The problem: Intune's evaluation logic has historically treated missing health attestation responses as <strong>"not applicable"</strong> rather than non-compliant. In hybrid environments, this creates a window where a device can claim domain-join status without being verified against on-premises Active Directory.</p>
+    <p>CA policies requiring "compliant device" rely on Intune's verdict, and that verdict is only as strong as the settings behind it. Two weaknesses show up again and again: the tenant-wide setting <strong>"Mark devices with no compliance policy assigned as"</strong> left at its default of <strong>Compliant</strong>, and compliance policies that check little more than OS version.</p>
 
     <div class="section-tag tag-attack">💀 How Attackers Exploit It</div>
-    <p>A recent red team engagement (May 2026) documented a phantom device registration attack: attackers enrolled a fresh device by claiming hybrid domain-join status. Intune trusted the self-declared claim without verifying it against on-premises AD. The device achieved "compliant" status despite lacking BitLocker, Secure Boot, or antivirus — because missing health attestation was marked "not applicable," not "non-compliant."</p>
+    <p>An attacker with a user's credentials registers or enrolls a device they control. If any user can register devices, and the device lands outside the scope of your compliance policies, or those policies only check OS version, it can be marked compliant without BitLocker, Secure Boot or antivirus. A "require compliant device" grant then waves the attacker straight through.</p>
 
     <div class="alert alert-red">
       <div class="alert-icon">🚨</div>
@@ -646,7 +648,7 @@ State:         <span class="w">Report-only</span>  <span class="c">← run 2 wee
 
     <div class="section-tag tag-fix">✅ Harden Device Compliance Policies</div>
     <ul class="checklist">
-      <li>In Intune compliance policies, set <strong>"Mark device noncompliant"</strong> for missing health attestation — not "Not configured"</li>
+      <li>In Intune's tenant-wide compliance settings, set <strong>"Mark devices with no compliance policy assigned as"</strong> to <strong>Not compliant</strong></li>
       <li>Require <strong>BitLocker</strong>, <strong>Secure Boot</strong>, and <strong>Code Integrity</strong> as compliance requirements — not just OS version</li>
       <li>Enable <strong>Microsoft Defender for Endpoint integration</strong> with Intune — device risk score becomes a compliance dimension</li>
       <li>For hybrid environments: require <strong>Microsoft Entra hybrid join</strong> AND Intune compliance — not either/or</li>
@@ -695,7 +697,7 @@ State:         <span class="w">Report-only</span>  <span class="c">← run 2 wee
 
     <div class="alert alert-orange">
       <div class="alert-icon">⚠️</div>
-      <p><strong>February 2026 change:</strong> The new "Revoke sessions" action in Entra ID now invalidates <strong>all user sessions including MFA</strong>, regardless of whether MFA is enforced via CA or per-user policy. This is the correct incident response action — make sure your IR playbooks reference the new control name.</p>
+      <p><strong>February 2026 change:</strong> The new "Revoke sessions" action in Entra ID now invalidates <strong>all user sessions including MFA</strong>, regardless of whether MFA is enforced via CA or per-user policy. Make sure your IR playbooks reference the new control name. Note that it revokes refresh tokens and session cookies — access tokens already issued stay valid until they expire, unless the app supports Continuous Access Evaluation.</p>
     </div>
 
     <div class="section-tag tag-attack">💀 Token Theft Attack Flow</div>
@@ -705,7 +707,7 @@ State:         <span class="w">Report-only</span>  <span class="c">← run 2 wee
         <div class="attack-step"><span class="attack-step-num">01</span><div class="attack-step-text">Attacker sends phishing email with link to an <strong>AiTM proxy</strong> (e.g., Evilginx) that relays the real Microsoft sign-in page</div></div>
         <div class="attack-step"><span class="attack-step-num">02</span><div class="attack-step-text">Victim completes legitimate MFA through the proxy — attacker captures the session cookie and access token</div></div>
         <div class="attack-step"><span class="attack-step-num">03</span><div class="attack-step-text">Attacker replays the token — <strong>MFA is already satisfied</strong>, CA policies are bypassed</div></div>
-        <div class="attack-step"><span class="attack-step-num">04</span><div class="attack-step-text">Attacker has full access until the token expires — typically 1 hour for access tokens, up to 90 days for refresh tokens</div></div>
+        <div class="attack-step"><span class="attack-step-num">04</span><div class="attack-step-text">Attacker has full access until the token expires — typically 60–90 minutes for access tokens, up to 90 days for refresh tokens</div></div>
       </div>
     </div>
 
@@ -714,8 +716,8 @@ State:         <span class="w">Report-only</span>  <span class="c">← run 2 wee
       <li>Enable <strong>Sign-in frequency</strong> in CA policy — set to 1 hour for privileged roles, 4–8 hours for standard users</li>
       <li>Enable <strong>Continuous Access Evaluation (CAE)</strong> — forces near-real-time policy re-evaluation instead of waiting for token expiry</li>
       <li>Require <strong>phishing-resistant MFA</strong> (FIDO2 / Windows Hello) for all admins — these cannot be replayed by AiTM proxies</li>
-      <li>Enable <strong>Token Protection</strong> (preview) in CA — binds tokens to the specific device, preventing replay from another machine</li>
-      <li>In IR scenarios, use <strong>Revoke sessions</strong> (not just password reset) — the new control invalidates all tokens immediately</li>
+      <li>Enable <strong>Token Protection</strong> in CA — binds sign-in tokens to the device so they can't be replayed elsewhere. Generally available on Windows for Exchange, SharePoint, Teams, Azure Virtual Desktop and Windows 365; preview on macOS and iOS; browsers not supported</li>
+      <li>In IR scenarios, use <strong>Revoke sessions</strong> together with a password reset — it kills refresh tokens and sessions, and CAE-capable apps also cut off access tokens in near real time</li>
     </ul>
 
     <div class="section-tag tag-detect">🔎 Detect Suspicious Token Usage</div>
@@ -801,7 +803,7 @@ State:         <span class="w">Report-only</span>  <span class="c">← run 2 wee
 
     <div class="section-tag tag-detect">🔎 Using the What If Tool</div>
     <ul class="checklist">
-      <li>Entra ID → Security → Conditional Access → <strong>What If</strong></li>
+      <li>Entra ID → Conditional Access → Policies → <strong>What If</strong></li>
       <li>Test these scenarios at minimum: user + legacy auth client, user + unknown IP, user + non-compliant device, service account + any app</li>
       <li>Any scenario that returns "0 policies applied" or only report-only policies = gap in your coverage</li>
     </ul>
@@ -840,7 +842,7 @@ State:         <span class="w">Report-only</span>  <span class="c">← run 2 wee
 
     <p>Here is the minimum viable CA policy set for an enterprise tenant in 2026. Every policy should be tested in Report-only first, then enforced within 30 days.</p>
 
-    <div class="section-tag tag-fix">✅ The 6-Policy Baseline</div>
+    <div class="section-tag tag-fix">✅ The 7-Policy Baseline</div>
     <div class="code-block">
       <div class="code-header">
         <div class="code-dots"><i class="dot-red"></i><i class="dot-yellow"></i><i class="dot-green"></i></div>
@@ -854,7 +856,7 @@ State:         <span class="w">Report-only</span>  <span class="c">← run 2 wee
 <span class="w">POLICY 2:</span> <span class="n">REQUIRE — MFA for All Users</span>
   Users: All · Exclude: Break-glass, service accounts (monitored)
   Apps: All resources
-  Grant: Require MFA (minimum: Microsoft Authenticator)
+  Grant: Require authentication strength → Multifactor authentication
 
 <span class="w">POLICY 3:</span> <span class="n">REQUIRE — Phishing-Resistant MFA for Admins</span>
   Users: All privileged roles (GA, PA, CA Admin, Exchange Admin...)
@@ -865,17 +867,25 @@ State:         <span class="w">Report-only</span>  <span class="c">← run 2 wee
 <span class="w">POLICY 4:</span> <span class="n">REQUIRE — Compliant Device for Corporate Apps</span>
   Users: All · Exclude: Break-glass
   Apps: Exchange Online, SharePoint, Teams
-  Grant: Require compliant device OR Hybrid Azure AD join
+  Grant: Require compliant device OR Microsoft Entra hybrid joined device
 
-<span class="w">POLICY 5:</span> <span class="n">BLOCK — High-Risk Sign-ins (Identity Protection)</span>
+<span class="w">POLICY 5:</span> <span class="n">BLOCK — High-Risk Sign-ins</span>
   Users: All · Exclude: Break-glass
   Apps: All resources
   Conditions: Sign-in risk = High
   Grant: Block  <span class="c">← requires Entra ID P2</span>
 
-<span class="w">POLICY 6:</span> <span class="n">REQUIRE — MFA Registration from Trusted Location</span>
+<span class="w">POLICY 6:</span> <span class="n">REQUIRE — Secure Password Change for High-Risk Users</span>
+  Users: All · Exclude: Break-glass
+  Apps: All resources
+  Conditions: User risk = High
+  Grant: Require authentication strength (MFA) + Require password change
+  Session: Sign-in frequency = Every time
+  <span class="c">← replaces the legacy Identity Protection user-risk policy (retired Oct 1, 2026)</span>
+
+<span class="w">POLICY 7:</span> <span class="n">REQUIRE — MFA Registration from Trusted Location</span>
   Users: All
-  Apps: Microsoft Azure AD → User Actions: Register security info
+  Target resources: User actions → Register security information
   Conditions: Location = not named location
   Grant: Require MFA  <span class="c">← prevents attacker registering their own MFA method</span></pre>
     </div>
@@ -889,7 +899,7 @@ State:         <span class="w">Report-only</span>  <span class="c">← run 2 wee
   <div class="closing">
     <h2>CA Is a Framework, Not a Finish Line</h2>
     <p>The gap between "Conditional Access enabled" and "identity secured" is enormous. Every policy has conditions, exclusions, and edge cases. Attackers don't need to break your encryption — they need to find the single sign-in flow you didn't account for.</p>
-    <p>The March 2026 OIDC enforcement change is a reminder that even Microsoft's own platform had silent bypass conditions that persisted for years. Your job isn't to configure CA once and move on — it's to treat it as a living architecture that requires continuous review, monitoring, and testing.</p>
+    <p>The 2026 OIDC enforcement change is a reminder that even Microsoft's own platform had silent bypass conditions that persisted for years. Your job isn't to configure CA once and move on — it's to treat it as a living architecture that requires continuous review, monitoring, and testing.</p>
     <p>Run the What If tool. Audit your exclusion groups. Check your Report-only policies. Then do it again next quarter. The attackers are checking.</p>
   </div>
 
@@ -919,7 +929,7 @@ State:         <span class="w">Report-only</span>  <span class="c">← run 2 wee
 </section>
 
 <footer class="footer">
-  <p>Written by <a href="https://medium.com/@timothy_jameseusebio">Timothy James Eusebio</a> · <a href="https://medium.com/@timothy_jameseusebio/entra-id-conditional-access-the-gaps-attackers-look-for-0eed87573052">Also on Medium</a> · May 2026</p>
+  <p>Written by <a href="https://medium.com/@timothy_jameseusebio">Timothy James Eusebio</a> · <a href="https://medium.com/@timothy_jameseusebio/entra-id-conditional-access-the-gaps-attackers-look-for-0eed87573052">Also on Medium</a> · May 2026 · Updated Oct 2026</p>
 </footer>
 
 <script>
