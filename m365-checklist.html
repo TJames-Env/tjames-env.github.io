@@ -1967,6 +1967,6 @@ render();
   try{ if(navigator.clipboard&&navigator.clipboard.writeText){ var _w=navigator.clipboard.writeText.bind(navigator.clipboard); navigator.clipboard.writeText=function(x){return _w(x).then(function(r){fxToast('Copied to clipboard');return r;});}; } }catch(e){}
 })();
 </script>
-<script src="globe.js" data-mode="calm"></script>
+<script src="globe.js" data-mode="drift" data-colors="#2dd4bf,#00e5ff" data-mix=".3" data-n="120,55" data-opacity=".9"></script>
 </body>
 </html>

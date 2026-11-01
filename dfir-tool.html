@@ -745,6 +745,6 @@ document.getElementById('reportDate').value=new Date().toISOString().split('T')[
   try{ if(navigator.clipboard&&navigator.clipboard.writeText){ var _w=navigator.clipboard.writeText.bind(navigator.clipboard); navigator.clipboard.writeText=function(x){return _w(x).then(function(r){fxToast('Copied to clipboard');return r;});}; } }catch(e){}
 })();
 </script>
-<script src="globe.js" data-mode="calm"></script>
+<script src="globe.js" data-mode="drift" data-colors="#00e5ff,#ff3b4e" data-mix=".15" data-n="130,60" data-opacity=".9"></script>
 </body>
 </html>

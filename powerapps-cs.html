@@ -485,6 +485,6 @@ if(!localStorage.getItem('pawcs1')){setTimeout(openM,500);localStorage.setItem('
 })();
 </script>
 <script>(function(){function s(){var a=document.querySelector('.app'),v=document.querySelector('.vbar');if(!a)return;if(!v||getComputedStyle(v).display==='none'){a.style.marginTop='';a.style.height='';return;}var o=Math.round(v.getBoundingClientRect().bottom);a.style.marginTop=o+'px';a.style.height='calc(100vh - '+o+'px)';}window.addEventListener('resize',s);window.addEventListener('load',s);document.addEventListener('DOMContentLoaded',s);var vb=document.querySelector('.vbar');if(vb)vb.addEventListener('input',s);s();})();</script>
-<script src="globe.js" data-mode="calm"></script>
+<script src="globe.js" data-mode="drift" data-colors="#b98aff,#2f81f7" data-mix=".35" data-n="110,50" data-opacity=".85"></script>
 </body>
 </html>

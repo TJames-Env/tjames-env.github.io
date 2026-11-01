@@ -1,7 +1,10 @@
 /* ==========================================================================
    Threat globe background + back-to-top button (shared by all pages)
    <script src="globe.js" data-mode="full"></script>   home / projects: HUD, arcs, cursor lock-on
-   <script src="globe.js" data-mode="calm"></script>   tool pages: slow grid globe only
+   <script src="globe.js" data-mode="calm"></script>   slow grid globe only (dimmed)
+   <script src="globe.js" data-mode="drift" data-colors="#2dd4bf,#00e5ff" data-mix=".3" data-n="120,55"></script>
+                                                       tool pages: sparse floating points in the page's accent colours
+                                                       (data-n = desktop,phone count; optional data-opacity, default .9)
    <script src="globe.js" data-mode="none"></script>   write-ups: back-to-top button only
    Draws on #bg-canvas (if present) so each page's existing opacity / scroll-fade / print rules still apply.
    ========================================================================== */
@@ -45,9 +48,14 @@
   var cv=document.getElementById('bg-canvas');
   if(MODE==='none'||!cv) return;
 
+  /* ---------- keep printouts clean (DFIR / pentest reports print from these pages) ---------- */
+  function setPrint(on){['bg-canvas','bg-glow','bg-aurora'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display=on?'none':'';});}
+  addEventListener('beforeprint',function(){setPrint(true);}); addEventListener('afterprint',function(){setPrint(false);});
+
+  if(MODE==='drift'){ drift(); return; }
+
   /* ---------- aurora backdrop ---------- */
   var aur=document.createElement('div'); aur.id='bg-aurora'; aur.setAttribute('aria-hidden','true');
-  if(MODE==='calm') aur.style.opacity='.6'; // let each tool page's own accent glow show through
   cv.parentNode.insertBefore(aur,cv);
 
   /* ---------- globe ---------- */
@@ -179,4 +187,37 @@
   layout();
   addEventListener('resize',function(){layout();if(REDUCE)frame(0);});
   requestAnimationFrame(loop);
+
+  /* ---------- drift: sparse floating points in the page's accent colours (tool pages) ----------
+     2D port of the original Three.js background: same box, wobble, slow spin and mouse parallax. */
+  function drift(){
+    var ctx=cv.getContext('2d'); if(!ctx) return;
+    var cols=(me.getAttribute('data-colors')||'#00e5ff,#2f81f7').split(','), mixR=+(me.getAttribute('data-mix')||0.3);
+    var nn=(me.getAttribute('data-n')||'120,55').split(','), op=+(me.getAttribute('data-opacity')||0.9);
+    var W,H,F,DPR=Math.min(devicePixelRatio||1,2),N,base=[],spr=[],t=0,rot=0,cx=0,cy=0,mx=0,my=0,last=performance.now(),i;
+    // soft round sprite per colour (white core -> colour -> transparent, as the original point texture)
+    cols.forEach(function(c){var s=document.createElement('canvas');s.width=s.height=64;var x=s.getContext('2d'),g=x.createRadialGradient(32,32,0,32,32,32);
+      g.addColorStop(0,c);g.addColorStop(.4,c+'80');g.addColorStop(1,c+'00');x.fillStyle=g;x.beginPath();x.arc(32,32,32,0,7);x.fill();spr.push(s);});
+    function size(){
+      W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);
+      F=(H/2)/Math.tan(Math.PI/6); // 60 degree vertical field of view
+      var n=W<760?+nn[1]:+nn[0];
+      if(n!==N){N=n;base=[];for(i=0;i<N;i++)base.push([(Math.random()*2-1)*76,(Math.random()*2-1)*48,(Math.random()*2-1)*24,Math.random()<mixR?1:0]);}
+    }
+    addEventListener('mousemove',function(e){mx=(e.clientX/innerWidth)*2-1;my=-(e.clientY/innerHeight)*2+1;},{passive:true});
+    function draw(dt){
+      t+=dt*0.36; rot+=dt*0.054; cx+=(mx*6-cx)*0.03; cy+=(my*4-cy)*0.03;
+      ctx.clearRect(0,0,W,H); ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=op;
+      var cr=Math.cos(rot),sr=Math.sin(rot);
+      for(i=0;i<N;i++){var b=base[i],
+        x=b[0]+Math.sin(t*0.6+i)*1.3, y=b[1]+Math.cos(t*0.5+i*1.3)*1.3, z=b[2]+Math.sin(t*0.4+i)*1.0,
+        rx=x*cr+z*sr, rz=-x*sr+z*cr, d=60-rz; if(d<2) continue;
+        var k=F/d, sx=W/2+(rx-cx)*k, sy=H/2-(y-cy)*k, r=0.75*(H/2)/d; // same point size maths as three.js PointsMaterial
+        if(sx<-r||sx>W+r||sy<-r||sy>H+r) continue;
+        ctx.drawImage(spr[b[3]]||spr[0],sx-r,sy-r,r*2,r*2);}
+      ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=1;
+    }
+    function tick(now){var dt=Math.min((now-last)/1000,0.05);last=now;draw(dt);if(!REDUCE)requestAnimationFrame(tick);}
+    size(); addEventListener('resize',function(){size();if(REDUCE)draw(0);}); requestAnimationFrame(tick);
+  }
 })();
