@@ -36,6 +36,7 @@
   var top=document.createElement('button');
   top.id='toTop'; top.type='button'; top.setAttribute('aria-label','Back to top'); top.setAttribute('data-link','');
   top.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+  if(MODE!=='full') top.style.zIndex='250'; // tool pages: toasts and slide-in panels sit above the button
   document.body.appendChild(top);
   function checkTop(){top.classList.toggle('show',window.scrollY>innerHeight*0.8);}
   addEventListener('scroll',checkTop,{passive:true}); setInterval(checkTop,400); checkTop(); // interval covers pages whose inertia scroller skips scroll events
@@ -46,6 +47,7 @@
 
   /* ---------- aurora backdrop ---------- */
   var aur=document.createElement('div'); aur.id='bg-aurora'; aur.setAttribute('aria-hidden','true');
+  if(MODE==='calm') aur.style.opacity='.6'; // let each tool page's own accent glow show through
   cv.parentNode.insertBefore(aur,cv);
 
   /* ---------- globe ---------- */
@@ -88,7 +90,7 @@
   }
 
   function frame(dt){
-    var g=MOB?0.6:1; // phones: globe sits behind text, so keep it quieter
+    var g=(MOB?0.6:1)*(FULL?1:0.4); // quieter on phones (behind text) and on tool pages (behind forms/output)
     if(!REDUCE){
       var tx=mx>0?(mx/W-0.5)*0.6:0, ty=my>0?(my/H-0.5)*0.4:0;
       ry+=dt*(FULL?0.12:0.06)+tx*dt*0.5; rx+=((-0.35+ty)-rx)*0.03;
